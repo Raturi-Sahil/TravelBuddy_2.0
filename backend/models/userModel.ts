@@ -10,9 +10,7 @@ const geoPointSchema = new Schema({
 
 const futureDestinationSchema = new Schema({
   name: { type: String },
-  location: geoPointSchema,
-  startDate: Date,
-  endDate: Date,
+  coordinates: { type: [Number], default: [0, 0] },
 });
 
 const userSchema = new Schema<IUser>({
@@ -88,6 +86,8 @@ const userSchema = new Schema<IUser>({
 
   JoinActivity: [{ type: mongoose.Schema.Types.ObjectId, ref: "Activity" }],
 
+  profileCompleted: { type: Boolean, default: false },
+
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -104,6 +104,6 @@ userSchema.methods.generateJwtToken = function (): string {
 // 🌍 GEO INDEXING
 // --------------------------------------
 userSchema.index({ currentLocation: "2dsphere" });
-userSchema.index({ "futureDestinations.location": "2dsphere" });
+userSchema.index({ "futureDestinations.coordinates": "2dsphere" });
 
 export const User = mongoose.model<IUser>("User", userSchema);

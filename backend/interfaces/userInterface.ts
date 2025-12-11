@@ -13,9 +13,7 @@ export interface IGeoPoint {
 
 export interface IFutureDestination {
   name: string;
-  location: IGeoPoint;
-  startDate?: Date;
-  endDate?: Date;
+  coordinates: number[];
 }
 
 export interface IUser extends Document {
@@ -57,6 +55,8 @@ export interface IUser extends Document {
   socketId?: string | null;
 
   JoinActivity?: string[];
+
+  profileCompleted?: boolean;
 
   createdAt?: Date;
 
