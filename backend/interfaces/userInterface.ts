@@ -21,6 +21,7 @@ export interface IUser extends Document {
   mobile: string;
   dob: Date;
   gender: "Male" | "Female" | "Other";
+  profileVisibility? : "Public" | "Private";
 
   travelStyle:
     | "Solo"

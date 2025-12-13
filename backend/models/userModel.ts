@@ -28,6 +28,12 @@ const userSchema = new Schema<IUser>({
 
   gender: { type: String, enum: GENDERS, required: true },
 
+  profileVisibility: {
+      type: String,
+      enum: ["Public", "Private"],
+      default: "Public"
+  },
+
   travelStyle: {
     type: String,
     enum: TRAVEL_STYLES,
