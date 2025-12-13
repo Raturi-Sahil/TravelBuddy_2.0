@@ -14,9 +14,8 @@ import {
   Users,
   Zap} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-
 import CurrentLocationMap from '../components/currentLocation';
+
 
 
 const heroSlides = [
@@ -74,9 +73,20 @@ const meetupSpots = [
 function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [activeFeature, setActiveFeature] = useState(0);
-const { user,isSignedIn } = useUser();
-console.log('user',user);
+  const[currentLocation, setCurrentLocation] = useState(null);
+  const updateLocation = ()=>{
+    navigator.geolocation.getCurrentPosition((position) => {
+      setCurrentLocation({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      });
+    });
+  }
+  const { user,isSignedIn } = useUser();
 
+  useEffect(() => {
+    updateLocation();
+  }, []);
   useEffect(() => {
     const interval = setInterval(
       () => setActiveSlide((prev) => (prev + 1) % heroSlides.length),
@@ -304,7 +314,7 @@ console.log('user',user);
           <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
             <div className="p-1">
               <div className="h-[520px] rounded-[1.5rem] overflow-hidden">
-                <CurrentLocationMap lat={user?.currentLocation?.lat} lng={user?.currentLocation?.lng} />
+                <CurrentLocationMap lat={currentLocation?.lat} lng={currentLocation?.lng} />
               </div>
             </div>
           </div>

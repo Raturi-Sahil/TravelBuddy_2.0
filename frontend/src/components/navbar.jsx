@@ -16,10 +16,12 @@ import {
   Trash2,
   User,
   Users,
+  Bed,
+  Landmark,
   X} from 'lucide-react';
 import  { useEffect, useRef,useState } from 'react';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ReverseGeocode from '../helpers/reverseGeoCode';
 
 import { useSocketContext } from '../context/socketContext';
@@ -33,6 +35,7 @@ function NavBar() {
   const { user } = useUser();
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { signOut } = useClerk();
   const { user:  isSignedIn } = useUser();
 const currentUser  = {
@@ -135,10 +138,18 @@ const currentUser  = {
 
   const navLinks = [
     { name: 'Discover', path: '/', icon: Compass },
-    { name: 'Map', path: '/map', icon: MapPin },
+    {
+      name: 'Map',
+      path: '/map',
+      icon: MapPin,
+      children: [
+        { name: 'Nearby Traveller', path: '/map', icon: Users },
+        { name: 'Near Hotels', path: '/map/hotels', icon: Bed },
+        { name: 'Nearby Tourist Place', path: '/map/tourist-places', icon: Landmark }
+      ]
+    },
     { name: 'Activities', path: '/activity-near-me', icon: Calendar },
     { name: 'About Us', path: '/about-us', icon: Info },
-
   ];
 
   const profileMenuItems = [
@@ -178,19 +189,45 @@ const currentUser  = {
 
           <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => (
-              <button
-                key={link.name}
-                onClick={() => handleNavigation(link.path)}
-                className="relative flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors duration-200 group"
-              >
-                <link.icon size={20} />
-                <span className="group-hover:underline underline-offset-4">{link.name}</span>
-                {link.badge && link.badge > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {link.badge}
-                  </span>
-                )}
-              </button>
+              link.children ? (
+                <div key={link.name} className="relative group z-50">
+                  <button className={`flex items-center space-x-1 transition-colors duration-200 py-2 ${
+                    link.children.some(child => location.pathname === child.path) ? 'text-amber-600 font-medium' : 'text-gray-700 hover:text-blue-600'
+                  }`}>
+                    <link.icon size={20} />
+                    <span className="group-hover:underline underline-offset-4">{link.name}</span>
+                    <ChevronDown size={16} className="ml-1" />
+                  </button>
+                  <div className="absolute left-0 mt-0 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 transform origin-top-left">
+                    {link.children.map((child) => (
+                      <button
+                        key={child.name}
+                        onClick={() => handleNavigation(child.path)}
+                        className="w-full flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                      >
+                        <child.icon size={16} />
+                        <span>{child.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <button
+                  key={link.name}
+                  onClick={() => handleNavigation(link.path)}
+                  className={`relative flex items-center space-x-1 transition-colors duration-200 group ${
+                    location.pathname === link.path ? 'text-amber-600 font-medium' : 'text-gray-700 hover:text-blue-600'
+                  }`}
+                >
+                  <link.icon size={20} />
+                  <span className="group-hover:underline underline-offset-4">{link.name}</span>
+                  {link.badge && link.badge > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {link.badge}
+                    </span>
+                  )}
+                </button>
+              )
             ))}
 
             {isSignedIn ? (
@@ -313,22 +350,49 @@ const currentUser  = {
             )}
 
             {navLinks.map((link) => (
-              <button
-                key={link.name}
-                onClick={() => {
-                  handleNavigation(link.path);
-                  setIsMenuOpen(false);
-                }}
-                className="relative flex items-center space-x-3 px-3 py-3 text-gray-700 hover:bg-gray-50 rounded-lg mx-3 transition-colors w-full text-left"
-              >
-                <link.icon size={20} />
-                <span className="font-medium">{link.name}</span>
-                {link.badge && link.badge > 0 && (
-                  <span className=" bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {link.badge}
-                  </span>
+              <div key={link.name}>
+                {link.children ? (
+                  <div className="mx-3 mb-1">
+                    <div className="flex items-center space-x-3 px-3 py-3 text-gray-700 font-medium">
+                      <link.icon size={20} />
+                      <span>{link.name}</span>
+                    </div>
+                    <div className="pl-4 border-l-2 border-gray-100 ml-5 space-y-1">
+                      {link.children.map((child) => (
+                        <button
+                          key={child.name}
+                          onClick={() => {
+                            handleNavigation(child.path);
+                            setIsMenuOpen(false);
+                          }}
+                          className="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg w-full text-left text-sm"
+                        >
+                          <child.icon size={16} />
+                          <span>{child.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      handleNavigation(link.path);
+                      setIsMenuOpen(false);
+                    }}
+                    className={`relative flex items-center space-x-3 px-3 py-3 rounded-lg mx-3 transition-colors w-full text-left ${
+                      location.pathname === link.path ? 'bg-amber-50 text-amber-600' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <link.icon size={20} />
+                    <span className="font-medium">{link.name}</span>
+                    {link.badge && link.badge > 0 && (
+                      <span className=" bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {link.badge}
+                      </span>
+                    )}
+                  </button>
                 )}
-              </button>
+              </div>
             ))}
 
             <button

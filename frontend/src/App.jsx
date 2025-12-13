@@ -8,6 +8,9 @@ import SignUpPage from "./pages/User/signUp";
 import SignInPage from "./pages/User/singIn";
 import AboutUs from "./pages/aboutUs";
 import HomePage from "./pages/userHome";
+import NearByTravellers from "./components/NearByTravellers";
+import NearHotels from "./components/NearHotels";
+import TouristPlaces from "./components/TouristPlaces";
 
 function App() {
   return (
@@ -27,6 +30,11 @@ function App() {
        } />
        <Route path="complete-registration" element={<CompleteRegistration />} />
        <Route path="about-us" element={<AboutUs />} />
+
+       {/* Map Routes */}
+       <Route path="map" element={<AuthGuard><NearByTravellers /></AuthGuard>} />
+       <Route path="map/hotels" element={<AuthGuard><NearHotels /></AuthGuard>} />
+       <Route path="map/tourist-places" element={<AuthGuard><TouristPlaces /></AuthGuard>} />
      </Route>
     </Routes>
   );
