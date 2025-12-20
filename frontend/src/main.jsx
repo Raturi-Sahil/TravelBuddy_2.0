@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 
 import App from './App.jsx';
+import { GoogleMapsProvider } from './context/GoogleMapsContext.jsx';
 import { SocketContextProvider } from './context/socketContext.jsx';
 import store from './redux/store.js';
 
@@ -17,12 +18,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     signUpFallbackRedirectUrl="/complete-registration"
   >
     <Provider store={store}>
-      <SocketContextProvider>
-        <BrowserRouter>
-          <App />
-          <Toaster />
-        </BrowserRouter>
-      </SocketContextProvider>
+      <GoogleMapsProvider>
+        <SocketContextProvider>
+          <BrowserRouter>
+            <App />
+            <Toaster />
+          </BrowserRouter>
+        </SocketContextProvider>
+      </GoogleMapsProvider>
     </Provider>
   </ClerkProvider>
 );

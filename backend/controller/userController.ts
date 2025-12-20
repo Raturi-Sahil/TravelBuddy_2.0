@@ -1,12 +1,12 @@
 import { NextFunction,Request, Response } from "express";
 
+import { uploadCoverImage } from "../middlewares/cloudinary";
+import deleteFromCloudinaryByUrl from "../middlewares/deleteCloudinary";
 import { User } from "../models/userModel";
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
 import asyncHandler from "../utils/asyncHandler";
 import { registerUserSchema, updateProfileSchema } from "../validation/userValidation";
-import deleteFromCloudinaryByUrl from "../middlewares/deleteCloudinary";
-import { uploadCoverImage } from "../middlewares/cloudinary";
 
 export const registerUser = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -169,3 +169,78 @@ export const updateProfile = asyncHandler(
   }
 );
 
+// Get nearby travelers based on location
+export const getNearbyTravelers = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    
+    const { lat, lng, radius } = req.query;
+
+    // Validate required parameters
+    if (!lat || !lng) {
+      throw new ApiError(400, "Latitude and longitude are required");
+    }
+
+    const latitude = parseFloat(lat as string);
+    const longitude = parseFloat(lng as string);
+    const searchRadius = parseInt(radius as string) || 20000; // Default 20km in meters
+    console.log("hello");
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+      throw new ApiError(400, "Invalid latitude or longitude");
+    }
+
+    // Get current user ID to exclude from results
+    const currentUserId = req.user?._id;
+
+    // Use $geoNear aggregation to find nearby users with distance calculation
+    const nearbyUsers = await User.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: "Point",
+            coordinates: [longitude, latitude],
+          },
+          distanceField: "distanceMeters",
+          maxDistance: searchRadius,
+          spherical: true,
+          query: {
+            profileVisibility: "Public",
+            ...(currentUserId && { _id: { $ne: currentUserId } }),
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          clerk_id: 1,
+          gender: 1,
+          travelStyle: 1,
+          bio: 1,
+          coverImage: 1,
+          currentLocation: 1,
+          nationality: 1,
+          interests: 1,
+          isOnline: 1,
+          lastSeen: 1,
+          distanceMeters: 1,
+          distanceKm: { $round: [{ $divide: ["$distanceMeters", 1000] }, 1] },
+        },
+      },
+      {
+        $limit: 50, // Limit results
+      },
+    ]);
+
+    console.log("nn",nearbyUsers);
+    
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          nearbyUsers,
+          `Found ${nearbyUsers.length} travelers nearby`
+        )
+      );
+  }
+);

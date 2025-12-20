@@ -1,13 +1,14 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { GoogleMap, Marker, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
-import { Clock, MapPin, DollarSign, Users, Image as ImageIcon, AlignLeft, Send, X, Plus, Video, Search, Mic, MicOff, Sparkles, Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { Autocomplete,GoogleMap, Marker } from "@react-google-maps/api";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { AlignLeft, Clock, DollarSign, Image as ImageIcon, Loader2,MapPin, Mic, MicOff, Plus, Search, Send, Sparkles, Users, Video, X } from "lucide-react";
+import React, { useCallback, useEffect,useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
+import { useGoogleMaps } from "../../context/GoogleMapsContext";
 
 const containerStyle = { width: "100%", height: "100%", borderRadius: "0.75rem" };
-const libraries = ["places"];
 const categories = ["Adventure", "Culture", "Food", "Nightlife", "Sports", "Nature", "Other"];
 
 // Reusable UI Components
@@ -53,7 +54,7 @@ export default function CreateActivity() {
     price: "", foreignerPrice: "", maxCapacity: "", gender: "Any", location: null, photos: [], videos: []
   });
 
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: import.meta.env.VITE_GOOGLE_API, libraries });
+  const { isLoaded } = useGoogleMaps();
 
   useEffect(() => {
     if (profile && !profile.planType) { toast.error("Please select a subscription plan."); navigate("/subscription"); }

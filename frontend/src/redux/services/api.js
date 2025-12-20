@@ -89,6 +89,11 @@ export const userService = {
     const response = await authApi.post('/subscription/verify-payment', { orderId });
     return response.data;
   },
+
+  getNearbyTravelers: async (authApi, lat, lng, radius = 20000) => {
+    const response = await authApi.get(`/users/nearby?lat=${lat}&lng=${lng}&radius=${radius}`);
+    return response.data;
+  },
 };
 
 // Places API service functions (no auth required for public data)

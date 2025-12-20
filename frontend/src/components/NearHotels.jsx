@@ -1,4 +1,4 @@
-import { Circle,GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { Circle,GoogleMap, Marker } from '@react-google-maps/api';
 import {
   AlertCircle,
   ChevronLeft,
@@ -13,11 +13,13 @@ import {
   Phone,
   Radio,
   Search,
+  Sliders,
   Star,
   Users,
   X} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useGoogleMaps } from '../context/GoogleMapsContext';
 import { placesService } from '../redux/services/api';
 
 // Hotels will be fetched from Google Places API via backend
@@ -28,7 +30,9 @@ const containerStyle = {
 };
 
 const DEFAULT_CENTER = { lat: 20.5937, lng: 78.9629 };
-const RADIUS_METERS = 20000;
+const DEFAULT_RADIUS_KM = 20;
+const MIN_RADIUS_KM = 5;
+const MAX_RADIUS_KM = 100;
 
 const darkMapStyles = [
   { elementType: "geometry", stylers: [{ color: "#212121" }] },
@@ -245,9 +249,7 @@ function HotelDetailModal({ hotel, onClose }) {
 }
 
 function NearbyHotels() {
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_API
-  });
+  const { isLoaded } = useGoogleMaps();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHotel, setSelectedHotel] = useState(null);
@@ -258,13 +260,17 @@ function NearbyHotels() {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingHotels, setLoadingHotels] = useState(false);
   const [error, setError] = useState('');
+  const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
+  const [showRadiusInput, setShowRadiusInput] = useState(false);
 
-  const fetchNearbyHotels = useCallback(async (lat, lng) => {
+  const radiusMeters = radiusKm * 1000;
+
+  const fetchNearbyHotels = useCallback(async (lat, lng, radius) => {
     setLoadingHotels(true);
     setError('');
 
     try {
-      const response = await placesService.getNearbyHotels(lat, lng, RADIUS_METERS);
+      const response = await placesService.getNearbyHotels(lat, lng, radius);
       if (response.statusCode === 200) {
         setNearbyHotels(response.data || []);
       } else {
@@ -293,14 +299,15 @@ function NearbyHotels() {
         };
         setUserLocation(coords);
         setLoadingLocation(false);
-        fetchNearbyHotels(coords.lat, coords.lng);
+        // Initial fetch with default radius
+        fetchNearbyHotels(coords.lat, coords.lng, radiusKm * 1000);
       },
       (geoError) => {
         console.warn("Location denied, using default",geoError);
         const defaultCoords = DEFAULT_CENTER;
         setUserLocation(defaultCoords);
         setLoadingLocation(false);
-        fetchNearbyHotels(defaultCoords.lat, defaultCoords.lng);
+        fetchNearbyHotels(defaultCoords.lat, defaultCoords.lng, radiusKm * 1000);
       },
       {
         enableHighAccuracy: true,
@@ -308,7 +315,14 @@ function NearbyHotels() {
         maximumAge: 60000
       }
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchNearbyHotels]);
+
+  const handleSearch = () => {
+    if (userLocation) {
+      fetchNearbyHotels(userLocation.lat, userLocation.lng, radiusMeters);
+    }
+  };
 
   const filteredHotels = useMemo(() => {
     return nearbyHotels.filter((hotel) => {
@@ -414,30 +428,82 @@ function NearbyHotels() {
                     </p>
                   </div>
                   <span className="text-zinc-700">•</span>
-                  <p className="text-sm text-zinc-500">Within 20 km radius</p>
+                  <p className="text-sm text-zinc-500">Within {radiusKm} km radius</p>
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => setShowList(!showList)}
-              className="sm:hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
-            >
-              {showList ? <X className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
-            </button>
+            
+            {/* Distance Filter Toggle */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowRadiusInput(!showRadiusInput)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-medium ${
+                  showRadiusInput 
+                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30' 
+                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                }`}
+              >
+                <Sliders className="h-4 w-4" />
+                <span className="hidden sm:inline">{radiusKm} km</span>
+              </button>
+              <button
+                onClick={() => setShowList(!showList)}
+                className="sm:hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
+              >
+                {showList ? <X className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-500 group-hover:text-blue-500 transition-colors" />
+          {/* Distance Slider */}
+          {showRadiusInput && (
+            <div className="mb-5 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-zinc-300">Search Radius</span>
+                <span className="text-lg font-bold text-purple-400">{radiusKm} km</span>
+              </div>
               <input
-                type="text"
-                placeholder="Search hotels or amenities..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-zinc-900 border-2 border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-zinc-100 placeholder-zinc-500 shadow-sm hover:shadow-md hover:border-zinc-700"
+                type="range"
+                min={MIN_RADIUS_KM}
+                max={MAX_RADIUS_KM}
+                value={radiusKm}
+                onChange={(e) => setRadiusKm(parseInt(e.target.value))}
+                className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
               />
+              <div className="flex justify-between text-xs text-zinc-500 mt-2">
+                <span>{MIN_RADIUS_KM} km</span>
+                <span>{MAX_RADIUS_KM} km</span>
+              </div>
             </div>
+          )}
+
+          <div className="flex gap-3">
+            <div className="relative group flex-1">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-500 group-hover:text-blue-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search hotels or amenities..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="w-full pl-12 pr-4 py-3.5 bg-zinc-900 border-2 border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-zinc-100 placeholder-zinc-500 shadow-sm hover:shadow-md hover:border-zinc-700"
+                />
+              </div>
+            </div>
+            <button
+              onClick={handleSearch}
+              disabled={loadingHotels}
+              className="px-6 py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {loadingHotels ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Search className="h-5 w-5" />
+              )}
+              <span className="hidden sm:inline">Search</span>
+            </button>
           </div>
 
           {error && (
@@ -605,7 +671,7 @@ function NearbyHotels() {
                       />
                       <Circle
                         center={userLocation}
-                        radius={RADIUS_METERS}
+                        radius={radiusMeters}
                         options={{
                           fillColor: '#3b82f633',
                           strokeColor: '#3b82f6',

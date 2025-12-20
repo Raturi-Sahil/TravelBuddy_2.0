@@ -1,18 +1,22 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Circle } from '@react-google-maps/api';
+import { useAuth } from '@clerk/clerk-react';
+import { Circle,GoogleMap, Marker } from '@react-google-maps/api';
 import {
-  MapPin,
-  Users,
-  Search,
-  Filter,
-  Navigation,
-  Loader2,
   AlertCircle,
-  LocateFixed,
-  X,
   ChevronRight,
-  Radio
-} from 'lucide-react';
+  Filter,
+  Loader2,
+  LocateFixed,
+  MapPin,
+  Navigation,
+  Radio,
+  Search,
+  Sliders,
+  Users,
+  X} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { useGoogleMaps } from '../context/GoogleMapsContext';
+import { createAuthenticatedApi, userService } from '../redux/services/api';
 
 // MOCK DATA
 const MOCK_TRAVELERS = [
@@ -64,7 +68,9 @@ const containerStyle = {
 };
 
 const DEFAULT_CENTER = { lat: 20.5937, lng: 78.9629 };
-const RADIUS_METERS = 20000;
+const DEFAULT_RADIUS_KM = 20;
+const MIN_RADIUS_KM = 5;
+const MAX_RADIUS_KM = 100;
 
 // Dark theme map styles
 const darkMapStyles = [
@@ -150,9 +156,8 @@ const darkMapStyles = [
 ];
 
 function AllTravelersOnMap() {
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_API
-  });
+  const { isLoaded } = useGoogleMaps();
+  const { getToken } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTraveler, setSelectedTraveler] = useState(null);
@@ -162,33 +167,49 @@ function AllTravelersOnMap() {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingTravelers, setLoadingTravelers] = useState(false);
   const [error, setError] = useState('');
+  const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
+  const [showRadiusInput, setShowRadiusInput] = useState(false);
 
-  const fetchNearbyTravelers = useCallback(async (lat, lng) => {
+  const radiusMeters = radiusKm * 1000;
+
+  const fetchNearbyTravelers = useCallback(async (lat, lng, radius) => {
     setLoadingTravelers(true);
     setError('');
 
-    // Simulate API Delay
-    setTimeout(() => {
-        // Generate mock points distinctively around the user's location
-        const mockDataAroundUser = MOCK_TRAVELERS.map(t => {
-            // Random offset within roughly 5-10km
-            const latOffset = (Math.random() - 0.5) * 0.1;
-            const lngOffset = (Math.random() - 0.5) * 0.1;
-            return {
-                ...t,
-                currentLocation: {
-                     lat: lat + latOffset,
-                     lng: lng + lngOffset
-                },
-                distanceKm: (Math.random() * 10).toFixed(1)
-            };
-        });
-
-        setNearbyTravelers(mockDataAroundUser);
-        setLoadingTravelers(false);
-    }, 1000);
-
-  }, []);
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await userService.getNearbyTravelers(authApi, lat, lng, radius);
+      
+      if (response.success && response.data) {
+        // Transform API data to match expected format
+        const travelers = response.data.map(user => ({
+          _id: user._id,
+          fullName: user.clerk_id, // We'll show clerk_id as name since we don't store fullName
+          profilePicture: user.coverImage || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=150',
+          currentLocation: user.currentLocation?.coordinates 
+            ? { lat: user.currentLocation.coordinates[1], lng: user.currentLocation.coordinates[0] }
+            : null,
+          distanceKm: user.distanceKm || 0,
+          interests: user.interests || [],
+          isOnline: user.isOnline,
+          nationality: user.nationality,
+          travelStyle: user.travelStyle,
+          bio: user.bio,
+          gender: user.gender,
+        })).filter(t => t.currentLocation); // Only show users with location
+        
+        setNearbyTravelers(travelers);
+      } else {
+        setNearbyTravelers([]);
+      }
+    } catch (err) {
+      console.error('Error fetching nearby travelers:', err);
+      setError('Failed to fetch nearby travelers. Please try again.');
+      setNearbyTravelers([]);
+    } finally {
+      setLoadingTravelers(false);
+    }
+  }, [getToken]);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -205,15 +226,15 @@ function AllTravelersOnMap() {
         };
         setUserLocation(coords);
         setLoadingLocation(false);
-        fetchNearbyTravelers(coords.lat, coords.lng);
+        fetchNearbyTravelers(coords.lat, coords.lng, radiusMeters);
       },
-      (geoError) => {
+      () => {
          // Fallback for demo purposes if location is denied
         console.warn("Location denied, using default");
         const defaultCoords = DEFAULT_CENTER;
         setUserLocation(defaultCoords);
         setLoadingLocation(false);
-        fetchNearbyTravelers(defaultCoords.lat, defaultCoords.lng);
+        fetchNearbyTravelers(defaultCoords.lat, defaultCoords.lng, radiusMeters);
       },
       {
         enableHighAccuracy: true,
@@ -221,7 +242,14 @@ function AllTravelersOnMap() {
         maximumAge: 60000
       }
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchNearbyTravelers]);
+
+  const handleSearch = () => {
+    if (userLocation) {
+      fetchNearbyTravelers(userLocation.lat, userLocation.lng, radiusMeters);
+    }
+  };
 
   const filteredTravelers = useMemo(() => {
     return nearbyTravelers.filter((traveler) => {
@@ -312,35 +340,87 @@ function AllTravelersOnMap() {
                   <div className="flex items-center space-x-1.5">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50" />
                     <p className="text-sm font-medium text-zinc-300">
-                      {filteredTravelers.length} active
+                      {filteredTravelers.length} found
                     </p>
                   </div>
                   <span className="text-zinc-700">•</span>
-                  <p className="text-sm text-zinc-500">Within 20 km radius</p>
+                  <p className="text-sm text-zinc-500">Within {radiusKm} km radius</p>
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => setShowList(!showList)}
-              className="sm:hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
-            >
-              {showList ? <X className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
-            </button>
+            
+            {/* Distance Filter Toggle */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowRadiusInput(!showRadiusInput)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-medium ${
+                  showRadiusInput 
+                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30' 
+                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                }`}
+              >
+                <Sliders className="h-4 w-4" />
+                <span className="hidden sm:inline">{radiusKm} km</span>
+              </button>
+              <button
+                onClick={() => setShowList(!showList)}
+                className="sm:hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
+              >
+                {showList ? <X className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
-          {/* Enhanced Search Bar */}
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-500 group-hover:text-blue-500 transition-colors" />
+          {/* Distance Slider */}
+          {showRadiusInput && (
+            <div className="mb-5 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-zinc-300">Search Radius</span>
+                <span className="text-lg font-bold text-purple-400">{radiusKm} km</span>
+              </div>
               <input
-                type="text"
-                placeholder="Search by name or interests..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-zinc-900 border-2 border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-zinc-100 placeholder-zinc-500 shadow-sm hover:shadow-md hover:border-zinc-700"
+                type="range"
+                min={MIN_RADIUS_KM}
+                max={MAX_RADIUS_KM}
+                value={radiusKm}
+                onChange={(e) => setRadiusKm(parseInt(e.target.value))}
+                className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
               />
+              <div className="flex justify-between text-xs text-zinc-500 mt-2">
+                <span>{MIN_RADIUS_KM} km</span>
+                <span>{MAX_RADIUS_KM} km</span>
+              </div>
             </div>
+          )}
+
+          {/* Enhanced Search Bar */}
+          <div className="flex gap-3">
+            <div className="relative group flex-1">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-500 group-hover:text-blue-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search by name or interests..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="w-full pl-12 pr-4 py-3.5 bg-zinc-900 border-2 border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-zinc-100 placeholder-zinc-500 shadow-sm hover:shadow-md hover:border-zinc-700"
+                />
+              </div>
+            </div>
+            <button
+              onClick={handleSearch}
+              disabled={loadingTravelers}
+              className="px-6 py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {loadingTravelers ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Search className="h-5 w-5" />
+              )}
+              <span className="hidden sm:inline">Search</span>
+            </button>
           </div>
 
           {/* Error Message */}
@@ -511,7 +591,7 @@ function AllTravelersOnMap() {
                       />
                       <Circle
                         center={userLocation}
-                        radius={RADIUS_METERS}
+                        radius={radiusMeters}
                         options={{
                           fillColor: '#3b82f633',
                           strokeColor: '#3b82f6',

@@ -1,4 +1,4 @@
-import { Circle,GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { Circle,GoogleMap, Marker } from '@react-google-maps/api';
 import {
   AlertCircle,
   ChevronRight,
@@ -11,12 +11,14 @@ import {
   Phone,
   Radio,
   Search,
+  Sliders,
   Star,
   Users,
   UtensilsCrossed,
   X} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useGoogleMaps } from '../context/GoogleMapsContext';
 import { placesService } from '../redux/services/api';
 
 const containerStyle = {
@@ -25,7 +27,9 @@ const containerStyle = {
 };
 
 const DEFAULT_CENTER = { lat: 20.5937, lng: 78.9629 };
-const RADIUS_METERS = 20000;
+const DEFAULT_RADIUS_KM = 20;
+const MIN_RADIUS_KM = 5;
+const MAX_RADIUS_KM = 100;
 
 const darkMapStyles = [
   { elementType: "geometry", stylers: [{ color: "#212121" }] },
@@ -148,7 +152,7 @@ function PlaceDetailModal({ place, onClose }) {
 }
 
 function FoodNightlife() {
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: import.meta.env.VITE_GOOGLE_API });
+  const { isLoaded } = useGoogleMaps();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlace, setSelectedPlace] = useState(null);
@@ -159,12 +163,16 @@ function FoodNightlife() {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [error, setError] = useState('');
+  const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
+  const [showRadiusInput, setShowRadiusInput] = useState(false);
 
-  const fetchNearbyPlaces = useCallback(async (lat, lng) => {
+  const radiusMeters = radiusKm * 1000;
+
+  const fetchNearbyPlaces = useCallback(async (lat, lng, radius) => {
     setLoadingPlaces(true);
     setError('');
     try {
-      const response = await placesService.getNearbyRestaurants(lat, lng, RADIUS_METERS);
+      const response = await placesService.getNearbyRestaurants(lat, lng, radius);
       if (response.statusCode === 200) {
         setNearbyPlaces(response.data || []);
       } else {
@@ -190,15 +198,16 @@ function FoodNightlife() {
         const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
         setUserLocation(coords);
         setLoadingLocation(false);
-        fetchNearbyPlaces(coords.lat, coords.lng);
+        fetchNearbyPlaces(coords.lat, coords.lng, radiusKm * 1000);
       },
       () => {
         setUserLocation(DEFAULT_CENTER);
         setLoadingLocation(false);
-        fetchNearbyPlaces(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng);
+        fetchNearbyPlaces(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng, radiusKm * 1000);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchNearbyPlaces]);
 
   const filteredPlaces = useMemo(() => {
@@ -209,9 +218,15 @@ function FoodNightlife() {
     });
   }, [nearbyPlaces, searchQuery]);
 
+  const handleSearch = () => {
+    if (userLocation) {
+      fetchNearbyPlaces(userLocation.lat, userLocation.lng, radiusMeters);
+    }
+  };
+
   const handleRetry = () => {
     if (userLocation) {
-      fetchNearbyPlaces(userLocation.lat, userLocation.lng);
+      fetchNearbyPlaces(userLocation.lat, userLocation.lng, radiusMeters);
     }
   };
 
@@ -254,24 +269,67 @@ function FoodNightlife() {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                   <p className="text-sm font-medium text-zinc-300">{filteredPlaces.length} nearby</p>
                   <span className="text-zinc-700">•</span>
-                  <p className="text-sm text-zinc-500">Within 20 km</p>
+                  <p className="text-sm text-zinc-500">Within {radiusKm} km</p>
                 </div>
               </div>
             </div>
-            <button onClick={() => setShowList(!showList)} className="sm:hidden bg-gradient-to-r from-orange-600 to-orange-700 text-white p-3 rounded-xl">
-              {showList ? <X className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowRadiusInput(!showRadiusInput)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-medium ${
+                  showRadiusInput ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                }`}
+              >
+                <Sliders className="h-4 w-4" />
+                <span className="hidden sm:inline">{radiusKm} km</span>
+              </button>
+              <button onClick={() => setShowList(!showList)} className="sm:hidden bg-gradient-to-r from-orange-600 to-orange-700 text-white p-3 rounded-xl">
+                {showList ? <X className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-500" />
-            <input
-              type="text"
-              placeholder="Search restaurants, cafes, bars..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-zinc-900 border-2 border-zinc-800 rounded-xl focus:ring-2 focus:ring-orange-500 text-zinc-100 placeholder-zinc-500"
-            />
+          {showRadiusInput && (
+            <div className="mb-5 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-zinc-300">Search Radius</span>
+                <span className="text-lg font-bold text-purple-400">{radiusKm} km</span>
+              </div>
+              <input
+                type="range"
+                min={MIN_RADIUS_KM}
+                max={MAX_RADIUS_KM}
+                value={radiusKm}
+                onChange={(e) => setRadiusKm(parseInt(e.target.value))}
+                className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+              />
+              <div className="flex justify-between text-xs text-zinc-500 mt-2">
+                <span>{MIN_RADIUS_KM} km</span>
+                <span>{MAX_RADIUS_KM} km</span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-500" />
+              <input
+                type="text"
+                placeholder="Search restaurants, cafes, bars..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="w-full pl-12 pr-4 py-3.5 bg-zinc-900 border-2 border-zinc-800 rounded-xl focus:ring-2 focus:ring-orange-500 text-zinc-100 placeholder-zinc-500"
+              />
+            </div>
+            <button
+              onClick={handleSearch}
+              disabled={loadingPlaces}
+              className="px-6 py-3.5 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-semibold rounded-xl hover:from-orange-700 hover:to-orange-800 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {loadingPlaces ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+              <span className="hidden sm:inline">Search</span>
+            </button>
           </div>
 
           {error && (
@@ -369,7 +427,7 @@ function FoodNightlife() {
                   {userLocation && (
                     <>
                       <Marker position={userLocation} icon={getUserMarkerIcon()} title="Your location" />
-                      <Circle center={userLocation} radius={RADIUS_METERS} options={{ fillColor: '#f9731633', strokeColor: '#f97316', strokeOpacity: 0.8, strokeWeight: 2 }} />
+                      <Circle center={userLocation} radius={radiusMeters} options={{ fillColor: '#f9731633', strokeColor: '#f97316', strokeOpacity: 0.8, strokeWeight: 2 }} />
                     </>
                   )}
                   {filteredPlaces.map((place) => (

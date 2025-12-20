@@ -157,7 +157,6 @@ export const getNearbyTouristPlaces = asyncHandler(
         const response = await fetch(url);
         const data = await response.json();
 
-        console.log("dd",data);
         
 
         if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {

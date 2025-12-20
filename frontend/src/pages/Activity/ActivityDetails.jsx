@@ -1,25 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import {
   Calendar,
-  MapPin,
-  Users,
-  Clock,
-  MessageCircle,
-  Phone,
-  Loader2,
-  Globe,
-  DollarSign,
-  Video,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  ShieldAlert,
-  Tag,
-  Star,
-  CheckCircle2,
+  Clock,
+  DollarSign,
+  Globe,
   Info,
-  Mail
-} from 'lucide-react';
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+  Loader2,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  ShieldAlert,
+  Star,
+  Tag,
+  Users,
+  Video} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { useGoogleMaps } from '../../context/GoogleMapsContext';
 
 // MOCK DATA
 const MOCK_ACTIVITY = {
@@ -77,10 +78,7 @@ function IndividualActivity() {
   const [singleActivity, setSingleActivity] = useState(null);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_API || ""
-  });
+  const { isLoaded } = useGoogleMaps();
 
   useEffect(() => {
     setLoading(true);

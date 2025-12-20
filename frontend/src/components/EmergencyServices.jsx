@@ -1,4 +1,4 @@
-import { Circle,GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { Circle,GoogleMap, Marker } from '@react-google-maps/api';
 import {
   AlertCircle,
   ChevronRight,
@@ -11,16 +11,20 @@ import {
   Radio,
   Search,
   ShieldAlert,
+  Sliders,
   Star,
   Users,
   X} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useGoogleMaps } from '../context/GoogleMapsContext';
 import { placesService } from '../redux/services/api';
 
 const containerStyle = { width: '100%', height: '100%' };
 const DEFAULT_CENTER = { lat: 20.5937, lng: 78.9629 };
-const RADIUS_METERS = 20000;
+const DEFAULT_RADIUS_KM = 20;
+const MIN_RADIUS_KM = 5;
+const MAX_RADIUS_KM = 100;
 
 const darkMapStyles = [
   { elementType: "geometry", stylers: [{ color: "#212121" }] },
@@ -116,7 +120,7 @@ function PlaceDetailModal({ place, onClose }) {
 }
 
 function EmergencyServices() {
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: import.meta.env.VITE_GOOGLE_API });
+  const { isLoaded } = useGoogleMaps();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [detailPlace, setDetailPlace] = useState(null);
@@ -126,15 +130,20 @@ function EmergencyServices() {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [error, setError] = useState('');
+  const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
+  const [showRadiusInput, setShowRadiusInput] = useState(false);
 
-  const fetchNearbyPlaces = useCallback(async (lat, lng) => {
+  const radiusMeters = radiusKm * 1000;
+
+  const fetchNearbyPlaces = useCallback(async (lat, lng, radius) => {
     setLoadingPlaces(true);
     setError('');
     try {
-      const response = await placesService.getNearbyEmergency(lat, lng, RADIUS_METERS);
+      const response = await placesService.getNearbyEmergency(lat, lng, radius);
       if (response.statusCode === 200) setNearbyPlaces(response.data || []);
       else setError(response.message || 'Failed to fetch');
     } catch (err) {
+      console.error('Error:', err);
       setError('Failed to fetch emergency services.');
     } finally {
       setLoadingPlaces(false);
@@ -144,13 +153,18 @@ function EmergencyServices() {
   useEffect(() => {
     if (!navigator.geolocation) { setError('Geolocation not supported.'); setLoadingLocation(false); return; }
     navigator.geolocation.getCurrentPosition(
-      (pos) => { const c = { lat: pos.coords.latitude, lng: pos.coords.longitude }; setUserLocation(c); setLoadingLocation(false); fetchNearbyPlaces(c.lat, c.lng); },
-      () => { setUserLocation(DEFAULT_CENTER); setLoadingLocation(false); fetchNearbyPlaces(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng); },
+      (pos) => { const c = { lat: pos.coords.latitude, lng: pos.coords.longitude }; setUserLocation(c); setLoadingLocation(false); fetchNearbyPlaces(c.lat, c.lng, radiusKm * 1000); },
+      () => { setUserLocation(DEFAULT_CENTER); setLoadingLocation(false); fetchNearbyPlaces(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng, radiusKm * 1000); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchNearbyPlaces]);
 
   const filteredPlaces = useMemo(() => nearbyPlaces.filter((p) => p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || (p.category || '').toLowerCase().includes(searchQuery.toLowerCase())), [nearbyPlaces, searchQuery]);
+
+  const handleSearch = () => {
+    if (userLocation) fetchNearbyPlaces(userLocation.lat, userLocation.lng, radiusMeters);
+  };
 
   const getUserMarkerIcon = () => window.google ? { path: window.google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#ef4444', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 } : undefined;
 
@@ -171,18 +185,45 @@ function EmergencyServices() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">Emergency & Utilities</h1>
-                <p className="text-sm text-zinc-400">{filteredPlaces.length} nearby • Within 20 km</p>
+                <p className="text-sm text-zinc-400">{filteredPlaces.length} nearby • Within {radiusKm} km</p>
               </div>
             </div>
-            <button onClick={() => setShowList(!showList)} className="sm:hidden bg-red-600 text-white p-3 rounded-xl">
-              {showList ? <X className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowRadiusInput(!showRadiusInput)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium ${showRadiusInput ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}`}
+              >
+                <Sliders className="h-4 w-4" />
+                <span className="hidden sm:inline">{radiusKm} km</span>
+              </button>
+              <button onClick={() => setShowList(!showList)} className="sm:hidden bg-red-600 text-white p-3 rounded-xl">
+                {showList ? <X className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
-            <input type="text" placeholder="Search hospitals, pharmacies, ATMs..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-zinc-900 border-2 border-zinc-800 rounded-xl focus:ring-2 focus:ring-red-500 text-zinc-100" />
+          {showRadiusInput && (
+            <div className="mb-5 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
+              <div className="flex justify-between mb-3">
+                <span className="text-sm text-zinc-300">Search Radius</span>
+                <span className="text-lg font-bold text-purple-400">{radiusKm} km</span>
+              </div>
+              <input type="range" min={MIN_RADIUS_KM} max={MAX_RADIUS_KM} value={radiusKm} onChange={(e) => setRadiusKm(parseInt(e.target.value))}
+                className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-500" />
+              <div className="flex justify-between text-xs text-zinc-500 mt-2"><span>{MIN_RADIUS_KM} km</span><span>{MAX_RADIUS_KM} km</span></div>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+              <input type="text" placeholder="Search hospitals, pharmacies, ATMs..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="w-full pl-12 pr-4 py-3.5 bg-zinc-900 border-2 border-zinc-800 rounded-xl focus:ring-2 focus:ring-red-500 text-zinc-100" />
+            </div>
+            <button onClick={handleSearch} disabled={loadingPlaces} className="px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center gap-2">
+              {loadingPlaces ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+              <span className="hidden sm:inline">Search</span>
+            </button>
           </div>
 
           {error && <div className="mt-4 bg-red-950/50 border-l-4 border-red-500 rounded-xl p-4 text-red-400">{error}</div>}
@@ -222,11 +263,11 @@ function EmergencyServices() {
                 <Navigation className="h-5 w-5 text-red-400" />
                 <span className="font-bold text-white">Map View</span>
               </div>
-              <span className="text-sm text-zinc-400">20 km radius</span>
+              <span className="text-sm text-zinc-400">{radiusKm} km radius</span>
             </div>
             <div className="h-[calc(100%-80px)] min-h-[450px] relative">
               <GoogleMap mapContainerStyle={containerStyle} center={selectedPlace?.currentLocation || userLocation || DEFAULT_CENTER} zoom={userLocation ? 11 : 5} options={{ styles: darkMapStyles, streetViewControl: false, mapTypeControl: false }}>
-                {userLocation && (<><Marker position={userLocation} icon={getUserMarkerIcon()} /><Circle center={userLocation} radius={RADIUS_METERS} options={{ fillColor: '#ef444433', strokeColor: '#ef4444' }} /></>)}
+                {userLocation && (<><Marker position={userLocation} icon={getUserMarkerIcon()} /><Circle center={userLocation} radius={radiusMeters} options={{ fillColor: '#ef444433', strokeColor: '#ef4444' }} /></>)}
                 {filteredPlaces.map((p) => (<Marker key={p._id} position={{ lat: p.currentLocation?.lat, lng: p.currentLocation?.lng }} onClick={() => setSelectedPlace(p)} />))}
               </GoogleMap>
               {selectedPlace && (
