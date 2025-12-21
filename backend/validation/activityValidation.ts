@@ -7,8 +7,8 @@ export const geoPointSchema = z.object({
 });
 
 export const activityZodSchema = z.object({
-    title: z.string().min(3, "Title must be at least 3 characters"),
-    description: z.string().optional(),
+    title: z.string().min(5, "Title must be at least 5 characters"),
+    description: z.string().min(10, "Description must be atleast 10 characters").optional(),
 
     category: z.string().min(1, "Category is required"),
 
@@ -21,10 +21,31 @@ export const activityZodSchema = z.object({
     photos: z.array(z.string()).optional(),
     videos: z.array(z.string()).optional(),
 
-    gender: z.enum(["Male", "Female"]).optional(),
+    gender: z.enum(["Male", "Female", "Any"]).optional(),
 
     price: z.number().nonnegative().default(0),
     foreignerPrice: z.number().nonnegative().optional(),
 
     maxCapacity: z.number().min(1, "Max capacity must be at least 1"),
-});
+}).superRefine((data, ctx) => {
+    const { startTime, endTime } = data;
+
+    // either both present or both absent
+    if ((startTime && !endTime) || (!startTime && endTime)) {
+      ctx.addIssue({
+        code: "custom",
+        path: startTime ? ["endTime"] : ["startTime"],
+        message: "Both startTime and endTime must be provided together",
+      });
+    }
+
+    // start < end
+    if (startTime && endTime && startTime >= endTime) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: "endTime must be after startTime",
+      });
+    }
+  });
+;
