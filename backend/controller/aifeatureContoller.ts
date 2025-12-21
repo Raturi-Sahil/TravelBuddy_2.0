@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction,Request, Response } from "express";
 import OpenAI from "openai";
-import asyncHandler from "../utils/asyncHandler";
+
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
+import asyncHandler from "../utils/asyncHandler";
 
 export const generateDescription = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
    const { title, category, location, date, startTime, price, maxCapacity } = req.body;

@@ -26,7 +26,7 @@ const MOCK_ACTIVITIES = [
       lng: 77.2410
     },
     photos: [
-      "https://images.unsplash.com/photo-1559103006-25d25950854d?auto=format&fit=crop&q=80&w=800", // Cycling
+      "https://framerusercontent.com/images/mQcKcyt3Nb25vMYBSbb47aQ9Kw.jpg?scale-down-to=2048&width=5465&height=3643", // Cycling
       "https://images.unsplash.com/photo-1626125076395-9464e8156641?auto=format&fit=crop&q=80&w=800", // Delhi Night
     ],
     videos: [],
@@ -150,27 +150,27 @@ export default function ActivityNearMe() {
     <div className="min-h-screen bg-slate-50 text-slate-900 "> {/* pt-20 for fixed navbar */}
 
       {/* Hero Header */}
-      <div className="relative bg-indigo-900 pb-16 pt-12 px-4 sm:px-6 lg:px-8 overflow-hidden rounded-b-[2.5rem] shadow-2xl shadow-indigo-900/20 mb-8">
+      <div className="relative bg-gradient-to-br from-amber-400 to-orange-600 pb-16 pt-12 px-4 sm:px-6 lg:px-8 overflow-hidden rounded-b-[2.5rem] shadow-2xl shadow-orange-500/20 mb-8">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
-             <div className="absolute top-0 right-[-10%] w-[50%] h-[150%] bg-indigo-800/30 rounded-full blur-3xl transform rotate-12"></div>
-             <div className="absolute bottom-0 left-[-10%] w-[40%] h-[120%] bg-indigo-600/20 rounded-full blur-3xl"></div>
+             <div className="absolute top-0 right-[-10%] w-[50%] h-[150%] bg-white/10 rounded-full blur-3xl transform rotate-12"></div>
+             <div className="absolute bottom-0 left-[-10%] w-[40%] h-[120%] bg-amber-300/20 rounded-full blur-3xl"></div>
         </div>
 
         <div className="relative max-w-7xl mx-auto text-center z-10 mt-16">
-           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-indigo-100 text-sm font-medium mb-6 animate-fade-in-up">
-              <Zap className="w-4 h-4 text-amber-400" /> <span>Happening Now</span>
+           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-sm font-medium mb-6 animate-fade-in-up">
+              <Zap className="w-4 h-4 text-amber-100" /> <span>Happening Now</span>
            </div>
 
-           <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
-             Discover Activities <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Near You</span>
+           <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 tracking-tight drop-shadow-sm">
+             Discover Activities <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-100 to-white">Near You</span>
            </h1>
 
-           <p className="text-indigo-100 max-w-2xl mx-auto text-lg leading-relaxed mb-8">
+           <p className="text-amber-50 max-w-2xl mx-auto text-lg leading-relaxed mb-8 font-medium">
              Join vibrant communities, explore hidden gems, and make new friends with curated local experiences.
            </p>
 
            {/* Search Bar - Floating */}
-           <div className="max-w-3xl mx-auto bg-white rounded-2xl p-2 shadow-xl shadow-black/5 flex flex-col md:flex-row gap-2">
+           <div className="max-w-3xl mx-auto bg-white rounded-2xl p-2 shadow-xl shadow-orange-900/5 flex flex-col md:flex-row gap-2">
                <div className="relative flex-1">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <input
@@ -182,7 +182,7 @@ export default function ActivityNearMe() {
                   />
                </div>
                <div className="h-0.5 w-full md:w-0.5 md:h-12 bg-slate-100"></div>
-               <button className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-all shadow-lg flex items-center justify-center gap-2 active:scale-95">
+               <button className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl font-semibold transition-all shadow-lg flex items-center justify-center gap-2 active:scale-95">
                   <Filter className="w-4 h-4" /> Filter
                </button>
            </div>
@@ -199,7 +199,7 @@ export default function ActivityNearMe() {
             </div>
             <div className="flex items-center gap-3">
                  <span className="text-sm font-medium text-slate-600 hidden sm:block">Sort by:</span>
-                 <select className="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
+                 <select className="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block p-2.5">
                     <option>Recommended</option>
                     <option>Price: Low to High</option>
                     <option>Nearest First</option>
@@ -210,7 +210,7 @@ export default function ActivityNearMe() {
         {/* Loading / Empty / Grid */}
         {loading ? (
            <div className="flex flex-col items-center justify-center py-20 min-h-[400px]">
-             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+             <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-4" />
              <p className="text-slate-500 font-medium">Finding adventures nearby...</p>
            </div>
         ) : filteredActivities.length === 0 ? (
@@ -220,7 +220,7 @@ export default function ActivityNearMe() {
               </div>
               <h3 className="text-xl font-semibold text-slate-800 mb-2">No activities found</h3>
               <p className="text-slate-500">We couldn't find matches for "{searchQuery}"</p>
-              <button onClick={() => setSearchQuery('')} className="mt-6 text-indigo-600 font-medium hover:underline">
+              <button onClick={() => setSearchQuery('')} className="mt-6 text-orange-600 font-medium hover:underline">
                   Clear Search
               </button>
            </div>
@@ -232,7 +232,7 @@ export default function ActivityNearMe() {
               return (
                 <div
                   key={activity._id}
-                  className="group bg-white rounded-3xl overflow-hidden border border-slate-100 hover:border-indigo-100 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-900/5 hover:-translate-y-1"
+                  className="group bg-white rounded-3xl overflow-hidden border border-slate-100 hover:border-orange-100 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-900/5 hover:-translate-y-1"
                 >
                   {/* Image Section */}
                   <div className="h-64 relative overflow-hidden">
@@ -241,7 +241,7 @@ export default function ActivityNearMe() {
                     {/* Floating Badges */}
                     <div className="absolute top-4 left-4">
                        <span className="px-3 py-1 bg-white/90 backdrop-blur-md text-slate-800 text-xs font-bold rounded-lg uppercase tracking-wider shadow-sm flex items-center gap-1">
-                          {activity.category === 'Adventure' && <Zap className="w-3 h-3 text-amber-500" />}
+                          {activity.category === 'Adventure' && <Zap className="w-3 h-3 text-orange-500" />}
                           {activity.category}
                        </span>
                     </div>
@@ -262,7 +262,7 @@ export default function ActivityNearMe() {
                   {/* Content */}
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-3">
-                      <h3 className="text-xl font-bold text-slate-900 leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2">
+                      <h3 className="text-xl font-bold text-slate-900 leading-snug group-hover:text-orange-600 transition-colors line-clamp-2">
                         {activity.title}
                       </h3>
                       <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
@@ -272,7 +272,7 @@ export default function ActivityNearMe() {
                     </div>
 
                     <div className="flex items-center gap-2 text-slate-500 text-sm mb-4">
-                       <MapPin className="w-4 h-4 text-indigo-500" />
+                       <MapPin className="w-4 h-4 text-orange-500" />
                        <span className="truncate">{activity.location.address}</span>
                     </div>
 
@@ -311,12 +311,13 @@ export default function ActivityNearMe() {
                        </div>
 
                        <button
-                         className={`px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-200 active:scale-95 flex items-center gap-2 ${
+                         className={`px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-orange-200 active:scale-95 flex items-center gap-2 ${
                             status.type === 'full'
                             ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
-                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                            : 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700'
                          }`}
                          disabled={status.type === 'full'}
+                         onClick={() => navigate(`/activity/${activity._id}`)}
                        >
                          {status.type === 'full' ? 'Sold Out' : <>Join <ChevronRight className="w-4 h-4" /></>}
                        </button>

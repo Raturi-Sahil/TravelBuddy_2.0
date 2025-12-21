@@ -6,7 +6,7 @@ import http from "http";
 import app from "./app";
 import { initializeSocket } from "./socket";
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT ;
 
 const server = http.createServer(app);
 

@@ -37,10 +37,27 @@ export const initializeSocket = (server: HttpServer) => {
             io?.emit("getOnlineUsers", Object.keys(userSocketMap));
         });
 
-        socket.on("updateLocation", (data: { lat: number; lng: number }) => {
+        socket.on("updateLocation", async (data: { lat: number; lng: number }) => {
             console.log("User location updated:", userId, data);
-            // In a real app, you might save this to DB or broadcast it to friends
-            // For now, we just acknowledge it or could broadcast to specific rooms
+            // Save location to database
+            if (userId && userId !== "undefined" && data.lat && data.lng) {
+                try {
+                    const { User } = await import("./models/userModel");
+                    await User.findOneAndUpdate(
+                        { clerk_id: userId },
+                        {
+                            currentLocation: {
+                                type: "Point",
+                                coordinates: [data.lng, data.lat], // GeoJSON format: [longitude, latitude]
+                            },
+                            isOnline: true,
+                            socketId: socket.id,
+                        }
+                    );
+                } catch (error) {
+                    console.error("Error updating user location:", error);
+                }
+            }
         });
     });
 };

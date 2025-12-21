@@ -5,10 +5,11 @@ import morgan from "morgan";
 
 import connectToDB from "./db/db";
 import errorMiddleware from "./middlewares/errorMiddleware";
+import aiRoutes from "./routes/aiRoute";
 import friendRoutes from "./routes/friendRoute";
+import placesRoutes from "./routes/placesRoute";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
 import userRoutes from "./routes/userRoute";
-import aiRoutes from "./routes/aiRoute";
 
 const app: Application = express();
 
@@ -38,6 +39,7 @@ app.use("/users", userRoutes);
 app.use("/friends", friendRoutes);
 app.use("/subscription", subscriptionRoutes);
 app.use("/ai", aiRoutes);
+app.use("/places", placesRoutes);
 
 // Global Error Handler
 app.use(errorMiddleware);

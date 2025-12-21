@@ -89,6 +89,45 @@ export const userService = {
     const response = await authApi.post('/subscription/verify-payment', { orderId });
     return response.data;
   },
+
+  getNearbyTravelers: async (authApi, lat, lng, radius = 20000) => {
+    const response = await authApi.get(`/users/nearby?lat=${lat}&lng=${lng}&radius=${radius}`);
+    return response.data;
+  },
+};
+
+// Places API service functions (no auth required for public data)
+export const placesService = {
+  getNearbyHotels: async (lat, lng, radius = 20000) => {
+    const response = await api.get(`/places/hotels?lat=${lat}&lng=${lng}&radius=${radius}`);
+    return response.data;
+  },
+
+  getNearbyTouristPlaces: async (lat, lng, radius = 20000) => {
+    const response = await api.get(`/places/tourist?lat=${lat}&lng=${lng}&radius=${radius}`);
+    return response.data;
+  },
+
+  getNearbyRestaurants: async (lat, lng, radius = 20000) => {
+    const response = await api.get(`/places/restaurants?lat=${lat}&lng=${lng}&radius=${radius}`);
+    return response.data;
+  },
+
+  getNearbyShopping: async (lat, lng, radius = 20000) => {
+    const response = await api.get(`/places/shopping?lat=${lat}&lng=${lng}&radius=${radius}`);
+    return response.data;
+  },
+
+  getNearbyEmergency: async (lat, lng, radius = 20000) => {
+    const response = await api.get(`/places/emergency?lat=${lat}&lng=${lng}&radius=${radius}`);
+    return response.data;
+  },
+
+  getNearbyTransport: async (lat, lng, radius = 20000) => {
+    const response = await api.get(`/places/transport?lat=${lat}&lng=${lng}&radius=${radius}`);
+    return response.data;
+  },
 };
 
 export default api;
+
