@@ -11,7 +11,11 @@ router.post("/register", verifyClerk, upload.none(), registerUser);
 
 // These routes require full auth (Clerk + MongoDB profile)
 router.get("/profile", requireProfile, getProfile);
-router.patch("/update-profile", requireProfile, updateProfile);
+// Handle both coverImage and profileImage uploads
+router.patch("/update-profile", requireProfile, upload.fields([
+  { name: 'coverImage', maxCount: 1 },
+  { name: 'profileImage', maxCount: 1 }
+]), updateProfile);
 
 // Get nearby travelers (requires auth to exclude current user)
 router.get("/nearby", requireProfile, getNearbyTravelers);

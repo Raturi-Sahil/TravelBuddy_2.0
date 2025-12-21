@@ -1,8 +1,8 @@
-import { clerkClient } from "@clerk/clerk-sdk-node";
 import { NextFunction,Request, Response } from "express";
 
-import { uploadCoverImage } from "../middlewares/cloudinary";
+import { uploadCoverImage, uploadProfileImage } from "../middlewares/cloudinary";
 import deleteFromCloudinaryByUrl from "../middlewares/deleteCloudinary";
+import uploadProfileImageFromUrl from "../middlewares/uploadProfileImageFromUrl";
 import { User } from "../models/userModel";
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
@@ -18,7 +18,7 @@ export const registerUser = asyncHandler(
       throw new ApiError(400, "Invalid input data", errors);
     }
 
-    const { clerk_id, mobile, dob, gender, nationality, languages } = parsed.data;
+    const { clerk_id, name, email, profileImageUrl, mobile, dob, gender, nationality, languages } = parsed.data;
     const inputDob = new Date(dob);
 
     // Check if user already exists by clerk_id
@@ -39,8 +39,26 @@ export const registerUser = asyncHandler(
       throw new ApiError(409, "User with this mobile number already exists");
     }
 
+    // Check if user already exists by email
+    const existingEmailUser = await User.findOne({ email });
+    if (existingEmailUser) {
+      throw new ApiError(409, "User with this email already exists");
+    }
+
+    // Upload profile image from Clerk to Cloudinary
+    let profileImage = "";
+    if (profileImageUrl) {
+      const uploadedUrl = await uploadProfileImageFromUrl(profileImageUrl);
+      if (uploadedUrl) {
+        profileImage = uploadedUrl;
+      }
+    }
+
     const user = await User.create({
       clerk_id,
+      name,
+      email,
+      profileImage,
       mobile,
       dob: inputDob,
       gender,
@@ -131,9 +149,12 @@ export const updateProfile = asyncHandler(
       profileVisibility,
     } = parsed.data;
 
+    // Handle file uploads (using multer.fields for coverImage and profileImage)
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+
     // Handle cover image upload
-    if (req.file) {
-      const localFilePath = req.file.path;
+    if (files?.coverImage?.[0]) {
+      const localFilePath = files.coverImage[0].path;
 
       // Upload new image to Cloudinary
       const uploadResult = await uploadCoverImage(localFilePath);
@@ -149,6 +170,26 @@ export const updateProfile = asyncHandler(
 
       // Update user's cover image URL
       user.coverImage = uploadResult.secure_url;
+    }
+
+    // Handle profile image upload
+    if (files?.profileImage?.[0]) {
+      const localFilePath = files.profileImage[0].path;
+
+      // Upload new image to Cloudinary
+      const uploadResult = await uploadProfileImage(localFilePath);
+
+      if (!uploadResult) {
+        throw new ApiError(500, "Failed to upload profile image");
+      }
+
+      // Delete previous profile image from Cloudinary if exists
+      if (user.profileImage) {
+        await deleteFromCloudinaryByUrl(user.profileImage);
+      }
+
+      // Update user's profile image URL
+      user.profileImage = uploadResult.secure_url;
     }
 
     // Update fields if provided (already validated by Zod)
@@ -228,45 +269,16 @@ export const getNearbyTravelers = asyncHandler(
 
       console.log("Query filter:", JSON.stringify(filter, null, 2));
 
-      // Find users matching the filter
+      // Find users matching the filter - now includes name and profileImage from schema
       const nearbyUsers = await User.find(filter)
-        .select("clerk_id gender travelStyle bio coverImage currentLocation nationality interests isOnline lastSeen")
+        .select("name profileImage gender travelStyle bio coverImage currentLocation nationality interests isOnline lastSeen")
         .lean();
 
       console.log("Found users:", nearbyUsers.length);
 
-      // Fetch Clerk user data for all nearby users
-      const clerkUserIds = nearbyUsers.map((user: any) => user.clerk_id);
-      let clerkUsersMap: Record<string, { fullName: string; imageUrl: string }> = {};
-
-      if (clerkUserIds.length > 0) {
-        try {
-          const clerkUsers = await clerkClient.users.getUserList({
-            userId: clerkUserIds,
-          });
-          
-          // Clerk v4 returns array directly, handle both cases for compatibility
-          const usersList = Array.isArray(clerkUsers) ? clerkUsers : (clerkUsers as any).data || [];
-          
-          clerkUsersMap = usersList.reduce((acc: any, clerkUser: any) => {
-            acc[clerkUser.id] = {
-              fullName: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Anonymous',
-              imageUrl: clerkUser.imageUrl || '',
-            };
-            return acc;
-          }, {});
-        } catch (clerkError) {
-          console.error("Error fetching Clerk users:", clerkError);
-          // Continue without Clerk data
-        }
-      }
-
-      // Merge with Clerk data and always calculate distance if we have user location
+      // Map users with calculated distance - no Clerk API calls needed!
       let usersWithData = nearbyUsers.map((user: any) => {
-        // Get Clerk user data
-        const clerkData = clerkUsersMap[user.clerk_id] || { fullName: 'Anonymous', imageUrl: '' };
-
-        // Always calculate distance if we have user's current location
+        // Calculate distance if we have user's current location
         let distanceKm: number | null = null;
         let distanceMeters: number | null = null;
         
@@ -290,8 +302,8 @@ export const getNearbyTravelers = asyncHandler(
 
         return {
           ...user,
-          fullName: clerkData.fullName,
-          profilePicture: clerkData.imageUrl || user.coverImage || '',
+          fullName: user.name || 'Anonymous',
+          profilePicture: user.profileImage || user.coverImage || '',
           distanceMeters,
           distanceKm,
         };
@@ -389,17 +401,9 @@ export const getUserById = asyncHandler(
     const isPublic = targetUser.profileVisibility === "Public";
     const showFullProfile = isPublic || isFriend;
 
-    // Fetch Clerk user data for name and profile picture
-    let clerkData = { fullName: 'Anonymous', imageUrl: '' };
-    try {
-      const clerkUser = await clerkClient.users.getUser(targetUser.clerk_id);
-      clerkData = {
-        fullName: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Anonymous',
-        imageUrl: clerkUser.imageUrl || '',
-      };
-    } catch (clerkError) {
-      console.error("Error fetching Clerk user:", clerkError);
-    }
+    // Use stored user data - no Clerk API call needed!
+    const fullName = targetUser.name || 'Anonymous';
+    const profilePicture = targetUser.profileImage || '';
 
     // Calculate distance if both users have location
     let distanceKm: number | null = null;
@@ -423,8 +427,8 @@ export const getUserById = asyncHandler(
     // Build response based on privacy
     const baseProfile = {
       _id: targetUser._id,
-      fullName: clerkData.fullName,
-      profilePicture: clerkData.imageUrl,
+      fullName,
+      profilePicture,
       coverImage: targetUser.coverImage || '',
       nationality: targetUser.nationality,
       travelStyle: targetUser.travelStyle,

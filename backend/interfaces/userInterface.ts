@@ -26,6 +26,9 @@ export interface IFutureDestination {
 
 export interface IUser extends Document {
   clerk_id: string;
+  name: string;
+  email: string;
+  profileImage?: string;
   mobile: string;
   dob: Date;
   gender: (typeof GENDERS)[number];

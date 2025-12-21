@@ -19,8 +19,16 @@ export const registerUser = createAsyncThunk(
   async ({ getToken, clerkUser, additionalData }, { rejectWithValue }) => {
     try {
       const authApi = createAuthenticatedApi(getToken);
+      // Extract name, email, and profile image URL from Clerk user
+      const name = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Anonymous';
+      const email = clerkUser.primaryEmailAddress?.emailAddress || clerkUser.emailAddresses?.[0]?.emailAddress;
+      const profileImageUrl = clerkUser.imageUrl || '';
+      
       const userData = {
         clerk_id: clerkUser.id,
+        name,
+        email,
+        profileImageUrl,
         ...additionalData,
       };
       const response = await userService.register(authApi, userData);
