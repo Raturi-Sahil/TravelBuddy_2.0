@@ -59,10 +59,10 @@ function NavBar() {
 
   const notificationCount = 3;
 
-  // Derive user display values from Clerk user
-  const userImage = user?.imageUrl;
-  const userDisplayName = user?.fullName || user?.firstName || 'User';
-  const userEmail = user?.primaryEmailAddress?.emailAddress || '';
+  // Derive user display values - prefer data from backend profile, fallback to Clerk
+  const userImage = userProfile?.profileImage || user?.imageUrl;
+  const userDisplayName = userProfile?.name || user?.fullName || user?.firstName || 'User';
+  const userEmail = userProfile?.email || user?.primaryEmailAddress?.emailAddress || '';
 
 
   const { socket } = useSocketContext();

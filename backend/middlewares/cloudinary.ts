@@ -78,5 +78,18 @@ export const uploadCoverImage = async (
   });
 };
 
+// Dedicated function for profile image uploads
+export const uploadProfileImage = async (
+  localFilePath: string
+): Promise<UploadApiResponse | null> => {
+  return uploadOnCloudinary(localFilePath, {
+    folder: "travelBuddy/profiles",
+    width: 250,
+    height: 250,
+    crop: "fill",
+    gravity: "faces",
+  });
+};
+
 export default uploadOnCloudinary;
 

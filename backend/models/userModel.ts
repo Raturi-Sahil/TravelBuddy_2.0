@@ -5,6 +5,9 @@ import { IUser } from "../interfaces/userInterface";
 
 const userSchema = new Schema<IUser>({
   clerk_id: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  profileImage: { type: String, default: "" },
 
   mobile: {
     type: String,
