@@ -47,14 +47,22 @@ export const userService = {
   },
 
   updateProfile: async (authApi, profileData) => {
-    // Check if we have a cover image file to upload
-    if (profileData.coverImageFile) {
-      const formData = new FormData();
-      formData.append('coverImage', profileData.coverImageFile);
+    // Check if we have any image files to upload
+    const hasCoverImage = profileData.coverImageFile;
+    const hasProfileImage = profileData.profileImageFile;
 
+    if (hasCoverImage || hasProfileImage) {
+      const formData = new FormData();
+      // Append image files if present
+      if (hasCoverImage) {
+        formData.append('coverImage', profileData.coverImageFile);
+      }
+      if (hasProfileImage) {
+        formData.append('profileImage', profileData.profileImageFile);
+      }
       // Append other fields to FormData
       Object.keys(profileData).forEach(key => {
-        if (key !== 'coverImageFile') {
+        if (key !== 'coverImageFile' && key !== 'profileImageFile') {
           const value = profileData[key];
           if (value !== undefined && value !== null) {
             // Handle objects/arrays by stringifying them

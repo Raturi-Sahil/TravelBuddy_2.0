@@ -110,9 +110,7 @@ export default function Connections() {
     if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
     return list.filter(user => 
-      user.firstName?.toLowerCase().includes(q) || 
-      user.lastName?.toLowerCase().includes(q) ||
-      `${user.firstName} ${user.lastName}`.toLowerCase().includes(q)
+      user.name?.toLowerCase().includes(q)
     );
   };
 
@@ -144,14 +142,14 @@ export default function Connections() {
         onClick={() => navigate(`/traveler/${user._id}`)}
       >
         <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
-          {user.imageUrl ? (
-            <img src={user.imageUrl} alt={user.firstName} className="w-full h-full object-cover" />
+          {user.profileImage ? (
+            <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
           ) : (
-            `${user.firstName?.[0] || '?'}${user.lastName?.[0] || ''}`
+            user.name?.[0]?.toUpperCase() || '?'
           )}
         </div>
         <div>
-          <p className="font-semibold text-gray-900">{user.firstName} {user.lastName}</p>
+          <p className="font-semibold text-gray-900">{user.name || 'Anonymous'}</p>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             {user.nationality && <span>🌍 {user.nationality}</span>}
             {user.travelStyle && <span>• ✈️ {user.travelStyle}</span>}
