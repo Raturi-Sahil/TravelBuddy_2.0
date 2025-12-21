@@ -26,6 +26,22 @@ export const createActivity = createAsyncThunk(
   }
 );
 
+// Async Thunk to fetch all activities
+export const fetchActivities = createAsyncThunk(
+  'activity/fetchAll',
+  async (getToken, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await activityService.getActivities(authApi);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to fetch activities'
+      );
+    }
+  }
+);
+
 const activitySlice = createSlice({
   name: 'activity',
   initialState,
@@ -56,6 +72,21 @@ const activitySlice = createSlice({
       .addCase(createActivity.rejected, (state, action) => {
         state.isCreating = false;
         state.error = action.payload || 'Failed to create activity';
+      })
+
+      // Fetch Activities
+      .addCase(fetchActivities.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchActivities.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.activities = action.payload.data;
+        state.error = null;
+      })
+      .addCase(fetchActivities.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to fetch activities';
       });
   },
 });
