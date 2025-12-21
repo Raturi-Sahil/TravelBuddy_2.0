@@ -102,6 +102,43 @@ export const userService = {
     const response = await authApi.get(`/users/nearby?${params.toString()}`);
     return response.data;
   },
+
+  // Get another user's profile by ID
+  getUserById: async (authApi, id) => {
+    const response = await authApi.get(`/users/${id}`);
+    return response.data;
+  },
+
+  // Friend management
+  sendFriendRequest: async (authApi, id) => {
+    const response = await authApi.post(`/friends/request/${id}`);
+    return response.data;
+  },
+
+  acceptFriendRequest: async (authApi, id) => {
+    const response = await authApi.post(`/friends/accept/${id}`);
+    return response.data;
+  },
+
+  rejectFriendRequest: async (authApi, id) => {
+    const response = await authApi.post(`/friends/reject/${id}`);
+    return response.data;
+  },
+
+  removeFriend: async (authApi, id) => {
+    const response = await authApi.delete(`/friends/remove/${id}`);
+    return response.data;
+  },
+
+  getFriends: async (authApi) => {
+    const response = await authApi.get('/friends');
+    return response.data;
+  },
+
+  getFriendRequests: async (authApi) => {
+    const response = await authApi.get('/friends/requests');
+    return response.data;
+  },
 };
 
 // Places API service functions (no auth required for public data)

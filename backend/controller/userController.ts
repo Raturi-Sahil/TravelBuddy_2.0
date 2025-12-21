@@ -128,6 +128,7 @@ export const updateProfile = asyncHandler(
       socialLinks,
       languages,
       futureDestinations,
+      profileVisibility,
     } = parsed.data;
 
     // Handle cover image upload
@@ -161,6 +162,7 @@ export const updateProfile = asyncHandler(
     if (languages) user.languages = languages as any;
     if (futureDestinations) user.futureDestinations = futureDestinations as any;
     if (socialLinks) user.socialLinks = { ...user.socialLinks, ...socialLinks };
+    if (profileVisibility) user.profileVisibility = profileVisibility as "Public" | "Private";
 
     await user.save();
 
@@ -356,6 +358,104 @@ export const getNearbyTravelers = asyncHandler(
       }
       
       throw new ApiError(500, `Failed to find nearby travelers: ${error.message}`);
+    }
+  }
+);
+
+// Get another user's profile by ID (with privacy controls)
+export const getUserById = asyncHandler(
+  async (req: Request | any, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const currentUserId = req.user?._id;
+
+    // Find the target user
+    const targetUser = await User.findById(id).lean();
+    if (!targetUser) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Get current user to check friend status
+    const currentUser = await User.findById(currentUserId).lean();
+    if (!currentUser) {
+      throw new ApiError(404, "Current user not found");
+    }
+
+    // Check relationship status
+    const isFriend = currentUser.friends?.some((f: any) => f.toString() === id);
+    const hasSentRequest = currentUser.sentFriendRequests?.some((r: any) => r.toString() === id);
+    const hasReceivedRequest = currentUser.friendRequests?.some((r: any) => r.toString() === id);
+
+    // Determine if we should show full profile
+    const isPublic = targetUser.profileVisibility === "Public";
+    const showFullProfile = isPublic || isFriend;
+
+    // Fetch Clerk user data for name and profile picture
+    let clerkData = { fullName: 'Anonymous', imageUrl: '' };
+    try {
+      const clerkUser = await clerkClient.users.getUser(targetUser.clerk_id);
+      clerkData = {
+        fullName: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Anonymous',
+        imageUrl: clerkUser.imageUrl || '',
+      };
+    } catch (clerkError) {
+      console.error("Error fetching Clerk user:", clerkError);
+    }
+
+    // Calculate distance if both users have location
+    let distanceKm: number | null = null;
+    const currentLat = currentUser.currentLocation?.coordinates?.[1];
+    const currentLng = currentUser.currentLocation?.coordinates?.[0];
+    const targetLat = targetUser.currentLocation?.coordinates?.[1];
+    const targetLng = targetUser.currentLocation?.coordinates?.[0];
+
+    if (currentLat && currentLng && targetLat && targetLng &&
+        currentLat !== 0 && currentLng !== 0 && targetLat !== 0 && targetLng !== 0) {
+      const R = 6371;
+      const dLat = (targetLat - currentLat) * Math.PI / 180;
+      const dLng = (targetLng - currentLng) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(currentLat * Math.PI / 180) * Math.cos(targetLat * Math.PI / 180) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      distanceKm = Math.round(R * c * 10) / 10;
+    }
+
+    // Build response based on privacy
+    const baseProfile = {
+      _id: targetUser._id,
+      fullName: clerkData.fullName,
+      profilePicture: clerkData.imageUrl,
+      coverImage: targetUser.coverImage || '',
+      nationality: targetUser.nationality,
+      travelStyle: targetUser.travelStyle,
+      bio: targetUser.bio,
+      gender: targetUser.gender,
+      isOnline: targetUser.isOnline,
+      lastSeen: targetUser.lastSeen,
+      distanceKm,
+      profileVisibility: targetUser.profileVisibility,
+      // Relationship status
+      isFriend,
+      hasSentRequest,
+      hasReceivedRequest,
+    };
+
+    if (showFullProfile) {
+      // Full profile for public users or friends
+      return res.status(200).json(new ApiResponse(200, {
+        ...baseProfile,
+        interests: targetUser.interests || [],
+        languages: targetUser.languages || [],
+        socialLinks: targetUser.socialLinks || {},
+        futureDestinations: targetUser.futureDestinations || [],
+        createdAt: targetUser.createdAt,
+      }, "User profile fetched successfully"));
+    } else {
+      // Limited profile for private users who are not friends
+      return res.status(200).json(new ApiResponse(200, {
+        ...baseProfile,
+        isPrivate: true,
+      }, "Limited profile (private user)"));
     }
   }
 );

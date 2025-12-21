@@ -4,6 +4,8 @@ import {
   Calendar,
   Camera,
   Edit2,
+  Eye,
+  EyeOff,
   Facebook,
   Globe,
   Heart,
@@ -516,6 +518,43 @@ export default function ProfilePage() {
                 ) : (
                     <p className="text-gray-900 font-medium">{formatDate(profile?.dob)}</p>
                 )}
+              </div>
+
+              {/* Profile Visibility Toggle */}
+              <div className="pt-4 border-t border-gray-200">
+                <label className="text-sm text-gray-500 mb-2 block">Profile Visibility</label>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {(isEditing ? editData.profileVisibility : profile?.profileVisibility) === 'Public' ? (
+                      <Eye className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <EyeOff className="w-5 h-5 text-orange-500" />
+                    )}
+                    <span className="text-gray-900 font-medium">
+                      {(isEditing ? editData.profileVisibility : profile?.profileVisibility) || 'Public'}
+                    </span>
+                  </div>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => handleEditChange('profileVisibility', editData.profileVisibility === 'Public' ? 'Private' : 'Public')}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                        editData.profileVisibility === 'Public' ? 'bg-green-500' : 'bg-orange-500'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          editData.profileVisibility === 'Public' ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  {(isEditing ? editData.profileVisibility : profile?.profileVisibility) === 'Public' 
+                    ? 'Anyone can see your full profile' 
+                    : 'Only friends can see your full profile'}
+                </p>
               </div>
             </div>
           </div>

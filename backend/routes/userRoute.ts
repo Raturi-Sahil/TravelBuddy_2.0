@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { getNearbyTravelers, getProfile, registerUser, updateProfile } from "../controller/userController";
+import { getNearbyTravelers, getProfile, getUserById, registerUser, updateProfile } from "../controller/userController";
 import { requireProfile,verifyClerk } from "../middlewares/authMiddleware";
 import upload from "../middlewares/multerMiddleware";
 
@@ -16,4 +16,8 @@ router.patch("/update-profile", requireProfile, updateProfile);
 // Get nearby travelers (requires auth to exclude current user)
 router.get("/nearby", requireProfile, getNearbyTravelers);
 
+// Get another user's profile by ID
+router.get("/:id", requireProfile, getUserById);
+
 export default router;
+
