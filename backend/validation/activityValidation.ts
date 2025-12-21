@@ -18,15 +18,22 @@ export const activityZodSchema = z.object({
 
     location: geoPointSchema.optional(),
 
-    photos: z.array(z.string()).optional(),
-    videos: z.array(z.string()).optional(),
+    photos: z.preprocess((val) => {
+        if (typeof val === "string") return [val];
+        return val;
+    }, z.array(z.string()).optional()),
+
+    videos: z.preprocess((val) => {
+        if (typeof val === "string") return [val];
+        return val;
+    }, z.array(z.string()).optional()),
 
     gender: z.enum(["Male", "Female", "Any"]).optional(),
 
-    price: z.number().nonnegative().default(0),
-    foreignerPrice: z.number().nonnegative().optional(),
+    price: z.coerce.number().nonnegative().default(0),
+    foreignerPrice: z.coerce.number().nonnegative().optional(),
 
-    maxCapacity: z.number().min(1, "Max capacity must be at least 1"),
+    maxCapacity: z.coerce.number().min(1, "Max capacity must be at least 1"),
 }).superRefine((data, ctx) => {
     const { startTime, endTime } = data;
 

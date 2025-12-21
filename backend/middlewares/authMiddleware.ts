@@ -20,7 +20,7 @@ declare global {
 
 // Custom error handler for Clerk auth failures
 const handleClerkError = (err: any, req: Request, res: Response, next: NextFunction) => {
-  if (err?.status === 401 || err?.statusCode === 401) {
+  if (err?.status === 401 || err?.statusCode === 401 || err.message === 'Unauthenticated') {
     return res.status(401).json({
       success: false,
       message: "Unauthorized - Invalid or missing token",

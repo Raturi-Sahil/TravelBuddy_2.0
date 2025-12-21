@@ -12,7 +12,8 @@ import { activityZodSchema } from "../validation/activityValidation";
 
 export const createActivity = asyncHandler(
   async (req: Request & { user?: any }, res: Response) => {
-    
+    console.log("createActivity: Request received");
+
     if (!req.user) {
       throw new ApiError(401, "Unauthorized");
     }
@@ -21,6 +22,7 @@ export const createActivity = asyncHandler(
     const userId = user._id;
     const now = new Date();
 
+    console.log("createActivity: Validating body", req.body);
     const validatedData = activityZodSchema.parse(req.body);
 
     let entitlement: "PREMIUM" | "SINGLE" | "FREE";
@@ -54,10 +56,13 @@ export const createActivity = asyncHandler(
       files = (req.files as any).photos || [];
     }
 
+    console.log(`createActivity: Processing ${files.length} files`);
+
     const uploadedImageUrls: string[] = [];
 
     try {
       for (const file of files) {
+        console.log(`createActivity: Uploading file ${file.originalname}`);
         const result = await uploadOnCloudinary(file.path);
         if (!result) {
           throw new ApiError(500, "Image upload failed");
@@ -65,6 +70,7 @@ export const createActivity = asyncHandler(
         uploadedImageUrls.push(result.secure_url);
       }
     } catch (err) {
+      console.error("createActivity: Upload error", err);
       for (const url of uploadedImageUrls) {
         await deleteFromCloudinaryByUrl(url);
       }
@@ -81,28 +87,24 @@ export const createActivity = asyncHandler(
         ],
       };
     }
-
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    console.log("createActivity: Location prepared", location);
 
     try {
       // CREATE ACTIVITY
-      const [activity] = await Activity.create(
-        [
-          {
-            ...validatedData,
-            location,
-            photos: uploadedImageUrls,
-            createdBy: userId,
-            participants: [userId],
-          },
-        ],
-        { session }
-      );
+      console.log("createActivity: Creating DB entry");
+      const activity = await Activity.create({
+        ...validatedData,
+        location,
+        photos: uploadedImageUrls,
+        createdBy: userId,
+        participants: [userId],
+      });
 
       if (!activity) {
         throw new ApiError(500, "Failed to create activity");
       }
+
+      console.log("createActivity: Created activity", activity._id);
 
       // CONSUME ENTITLEMENT
       const userUpdate: any = {
@@ -121,10 +123,8 @@ export const createActivity = asyncHandler(
         }
       }
 
-      await User.findByIdAndUpdate(userId, userUpdate, { session });
-
-      await session.commitTransaction();
-      session.endSession();
+      await User.findByIdAndUpdate(userId, userUpdate);
+      console.log("createActivity: User updated");
 
       return res
         .status(201)
@@ -136,9 +136,7 @@ export const createActivity = asyncHandler(
           )
         );
     } catch (err) {
-      await session.abortTransaction();
-      session.endSession();
-
+      console.error("createActivity: DB Error", err);
       // cleanup uploaded images if DB fails
       for (const url of uploadedImageUrls) {
         await deleteFromCloudinaryByUrl(url);

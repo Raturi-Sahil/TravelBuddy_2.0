@@ -10,6 +10,7 @@ import friendRoutes from "./routes/friendRoute";
 import placesRoutes from "./routes/placesRoute";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
 import userRoutes from "./routes/userRoute";
+import activityRoutes from "./routes/activityRoutes";
 
 const app: Application = express();
 
@@ -38,7 +39,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/users", userRoutes);
 app.use("/friends", friendRoutes);
 app.use("/subscription", subscriptionRoutes);
+
+
 app.use("/ai", aiRoutes);
+app.use("/activities", activityRoutes);
 app.use("/places", placesRoutes);
 
 // Global Error Handler
