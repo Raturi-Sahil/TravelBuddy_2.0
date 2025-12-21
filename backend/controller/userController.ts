@@ -1,3 +1,4 @@
+import { clerkClient } from "@clerk/clerk-sdk-node";
 import { NextFunction,Request, Response } from "express";
 
 import { uploadCoverImage } from "../middlewares/cloudinary";
@@ -183,7 +184,6 @@ export const getNearbyTravelers = asyncHandler(
     const latitude = parseFloat(lat as string);
     const longitude = parseFloat(lng as string);
     const searchRadius = parseInt(radius as string) || 20000; // Default 20km in meters
-    console.log("hello");
 
     if (isNaN(latitude) || isNaN(longitude)) {
       throw new ApiError(400, "Invalid latitude or longitude");
@@ -192,55 +192,124 @@ export const getNearbyTravelers = asyncHandler(
     // Get current user ID to exclude from results
     const currentUserId = req.user?._id;
 
-    // Use $geoNear aggregation to find nearby users with distance calculation
-    const nearbyUsers = await User.aggregate([
-      {
-        $geoNear: {
-          near: {
-            type: "Point",
-            coordinates: [longitude, latitude],
-          },
-          distanceField: "distanceMeters",
-          maxDistance: searchRadius,
-          spherical: true,
-          query: {
-            profileVisibility: "Public",
-            ...(currentUserId && { _id: { $ne: currentUserId } }),
-          },
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          clerk_id: 1,
-          gender: 1,
-          travelStyle: 1,
-          bio: 1,
-          coverImage: 1,
-          currentLocation: 1,
-          nationality: 1,
-          interests: 1,
-          isOnline: 1,
-          lastSeen: 1,
-          distanceMeters: 1,
-          distanceKm: { $round: [{ $divide: ["$distanceMeters", 1000] }, 1] },
-        },
-      },
-      {
-        $limit: 50, // Limit results
-      },
-    ]);
+    try {
+      // Convert radius from meters to radians for $centerSphere (divide by Earth's radius in meters)
+      const radiusInRadians = searchRadius / 6378100;
 
-    console.log("nn",nearbyUsers);
-    
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          nearbyUsers,
-          `Found ${nearbyUsers.length} travelers nearby`
-        )
-      );
+      console.log("Searching for nearby travelers:", { latitude, longitude, searchRadius, radiusInRadians });
+
+      // Build query filter - use $and to combine conditions properly
+      const filter: any = {
+        profileVisibility: "Public",
+        "currentLocation.type": "Point",
+        $and: [
+          { "currentLocation.coordinates": { $ne: [0, 0] } },  // Exclude users without real location
+          {
+            "currentLocation.coordinates": {
+              $geoWithin: {
+                $centerSphere: [[longitude, latitude], radiusInRadians]
+              }
+            }
+          }
+        ]
+      };
+
+      // Exclude current user if authenticated
+      if (currentUserId) {
+        filter._id = { $ne: currentUserId };
+      }
+
+      console.log("Query filter:", JSON.stringify(filter, null, 2));
+
+      // Find nearby users
+      // Find all nearby users within the radius (no limit)
+      const nearbyUsers = await User.find(filter)
+        .select("clerk_id gender travelStyle bio coverImage currentLocation nationality interests isOnline lastSeen")
+        .lean();
+
+      console.log("Found users:", nearbyUsers.length);
+
+      // Fetch Clerk user data for all nearby users
+      const clerkUserIds = nearbyUsers.map((user: any) => user.clerk_id);
+      let clerkUsersMap: Record<string, { fullName: string; imageUrl: string }> = {};
+
+      if (clerkUserIds.length > 0) {
+        try {
+          const clerkUsers = await clerkClient.users.getUserList({
+            userId: clerkUserIds,
+          });
+          
+          // Clerk v4 returns array directly, handle both cases for compatibility
+          const usersList = Array.isArray(clerkUsers) ? clerkUsers : (clerkUsers as any).data || [];
+          
+          clerkUsersMap = usersList.reduce((acc: any, clerkUser: any) => {
+            acc[clerkUser.id] = {
+              fullName: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Anonymous',
+              imageUrl: clerkUser.imageUrl || '',
+            };
+            return acc;
+          }, {});
+        } catch (clerkError) {
+          console.error("Error fetching Clerk users:", clerkError);
+          // Continue without Clerk data
+        }
+      }
+
+      // Calculate distance and merge with Clerk data
+      const usersWithDistance = nearbyUsers.map((user: any) => {
+        const userLng = user.currentLocation?.coordinates?.[0] || 0;
+        const userLat = user.currentLocation?.coordinates?.[1] || 0;
+
+        // Calculate distance using Haversine formula
+        const R = 6371; // Earth's radius in km
+        const dLat = (userLat - latitude) * Math.PI / 180;
+        const dLng = (userLng - longitude) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(latitude * Math.PI / 180) * Math.cos(userLat * Math.PI / 180) *
+                  Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distanceKm = Math.round(R * c * 10) / 10; // Round to 1 decimal
+
+        // Get Clerk user data
+        const clerkData = clerkUsersMap[user.clerk_id] || { fullName: 'Anonymous', imageUrl: '' };
+
+        return {
+          ...user,
+          fullName: clerkData.fullName,
+          profilePicture: clerkData.imageUrl || user.coverImage || '',
+          distanceMeters: distanceKm * 1000,
+          distanceKm,
+        };
+      });
+
+      // Sort by distance
+      usersWithDistance.sort((a, b) => a.distanceKm - b.distanceKm);
+
+      console.log("Nearby users found:", usersWithDistance.length);
+      
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            usersWithDistance,
+            `Found ${usersWithDistance.length} travelers nearby`
+          )
+        );
+    } catch (error: any) {
+      console.error("Error in getNearbyTravelers:", error);
+      
+      // If it's a geospatial index error, return empty array instead of failing
+      if (error.code === 2 || error.message?.includes("geo")) {
+        console.log("No users with valid location data found");
+        return res
+          .status(200)
+          .json(
+            new ApiResponse(200, [], "No travelers nearby")
+          );
+      }
+      
+      throw new ApiError(500, `Failed to find nearby travelers: ${error.message}`);
+    }
   }
 );

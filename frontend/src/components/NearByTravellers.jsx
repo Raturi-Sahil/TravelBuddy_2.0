@@ -184,8 +184,8 @@ function AllTravelersOnMap() {
         // Transform API data to match expected format
         const travelers = response.data.map(user => ({
           _id: user._id,
-          fullName: user.clerk_id, // We'll show clerk_id as name since we don't store fullName
-          profilePicture: user.coverImage || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=150',
+          fullName: user.fullName || 'Anonymous', // Now coming from Clerk
+          profilePicture: user.profilePicture || '', // Now coming from Clerk
           currentLocation: user.currentLocation?.coordinates 
             ? { lat: user.currentLocation.coordinates[1], lng: user.currentLocation.coordinates[0] }
             : null,

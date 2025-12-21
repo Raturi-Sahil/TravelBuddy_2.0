@@ -3,16 +3,6 @@ import mongoose, { Schema } from "mongoose";
 import { COUNTRIES, GENDERS, INTERESTS, LANGUAGE_LEVELS, TRAVEL_STYLES } from "../data/enums";
 import { IUser } from "../interfaces/userInterface";
 
-const geoPointSchema = new Schema({
-  type: { type: String, enum: ["Point"], default: "Point" },
-  coordinates: { type: [Number], default: [0, 0] },
-});
-
-const futureDestinationSchema = new Schema({
-  name: { type: String },
-  coordinates: { type: [Number], default: [0, 0] },
-});
-
 const userSchema = new Schema<IUser>({
   clerk_id: { type: String, required: true, unique: true },
 
@@ -55,11 +45,19 @@ const userSchema = new Schema<IUser>({
 
   coverImage: { type: String, default: "" },
 
-  currentLocation: geoPointSchema,
+  currentLocation: {
+    type: { type: String, enum: ["Point"], default: "Point" },
+    coordinates: { type: [Number], default: [0, 0] },
+  },
 
   nationality: { type: String, enum: COUNTRIES, default: "Not Specified" },
 
-  futureDestinations: [futureDestinationSchema],
+  futureDestinations: [
+    {
+      name: { type: String },
+      coordinates: { type: [Number], default: [0, 0] },
+    },
+  ],
 
   interests: [{ type: String, enum: INTERESTS }],
 
