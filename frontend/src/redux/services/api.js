@@ -51,7 +51,7 @@ export const userService = {
     if (profileData.coverImageFile) {
       const formData = new FormData();
       formData.append('coverImage', profileData.coverImageFile);
-      
+
       // Append other fields to FormData
       Object.keys(profileData).forEach(key => {
         if (key !== 'coverImageFile') {
@@ -66,7 +66,7 @@ export const userService = {
           }
         }
       });
-      
+
       const response = await authApi.patch('/users/update-profile', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -74,7 +74,7 @@ export const userService = {
       });
       return response.data;
     }
-    
+
     // No file upload, send as JSON
     const response = await authApi.patch('/users/update-profile', profileData);
     return response.data;
@@ -98,7 +98,7 @@ export const userService = {
     if (search) params.append('search', search);
     params.append('page', page);
     params.append('limit', limit);
-    
+
     const response = await authApi.get(`/users/nearby?${params.toString()}`);
     return response.data;
   },
@@ -150,7 +150,7 @@ export const placesService = {
     params.append('radius', radius);
     if (search) params.append('search', search);
     if (pageToken) params.append('pageToken', pageToken);
-    
+
     const response = await api.get(`/places/hotels?${params.toString()}`);
     return response.data;
   },
@@ -162,7 +162,7 @@ export const placesService = {
     params.append('radius', radius);
     if (search) params.append('search', search);
     if (pageToken) params.append('pageToken', pageToken);
-    
+
     const response = await api.get(`/places/tourist?${params.toString()}`);
     return response.data;
   },
@@ -174,7 +174,7 @@ export const placesService = {
     params.append('radius', radius);
     if (search) params.append('search', search);
     if (pageToken) params.append('pageToken', pageToken);
-    
+
     const response = await api.get(`/places/restaurants?${params.toString()}`);
     return response.data;
   },
@@ -186,7 +186,7 @@ export const placesService = {
     params.append('radius', radius);
     if (search) params.append('search', search);
     if (pageToken) params.append('pageToken', pageToken);
-    
+
     const response = await api.get(`/places/shopping?${params.toString()}`);
     return response.data;
   },
@@ -198,7 +198,7 @@ export const placesService = {
     params.append('radius', radius);
     if (search) params.append('search', search);
     if (pageToken) params.append('pageToken', pageToken);
-    
+
     const response = await api.get(`/places/emergency?${params.toString()}`);
     return response.data;
   },
@@ -210,10 +210,56 @@ export const placesService = {
     params.append('radius', radius);
     if (search) params.append('search', search);
     if (pageToken) params.append('pageToken', pageToken);
-    
+
     const response = await api.get(`/places/transport?${params.toString()}`);
     return response.data;
   },
+};
+
+export const activityService = {
+  createActivity: async (authApi, activityData) => {
+    let formData;
+
+    if (activityData instanceof FormData) {
+      formData = activityData;
+    } else {
+      formData = new FormData();
+
+      // Append photos
+      if (activityData.photos && activityData.photos.length > 0) {
+        if (typeof activityData.photos[0] === 'string') {
+            // If already uploaded urls
+             activityData.photos.forEach((photo) => {
+               formData.append('photos', photo);
+             });
+        } else {
+          // File objects
+          activityData.photos.forEach((photo) => {
+            formData.append('photos', photo);
+          });
+        }
+      }
+
+      // Append other fields
+      Object.keys(activityData).forEach(key => {
+        if (key !== 'photos') {
+           // Handle arrays like videos
+           if (Array.isArray(activityData[key])) {
+             activityData[key].forEach(val => formData.append(key, val));
+           } else {
+             formData.append(key, activityData[key]);
+           }
+        }
+      });
+    }
+
+    const response = await authApi.post('/activities', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
 };
 
 export default api;

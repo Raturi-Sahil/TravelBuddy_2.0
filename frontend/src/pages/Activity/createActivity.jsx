@@ -1,10 +1,13 @@
 import { Autocomplete,GoogleMap, Marker } from "@react-google-maps/api";
+import { useAuth } from "@clerk/clerk-react";
 import axios from "axios";
 import { AlignLeft, Clock, DollarSign, Image as ImageIcon, Loader2,MapPin, Mic, MicOff, Plus, Search, Send, Sparkles, Users, Video, X } from "lucide-react";
 import React, { useCallback, useEffect,useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { createActivity } from "../../redux/slices/ActivitySlice";
+import { useDispatch } from "react-redux";
 
 import { useGoogleMaps } from "../../context/GoogleMapsContext";
 
@@ -40,11 +43,13 @@ const Select = ({ label, options, ...props }) => (
 
 export default function CreateActivity() {
   const navigate = useNavigate();
+  const { getToken } = useAuth();
   const { profile } = useSelector((state) => state.user);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const mapRef = useRef(null);
+  const dispatch = useDispatch();
   const autocompleteRef = useRef(null);
   const fileInputRef = useRef(null);
   const [center, setCenter] = useState({ lat: 28.6139, lng: 77.2090 });
@@ -121,13 +126,39 @@ export default function CreateActivity() {
     try {
       const payload = new FormData();
       Object.keys(formData).forEach(key => {
-        if (key === 'location') payload.append("location", JSON.stringify({ type: "Point", coordinates: [formData.location.lng, formData.location.lat] }));
-        else if (key === 'photos') formData.photos.forEach(p => p.file && payload.append("photos", p.file));
-        else if (key === 'videos') formData.videos.forEach(v => payload.append("videos", v));
-        else payload.append(key, formData[key] || "");
+        if (key === 'location') {
+             if (formData.location) {
+                 payload.append('lat', formData.location.lat);
+                 payload.append('lng', formData.location.lng);
+             }
+        }
+        else if (key === 'photos') {
+             formData.photos.forEach(p => {
+                 if (p.file) payload.append("photos", p.file);
+             });
+        }
+        else if (key === 'videos') {
+             formData.videos.forEach(v => payload.append("videos", v));
+        }
+        else if (key === 'startTime' || key === 'endTime') {
+            if (formData[key] && formData.date) {
+                // Combine date and time
+                const dateTimeStr = `${formData.date}T${formData[key]}`;
+                payload.append(key, new Date(dateTimeStr).toISOString());
+            }
+        }
+        else {
+             payload.append(key, formData[key] || "");
+        }
       });
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/activities`, payload, { headers: { "Content-Type": "multipart/form-data" }, withCredentials: true });
+
+      await dispatch(createActivity({
+          getToken,
+          activityData: payload
+      })).unwrap(); // unwrap to catch errors here
+
       toast.success("Activity created successfully!");
+      navigate("/activities"); // Redirect after success?
     } catch (err) { toast.error(err.response?.data?.message || err.message || "Failed to create"); }
     finally { setIsLoading(false); }
   };
@@ -222,7 +253,7 @@ export default function CreateActivity() {
             <Section icon={Video} title="Videos">
               <div className="flex gap-2">
                 <input type="text" placeholder="Paste video URL..." className="flex-1 px-4 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" onKeyDown={(e) => { if(e.key === 'Enter' && e.target.value.trim()) { setFormData(prev => ({...prev, videos:[...prev.videos, e.target.value]})); e.target.value = ''; e.preventDefault(); }}} />
-                <button type="button" onClick={(e) => { const inp = e.target.previousSibling; if(inp.value.trim()){ setFormData(prev => ({...prev, videos:[...prev.videos, inp.value]})); inp.value=''; } }} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Plus className="w-5 h-5"/></button>
+                <button type="button" onClick={(e) => { const inp = e.currentTarget.previousElementSibling; if(inp && inp.value.trim()){ setFormData(prev => ({...prev, videos:[...prev.videos, inp.value]})); inp.value=''; } }} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Plus className="w-5 h-5"/></button>
               </div>
               <div className="space-y-2">
                 {formData.videos.map((v, i) => (
