@@ -3,7 +3,7 @@ import { Router } from "express";
 
 import {
     createActivity,
-
+    getActivities
 } from "../controller/activityController";
 import { requireProfile } from "../middlewares/authMiddleware";
 import upload from "../middlewares/multerMiddleware";
@@ -15,7 +15,7 @@ router.use(requireProfile);
 
 // Core CRUD
 router.post("/", upload.fields([{ name: "photos", maxCount: 5 }]), createActivity);
-// router.get("/", getActivities);
+router.get("/", getActivities);
 // router.get("/:id", getActivityById);
 // router.put("/:id", updateActivity);
 // router.delete("/:id", deleteActivity);

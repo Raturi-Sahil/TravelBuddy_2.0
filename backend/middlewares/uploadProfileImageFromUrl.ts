@@ -17,6 +17,7 @@ export async function uploadProfileImageFromUrl(imageUrl: string): Promise<strin
   }
 
   const tempDir = path.join(process.cwd(), "tmp");
+
   const tempFilePath = path.join(tempDir, `profile_${uuidv4()}.jpg`);
 
   try {

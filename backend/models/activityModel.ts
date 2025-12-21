@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+  import mongoose, { Schema } from "mongoose";
 
 import { IActivity } from "../interfaces/activityInterface";
 
@@ -46,7 +46,7 @@ const activitySchema = new Schema<IActivity>({
 
   gender: {
     type: String,
-    enum: ["Male", "Female"],
+    enum: ["Male", "Female", "Any"],
   },
 
   price: { type: Number, default: 0 },

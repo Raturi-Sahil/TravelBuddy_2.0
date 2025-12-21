@@ -267,6 +267,11 @@ export const activityService = {
       },
     });
     return response.data;
+  },
+
+  getActivities: async (authApi) => {
+    const response = await authApi.get('/activities');
+    return response.data;
   }
 };
 
