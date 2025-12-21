@@ -147,3 +147,29 @@ export const createActivity = asyncHandler(
   }
 );
 
+
+export const getActivities = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => { 
+  
+    const now = new Date();
+
+    const activities = await Activity.find(
+      {
+        date: { $gte: now}
+      })
+      .sort({date: 1, startTime: 1})
+      .populate(
+        "createdBy", "name email mobile profileImage"
+      ).lean();
+
+    return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200, 
+            activities,
+            "Activities fetched successfully"
+          )
+        );
+  } 
+);
