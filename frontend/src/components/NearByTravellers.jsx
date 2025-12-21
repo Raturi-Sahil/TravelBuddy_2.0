@@ -168,39 +168,46 @@ function AllTravelersOnMap() {
   const [loadingTravelers, setLoadingTravelers] = useState(false);
   const [error, setError] = useState('');
   const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
-  const [showRadiusInput, setShowRadiusInput] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState(false); // When true, search by name only (no radius limit)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalCount: 0, hasMore: false });
 
   const radiusMeters = radiusKm * 1000;
 
-  const fetchNearbyTravelers = useCallback(async (lat, lng, radius) => {
+  const fetchNearbyTravelers = useCallback(async ({ lat, lng, radius, search = '', page = 1 } = {}) => {
     setLoadingTravelers(true);
     setError('');
 
     try {
       const authApi = createAuthenticatedApi(getToken);
-      const response = await userService.getNearbyTravelers(authApi, lat, lng, radius);
+      const response = await userService.getNearbyTravelers(authApi, { lat, lng, radius, search, page, limit: 50 });
       
       if (response.success && response.data) {
+        const { users, pagination: paginationData } = response.data;
+        
         // Transform API data to match expected format
-        const travelers = response.data.map(user => ({
+        const travelers = users.map(user => ({
           _id: user._id,
-          fullName: user.fullName || 'Anonymous', // Now coming from Clerk
-          profilePicture: user.profilePicture || '', // Now coming from Clerk
+          fullName: user.fullName || 'Anonymous',
+          profilePicture: user.profilePicture || '',
           currentLocation: user.currentLocation?.coordinates 
             ? { lat: user.currentLocation.coordinates[1], lng: user.currentLocation.coordinates[0] }
             : null,
-          distanceKm: user.distanceKm || 0,
+          distanceKm: user.distanceKm ?? null,
           interests: user.interests || [],
           isOnline: user.isOnline,
           nationality: user.nationality,
           travelStyle: user.travelStyle,
           bio: user.bio,
           gender: user.gender,
-        })).filter(t => t.currentLocation); // Only show users with location
+        }));
         
         setNearbyTravelers(travelers);
+        setPagination(paginationData);
+        setCurrentPage(paginationData.page);
       } else {
         setNearbyTravelers([]);
+        setPagination({ page: 1, totalPages: 1, totalCount: 0, hasMore: false });
       }
     } catch (err) {
       console.error('Error fetching nearby travelers:', err);
@@ -226,7 +233,7 @@ function AllTravelersOnMap() {
         };
         setUserLocation(coords);
         setLoadingLocation(false);
-        fetchNearbyTravelers(coords.lat, coords.lng, radiusMeters);
+        fetchNearbyTravelers({ lat: coords.lat, lng: coords.lng, radius: radiusMeters });
       },
       () => {
          // Fallback for demo purposes if location is denied
@@ -234,7 +241,7 @@ function AllTravelersOnMap() {
         const defaultCoords = DEFAULT_CENTER;
         setUserLocation(defaultCoords);
         setLoadingLocation(false);
-        fetchNearbyTravelers(defaultCoords.lat, defaultCoords.lng, radiusMeters);
+        fetchNearbyTravelers({ lat: defaultCoords.lat, lng: defaultCoords.lng, radius: radiusMeters });
       },
       {
         enableHighAccuracy: true,
@@ -245,22 +252,33 @@ function AllTravelersOnMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchNearbyTravelers]);
 
-  const handleSearch = () => {
-    if (userLocation) {
-      fetchNearbyTravelers(userLocation.lat, userLocation.lng, radiusMeters);
+  const handleSearch = (page = 1) => {
+    setCurrentPage(page);
+    // If global search is enabled, search by name only (no location filter)
+    if (globalSearch) {
+      fetchNearbyTravelers({ search: searchQuery, page });
+    } else {
+      // Search with location filter
+      fetchNearbyTravelers({ 
+        lat: userLocation?.lat, 
+        lng: userLocation?.lng, 
+        radius: radiusMeters,
+        search: searchQuery,
+        page
+      });
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      handleSearch(newPage);
     }
   };
 
   const filteredTravelers = useMemo(() => {
-    return nearbyTravelers.filter((traveler) => {
-      const name = traveler.fullName?.toLowerCase() || '';
-      const interestString = (traveler.interests || []).join(' ').toLowerCase();
-      return (
-        name.includes(searchQuery.toLowerCase()) ||
-        interestString.includes(searchQuery.toLowerCase())
-      );
-    });
-  }, [nearbyTravelers, searchQuery]);
+    // Filtering is now done server-side, so just return all travelers
+    return nearbyTravelers;
+  }, [nearbyTravelers]);
 
   const handleRetry = () => {
     setLoadingLocation(true);
@@ -349,59 +367,24 @@ function AllTravelersOnMap() {
               </div>
             </div>
             
-            {/* Distance Filter Toggle */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowRadiusInput(!showRadiusInput)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-medium ${
-                  showRadiusInput 
-                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30' 
-                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                }`}
-              >
-                <Sliders className="h-4 w-4" />
-                <span className="hidden sm:inline">{radiusKm} km</span>
-              </button>
-              <button
-                onClick={() => setShowList(!showList)}
-                className="sm:hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
-              >
-                {showList ? <X className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
-              </button>
-            </div>
+            {/* Mobile List Toggle */}
+            <button
+              onClick={() => setShowList(!showList)}
+              className="sm:hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
+            >
+              {showList ? <X className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
+            </button>
           </div>
 
-          {/* Distance Slider */}
-          {showRadiusInput && (
-            <div className="mb-5 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-zinc-300">Search Radius</span>
-                <span className="text-lg font-bold text-purple-400">{radiusKm} km</span>
-              </div>
-              <input
-                type="range"
-                min={MIN_RADIUS_KM}
-                max={MAX_RADIUS_KM}
-                value={radiusKm}
-                onChange={(e) => setRadiusKm(parseInt(e.target.value))}
-                className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
-              />
-              <div className="flex justify-between text-xs text-zinc-500 mt-2">
-                <span>{MIN_RADIUS_KM} km</span>
-                <span>{MAX_RADIUS_KM} km</span>
-              </div>
-            </div>
-          )}
-
-          {/* Enhanced Search Bar */}
-          <div className="flex gap-3">
+          {/* Search Bar with Global Toggle */}
+          <div className="flex gap-3 mb-4">
             <div className="relative group flex-1">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-500 group-hover:text-blue-500 transition-colors" />
                 <input
                   type="text"
-                  placeholder="Search by name or interests..."
+                  placeholder={globalSearch ? "Search by name (worldwide)..." : "Search by name or interests..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -409,6 +392,30 @@ function AllTravelersOnMap() {
                 />
               </div>
             </div>
+            
+            {/* Global Search Toggle Button */}
+            <button
+              onClick={() => setGlobalSearch(!globalSearch)}
+              title={globalSearch ? "Switch to nearby search" : "Switch to global search"}
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all font-medium whitespace-nowrap ${
+                globalSearch 
+                  ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-500/30' 
+                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300'
+              }`}
+            >
+              {globalSearch ? (
+                <>
+                  <span className="text-lg">🌍</span>
+                  <span className="hidden sm:inline">Global</span>
+                </>
+              ) : (
+                <>
+                  <LocateFixed className="h-4 w-4" />
+                  <span className="hidden sm:inline">Nearby</span>
+                </>
+              )}
+            </button>
+            
             <button
               onClick={handleSearch}
               disabled={loadingTravelers}
@@ -422,6 +429,34 @@ function AllTravelersOnMap() {
               <span className="hidden sm:inline">Search</span>
             </button>
           </div>
+
+          {/* Radius Slider - Only show when NOT in global search mode */}
+          {!globalSearch && (
+            <div className="flex items-center gap-4 p-3 bg-zinc-800/50 rounded-xl border border-zinc-700">
+              <div className="flex items-center gap-2 text-sm text-zinc-400">
+                <MapPin className="h-4 w-4 text-purple-400" />
+                <span>Radius:</span>
+              </div>
+              <input
+                type="range"
+                min={MIN_RADIUS_KM}
+                max={MAX_RADIUS_KM}
+                value={radiusKm}
+                onChange={(e) => setRadiusKm(parseInt(e.target.value))}
+                className="flex-1 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+              />
+              <span className="text-sm font-bold text-purple-400 min-w-[60px] text-right">{radiusKm} km</span>
+            </div>
+          )}
+          
+          {globalSearch && (
+            <div className="flex items-center gap-2 p-3 bg-green-900/30 rounded-xl border border-green-700/50 text-green-400 text-sm">
+              <span className="text-lg">🌍</span>
+              <span>Searching worldwide - no distance limit</span>
+            </div>
+          )}
+
+
 
           {/* Error Message */}
           {error && (
@@ -521,10 +556,17 @@ function AllTravelersOnMap() {
                           {traveler.fullName}
                         </p>
                         <div className="flex items-center space-x-2 mt-1.5">
-                          <div className="flex items-center space-x-1 text-sm text-zinc-300 bg-zinc-900/80 px-2 py-1 rounded-lg border border-zinc-700">
-                            <MapPin className="h-3.5 w-3.5 text-blue-500" />
-                            <span className="font-medium">{traveler.distanceKm} km</span>
-                          </div>
+                          {traveler.distanceKm !== null ? (
+                            <div className="flex items-center space-x-1 text-sm text-zinc-300 bg-zinc-900/80 px-2 py-1 rounded-lg border border-zinc-700">
+                              <MapPin className="h-3.5 w-3.5 text-blue-500" />
+                              <span className="font-medium">{traveler.distanceKm} km</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-1 text-sm text-zinc-400 bg-zinc-900/80 px-2 py-1 rounded-lg border border-zinc-700">
+                              <MapPin className="h-3.5 w-3.5 text-zinc-500" />
+                              <span className="font-medium">--</span>
+                            </div>
+                          )}
                           {traveler.interests && traveler.interests.length > 0 && (
                             <div className="flex items-center space-x-1">
                               <div className="w-1 h-1 bg-zinc-600 rounded-full" />
@@ -545,6 +587,36 @@ function AllTravelersOnMap() {
                 </div>
               ))}
             </div>
+            
+            {/* Pagination Controls */}
+            {pagination.totalPages > 1 && (
+              <div className="p-4 border-t border-zinc-800 bg-zinc-900/50">
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1 || loadingTravelers}
+                    className="px-3 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium"
+                  >
+                    ← Prev
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-zinc-400">
+                      Page <span className="font-bold text-white">{currentPage}</span> of <span className="font-bold text-white">{pagination.totalPages}</span>
+                    </span>
+                    <span className="text-xs text-zinc-500">
+                      ({pagination.totalCount} total)
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!pagination.hasMore || loadingTravelers}
+                    className="px-3 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Enhanced Map Section */}

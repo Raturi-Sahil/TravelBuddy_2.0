@@ -170,40 +170,43 @@ export const updateProfile = asyncHandler(
   }
 );
 
-// Get nearby travelers based on location
+// Get travelers - can filter by location (optional) and/or search by name
 export const getNearbyTravelers = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     
-    const { lat, lng, radius } = req.query;
+    const { lat, lng, radius, search, page, limit } = req.query;
 
-    // Validate required parameters
-    if (!lat || !lng) {
-      throw new ApiError(400, "Latitude and longitude are required");
-    }
-
-    const latitude = parseFloat(lat as string);
-    const longitude = parseFloat(lng as string);
+    // Parse optional location parameters
+    const latitude = lat ? parseFloat(lat as string) : null;
+    const longitude = lng ? parseFloat(lng as string) : null;
     const searchRadius = parseInt(radius as string) || 20000; // Default 20km in meters
-
-    if (isNaN(latitude) || isNaN(longitude)) {
-      throw new ApiError(400, "Invalid latitude or longitude");
-    }
+    const searchQuery = (search as string)?.trim() || '';
+    
+    // Pagination parameters
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 50)); // Default 50, max 100
 
     // Get current user ID to exclude from results
     const currentUserId = req.user?._id;
+    
+    // Get current user's location for distance calculation
+    const currentUser = await User.findById(currentUserId).select("currentLocation").lean();
+    const userLat = currentUser?.currentLocation?.coordinates?.[1] || latitude;
+    const userLng = currentUser?.currentLocation?.coordinates?.[0] || longitude;
 
     try {
-      // Convert radius from meters to radians for $centerSphere (divide by Earth's radius in meters)
-      const radiusInRadians = searchRadius / 6378100;
-
-      console.log("Searching for nearby travelers:", { latitude, longitude, searchRadius, radiusInRadians });
-
-      // Build query filter - use $and to combine conditions properly
+      // Build query filter
       const filter: any = {
         profileVisibility: "Public",
-        "currentLocation.type": "Point",
-        $and: [
-          { "currentLocation.coordinates": { $ne: [0, 0] } },  // Exclude users without real location
+      };
+
+      // Add location filter if coordinates provided (for radius-based search)
+      if (latitude !== null && longitude !== null && !isNaN(latitude) && !isNaN(longitude)) {
+        const radiusInRadians = searchRadius / 6378100;
+        
+        filter["currentLocation.type"] = "Point";
+        filter.$and = [
+          { "currentLocation.coordinates": { $ne: [0, 0] } },
           {
             "currentLocation.coordinates": {
               $geoWithin: {
@@ -211,8 +214,10 @@ export const getNearbyTravelers = asyncHandler(
               }
             }
           }
-        ]
-      };
+        ];
+        
+        console.log("Searching with location:", { latitude, longitude, searchRadius, radiusInRadians });
+      }
 
       // Exclude current user if authenticated
       if (currentUserId) {
@@ -221,8 +226,7 @@ export const getNearbyTravelers = asyncHandler(
 
       console.log("Query filter:", JSON.stringify(filter, null, 2));
 
-      // Find nearby users
-      // Find all nearby users within the radius (no limit)
+      // Find users matching the filter
       const nearbyUsers = await User.find(filter)
         .select("clerk_id gender travelStyle bio coverImage currentLocation nationality interests isOnline lastSeen")
         .lean();
@@ -255,45 +259,87 @@ export const getNearbyTravelers = asyncHandler(
         }
       }
 
-      // Calculate distance and merge with Clerk data
-      const usersWithDistance = nearbyUsers.map((user: any) => {
-        const userLng = user.currentLocation?.coordinates?.[0] || 0;
-        const userLat = user.currentLocation?.coordinates?.[1] || 0;
-
-        // Calculate distance using Haversine formula
-        const R = 6371; // Earth's radius in km
-        const dLat = (userLat - latitude) * Math.PI / 180;
-        const dLng = (userLng - longitude) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(latitude * Math.PI / 180) * Math.cos(userLat * Math.PI / 180) *
-                  Math.sin(dLng / 2) * Math.sin(dLng / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distanceKm = Math.round(R * c * 10) / 10; // Round to 1 decimal
-
+      // Merge with Clerk data and always calculate distance if we have user location
+      let usersWithData = nearbyUsers.map((user: any) => {
         // Get Clerk user data
         const clerkData = clerkUsersMap[user.clerk_id] || { fullName: 'Anonymous', imageUrl: '' };
+
+        // Always calculate distance if we have user's current location
+        let distanceKm: number | null = null;
+        let distanceMeters: number | null = null;
+        
+        if (userLat && userLng) {
+          const targetLng = user.currentLocation?.coordinates?.[0] || 0;
+          const targetLat = user.currentLocation?.coordinates?.[1] || 0;
+
+          if (targetLng !== 0 && targetLat !== 0) {
+            // Calculate distance using Haversine formula
+            const R = 6371; // Earth's radius in km
+            const dLat = (targetLat - userLat) * Math.PI / 180;
+            const dLng = (targetLng - userLng) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(userLat * Math.PI / 180) * Math.cos(targetLat * Math.PI / 180) *
+                      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            distanceKm = Math.round(R * c * 10) / 10;
+            distanceMeters = distanceKm * 1000;
+          }
+        }
 
         return {
           ...user,
           fullName: clerkData.fullName,
           profilePicture: clerkData.imageUrl || user.coverImage || '',
-          distanceMeters: distanceKm * 1000,
+          distanceMeters,
           distanceKm,
         };
       });
 
-      // Sort by distance
-      usersWithDistance.sort((a, b) => a.distanceKm - b.distanceKm);
+      // Filter by name search if provided
+      if (searchQuery) {
+        const lowerSearch = searchQuery.toLowerCase();
+        usersWithData = usersWithData.filter((user: any) => 
+          user.fullName.toLowerCase().includes(lowerSearch)
+        );
+        console.log(`Filtered by name "${searchQuery}":`, usersWithData.length);
+      }
 
-      console.log("Nearby users found:", usersWithDistance.length);
+      // Sort by distance if available, otherwise by name
+      usersWithData.sort((a: any, b: any) => {
+        if (a.distanceKm !== null && b.distanceKm !== null) {
+          return a.distanceKm - b.distanceKm;
+        } else if (a.distanceKm !== null) {
+          return -1; // Users with distance come first
+        } else if (b.distanceKm !== null) {
+          return 1;
+        }
+        return a.fullName.localeCompare(b.fullName);
+      });
+
+      // Apply pagination
+      const totalCount = usersWithData.length;
+      const totalPages = Math.ceil(totalCount / limitNum);
+      const startIndex = (pageNum - 1) * limitNum;
+      const paginatedUsers = usersWithData.slice(startIndex, startIndex + limitNum);
+
+      console.log(`Users found: ${totalCount}, Page: ${pageNum}/${totalPages}, Showing: ${paginatedUsers.length}`);
       
       return res
         .status(200)
         .json(
           new ApiResponse(
             200,
-            usersWithDistance,
-            `Found ${usersWithDistance.length} travelers nearby`
+            {
+              users: paginatedUsers,
+              pagination: {
+                page: pageNum,
+                limit: limitNum,
+                totalCount,
+                totalPages,
+                hasMore: pageNum < totalPages,
+              }
+            },
+            `Found ${totalCount} travelers (Page ${pageNum}/${totalPages})`
           )
         );
     } catch (error: any) {

@@ -90,41 +90,91 @@ export const userService = {
     return response.data;
   },
 
-  getNearbyTravelers: async (authApi, lat, lng, radius = 20000) => {
-    const response = await authApi.get(`/users/nearby?lat=${lat}&lng=${lng}&radius=${radius}`);
+  getNearbyTravelers: async (authApi, { lat, lng, radius = 20000, search = '', page = 1, limit = 50 } = {}) => {
+    const params = new URLSearchParams();
+    if (lat !== undefined && lat !== null) params.append('lat', lat);
+    if (lng !== undefined && lng !== null) params.append('lng', lng);
+    if (radius) params.append('radius', radius);
+    if (search) params.append('search', search);
+    params.append('page', page);
+    params.append('limit', limit);
+    
+    const response = await authApi.get(`/users/nearby?${params.toString()}`);
     return response.data;
   },
 };
 
 // Places API service functions (no auth required for public data)
 export const placesService = {
-  getNearbyHotels: async (lat, lng, radius = 20000) => {
-    const response = await api.get(`/places/hotels?lat=${lat}&lng=${lng}&radius=${radius}`);
+  getNearbyHotels: async ({ lat, lng, radius = 20000, search = '', pageToken = '' } = {}) => {
+    const params = new URLSearchParams();
+    params.append('lat', lat);
+    params.append('lng', lng);
+    params.append('radius', radius);
+    if (search) params.append('search', search);
+    if (pageToken) params.append('pageToken', pageToken);
+    
+    const response = await api.get(`/places/hotels?${params.toString()}`);
     return response.data;
   },
 
-  getNearbyTouristPlaces: async (lat, lng, radius = 20000) => {
-    const response = await api.get(`/places/tourist?lat=${lat}&lng=${lng}&radius=${radius}`);
+  getNearbyTouristPlaces: async ({ lat, lng, radius = 20000, search = '', pageToken = '' } = {}) => {
+    const params = new URLSearchParams();
+    params.append('lat', lat);
+    params.append('lng', lng);
+    params.append('radius', radius);
+    if (search) params.append('search', search);
+    if (pageToken) params.append('pageToken', pageToken);
+    
+    const response = await api.get(`/places/tourist?${params.toString()}`);
     return response.data;
   },
 
-  getNearbyRestaurants: async (lat, lng, radius = 20000) => {
-    const response = await api.get(`/places/restaurants?lat=${lat}&lng=${lng}&radius=${radius}`);
+  getNearbyRestaurants: async ({ lat, lng, radius = 20000, search = '', pageToken = '' } = {}) => {
+    const params = new URLSearchParams();
+    params.append('lat', lat);
+    params.append('lng', lng);
+    params.append('radius', radius);
+    if (search) params.append('search', search);
+    if (pageToken) params.append('pageToken', pageToken);
+    
+    const response = await api.get(`/places/restaurants?${params.toString()}`);
     return response.data;
   },
 
-  getNearbyShopping: async (lat, lng, radius = 20000) => {
-    const response = await api.get(`/places/shopping?lat=${lat}&lng=${lng}&radius=${radius}`);
+  getNearbyShopping: async ({ lat, lng, radius = 20000, search = '', pageToken = '' } = {}) => {
+    const params = new URLSearchParams();
+    params.append('lat', lat);
+    params.append('lng', lng);
+    params.append('radius', radius);
+    if (search) params.append('search', search);
+    if (pageToken) params.append('pageToken', pageToken);
+    
+    const response = await api.get(`/places/shopping?${params.toString()}`);
     return response.data;
   },
 
-  getNearbyEmergency: async (lat, lng, radius = 20000) => {
-    const response = await api.get(`/places/emergency?lat=${lat}&lng=${lng}&radius=${radius}`);
+  getNearbyEmergency: async ({ lat, lng, radius = 20000, search = '', pageToken = '' } = {}) => {
+    const params = new URLSearchParams();
+    params.append('lat', lat);
+    params.append('lng', lng);
+    params.append('radius', radius);
+    if (search) params.append('search', search);
+    if (pageToken) params.append('pageToken', pageToken);
+    
+    const response = await api.get(`/places/emergency?${params.toString()}`);
     return response.data;
   },
 
-  getNearbyTransport: async (lat, lng, radius = 20000) => {
-    const response = await api.get(`/places/transport?lat=${lat}&lng=${lng}&radius=${radius}`);
+  getNearbyTransport: async ({ lat, lng, radius = 20000, search = '', pageToken = '' } = {}) => {
+    const params = new URLSearchParams();
+    params.append('lat', lat);
+    params.append('lng', lng);
+    params.append('radius', radius);
+    if (search) params.append('search', search);
+    if (pageToken) params.append('pageToken', pageToken);
+    
+    const response = await api.get(`/places/transport?${params.toString()}`);
     return response.data;
   },
 };

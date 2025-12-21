@@ -64,15 +64,16 @@ const transformPlaceResult = (
     userLat: number,
     userLng: number
 ) => {
-    // Get the photo URL (Nearby Search API only returns 1 photo)
+    // Get the photo URL if available, otherwise empty string (frontend handles placeholder)
     const image = place.photos?.[0]
         ? getPhotoUrl(place.photos[0].photo_reference, 800)
-        : "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=300";
+        : "";
 
     return {
         _id: place.place_id,
         name: place.name,
         image,
+        hasPhoto: !!place.photos?.[0],
         currentLocation: {
             lat: place.geometry.location.lat,
             lng: place.geometry.location.lng,
@@ -96,7 +97,7 @@ const transformPlaceResult = (
 // Get Nearby Hotels
 export const getNearbyHotels = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-        const { lat, lng, radius = "20000" } = req.query;
+        const { lat, lng, radius = "20000", search, pageToken } = req.query;
 
         if (!lat || !lng) {
             throw new ApiError(400, "Latitude and longitude are required");
@@ -106,7 +107,22 @@ export const getNearbyHotels = asyncHandler(
             throw new ApiError(500, "Google Places API key not configured");
         }
 
-        const url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=lodging&key=${GOOGLE_PLACES_API_KEY}`;
+        let url: string;
+        const searchQuery = (search as string)?.trim();
+        const token = (pageToken as string)?.trim();
+        const isSearchResult = !!searchQuery;
+        
+        if (token) {
+            // Pagination - use next_page_token
+            url = `${PLACES_BASE_URL}/${searchQuery ? 'textsearch' : 'nearbysearch'}/json?pagetoken=${token}&key=${GOOGLE_PLACES_API_KEY}`;
+        } else if (searchQuery) {
+            // Text Search API - search by name (no type restriction for better matching)
+            const query = encodeURIComponent(searchQuery);
+            url = `${PLACES_BASE_URL}/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&key=${GOOGLE_PLACES_API_KEY}`;
+        } else {
+            // Nearby Search API - radius-based browsing
+            url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=lodging&key=${GOOGLE_PLACES_API_KEY}`;
+        }
 
         const response = await fetch(url);
         const data = await response.json();
@@ -134,14 +150,18 @@ export const getNearbyHotels = asyncHandler(
         
         return res
             .status(200)
-            .json(new ApiResponse(200, hotelsWithAmenities, "Nearby hotels fetched successfully"));
+            .json(new ApiResponse(200, {
+                places: hotelsWithAmenities,
+                nextPageToken: data.next_page_token || null,
+                isSearchResult,
+            }, "Hotels fetched successfully"));
     }
 );
 
 // Get Nearby Tourist Places
 export const getNearbyTouristPlaces = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-        const { lat, lng, radius = "20000" } = req.query;
+        const { lat, lng, radius = "20000", search, pageToken } = req.query;
 
         if (!lat || !lng) {
             throw new ApiError(400, "Latitude and longitude are required");
@@ -151,13 +171,25 @@ export const getNearbyTouristPlaces = asyncHandler(
             throw new ApiError(500, "Google Places API key not configured");
         }
 
-        const url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=tourist_attraction&key=${GOOGLE_PLACES_API_KEY}`;
-  
+        let url: string;
+        const searchQuery = (search as string)?.trim();
+        const token = (pageToken as string)?.trim();
+        const isSearchResult = !!searchQuery;
+        
+        if (token) {
+            // Pagination
+            url = `${PLACES_BASE_URL}/${searchQuery ? 'textsearch' : 'nearbysearch'}/json?pagetoken=${token}&key=${GOOGLE_PLACES_API_KEY}`;
+        } else if (searchQuery) {
+            // Text Search API - search by name
+            const query = encodeURIComponent(searchQuery);
+            url = `${PLACES_BASE_URL}/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&key=${GOOGLE_PLACES_API_KEY}`;
+        } else {
+            // Nearby Search API - radius-based browsing
+            url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=tourist_attraction&key=${GOOGLE_PLACES_API_KEY}`;
+        }
         
         const response = await fetch(url);
         const data = await response.json();
-
-        
 
         if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
             throw new ApiError(
@@ -195,14 +227,18 @@ export const getNearbyTouristPlaces = asyncHandler(
 
         return res
             .status(200)
-            .json(new ApiResponse(200, placesWithDetails, "Nearby tourist places fetched successfully"));
+            .json(new ApiResponse(200, {
+                places: placesWithDetails,
+                nextPageToken: data.next_page_token || null,
+                isSearchResult,
+            }, "Tourist places fetched successfully"));
     }
 );
 
 // Get Nearby Restaurants (Food & Nightlife)
 export const getNearbyRestaurants = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-        const { lat, lng, radius = "20000" } = req.query;
+        const { lat, lng, radius = "20000", search, pageToken } = req.query;
 
         if (!lat || !lng) {
             throw new ApiError(400, "Latitude and longitude are required");
@@ -212,26 +248,30 @@ export const getNearbyRestaurants = asyncHandler(
             throw new ApiError(500, "Google Places API key not configured");
         }
 
-        // Fetch restaurants, cafes, bars, and night clubs
-        const types = ["restaurant", "cafe", "bar", "night_club"];
-        const allResults: PlaceResult[] = [];
+        const searchQuery = (search as string)?.trim();
+        const token = (pageToken as string)?.trim();
+        const isSearchResult = !!searchQuery;
+        let data: any = { results: [], next_page_token: null };
 
-        for (const type of types) {
-            const url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${GOOGLE_PLACES_API_KEY}`;
+        if (token) {
+            // Pagination
+            const url = `${PLACES_BASE_URL}/${searchQuery ? 'textsearch' : 'nearbysearch'}/json?pagetoken=${token}&key=${GOOGLE_PLACES_API_KEY}`;
             const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.status === "OK") {
-                allResults.push(...data.results);
-            }
+            data = await response.json();
+        } else if (searchQuery) {
+            // Text Search API - search by name only (no suffix for exact matching)
+            const query = encodeURIComponent(searchQuery);
+            const url = `${PLACES_BASE_URL}/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(url);
+            data = await response.json();
+        } else {
+            // Nearby Search API - use single type for pagination support
+            const url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=restaurant&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(url);
+            data = await response.json();
         }
 
-        // Remove duplicates by place_id
-        const uniquePlaces = allResults.filter(
-            (place, index, self) => index === self.findIndex((p) => p.place_id === place.place_id)
-        );
-
-        const places = uniquePlaces.map((place: PlaceResult) =>
+        const places = (data.results || []).map((place: PlaceResult) =>
             transformPlaceResult(place, parseFloat(lat as string), parseFloat(lng as string))
         );
 
@@ -251,14 +291,18 @@ export const getNearbyRestaurants = asyncHandler(
 
         return res
             .status(200)
-            .json(new ApiResponse(200, placesWithCategory, "Nearby restaurants fetched successfully"));
+            .json(new ApiResponse(200, {
+                places: placesWithCategory,
+                nextPageToken: data.next_page_token || null,
+                isSearchResult,
+            }, "Restaurants fetched successfully"));
     }
 );
 
 // Get Nearby Shopping
 export const getNearbyShopping = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-        const { lat, lng, radius = "20000" } = req.query;
+        const { lat, lng, radius = "20000", search, pageToken } = req.query;
 
         if (!lat || !lng) {
             throw new ApiError(400, "Latitude and longitude are required");
@@ -268,24 +312,30 @@ export const getNearbyShopping = asyncHandler(
             throw new ApiError(500, "Google Places API key not configured");
         }
 
-        const types = ["shopping_mall", "department_store", "supermarket", "clothing_store"];
-        const allResults: PlaceResult[] = [];
+        const searchQuery = (search as string)?.trim();
+        const token = (pageToken as string)?.trim();
+        const isSearchResult = !!searchQuery;
+        let data: any = { results: [], next_page_token: null };
 
-        for (const type of types) {
-            const url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${GOOGLE_PLACES_API_KEY}`;
+        if (token) {
+            // Pagination
+            const url = `${PLACES_BASE_URL}/${searchQuery ? 'textsearch' : 'nearbysearch'}/json?pagetoken=${token}&key=${GOOGLE_PLACES_API_KEY}`;
             const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.status === "OK") {
-                allResults.push(...data.results);
-            }
+            data = await response.json();
+        } else if (searchQuery) {
+            // Text Search API - search by name only
+            const query = encodeURIComponent(searchQuery);
+            const url = `${PLACES_BASE_URL}/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(url);
+            data = await response.json();
+        } else {
+            // Nearby Search API - use single type for pagination support
+            const url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=shopping_mall&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(url);
+            data = await response.json();
         }
 
-        const uniquePlaces = allResults.filter(
-            (place, index, self) => index === self.findIndex((p) => p.place_id === place.place_id)
-        );
-
-        const places = uniquePlaces.map((place: PlaceResult) =>
+        const places = (data.results || []).map((place: PlaceResult) =>
             transformPlaceResult(place, parseFloat(lat as string), parseFloat(lng as string))
         );
 
@@ -304,14 +354,18 @@ export const getNearbyShopping = asyncHandler(
 
         return res
             .status(200)
-            .json(new ApiResponse(200, placesWithCategory, "Nearby shopping fetched successfully"));
+            .json(new ApiResponse(200, {
+                places: placesWithCategory,
+                nextPageToken: data.next_page_token || null,
+                isSearchResult,
+            }, "Shopping fetched successfully"));
     }
 );
 
 // Get Nearby Emergency Services
 export const getNearbyEmergency = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-        const { lat, lng, radius = "20000" } = req.query;
+        const { lat, lng, radius = "20000", search, pageToken } = req.query;
 
         if (!lat || !lng) {
             throw new ApiError(400, "Latitude and longitude are required");
@@ -321,24 +375,30 @@ export const getNearbyEmergency = asyncHandler(
             throw new ApiError(500, "Google Places API key not configured");
         }
 
-        const types = ["hospital", "pharmacy", "police", "fire_station", "atm", "bank"];
-        const allResults: PlaceResult[] = [];
+        const searchQuery = (search as string)?.trim();
+        const token = (pageToken as string)?.trim();
+        const isSearchResult = !!searchQuery;
+        let data: any = { results: [], next_page_token: null };
 
-        for (const type of types) {
-            const url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${GOOGLE_PLACES_API_KEY}`;
+        if (token) {
+            // Pagination
+            const url = `${PLACES_BASE_URL}/${searchQuery ? 'textsearch' : 'nearbysearch'}/json?pagetoken=${token}&key=${GOOGLE_PLACES_API_KEY}`;
             const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.status === "OK") {
-                allResults.push(...data.results);
-            }
+            data = await response.json();
+        } else if (searchQuery) {
+            // Text Search API - search by name only
+            const query = encodeURIComponent(searchQuery);
+            const url = `${PLACES_BASE_URL}/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(url);
+            data = await response.json();
+        } else {
+            // Nearby Search API - use single type for pagination support
+            const url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=hospital&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(url);
+            data = await response.json();
         }
 
-        const uniquePlaces = allResults.filter(
-            (place, index, self) => index === self.findIndex((p) => p.place_id === place.place_id)
-        );
-
-        const places = uniquePlaces.map((place: PlaceResult) =>
+        const places = (data.results || []).map((place: PlaceResult) =>
             transformPlaceResult(place, parseFloat(lat as string), parseFloat(lng as string))
         );
 
@@ -363,14 +423,18 @@ export const getNearbyEmergency = asyncHandler(
 
         return res
             .status(200)
-            .json(new ApiResponse(200, placesWithCategory, "Nearby emergency services fetched successfully"));
+            .json(new ApiResponse(200, {
+                places: placesWithCategory,
+                nextPageToken: data.next_page_token || null,
+                isSearchResult,
+            }, "Emergency services fetched successfully"));
     }
 );
 
 // Get Nearby Transport
 export const getNearbyTransport = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-        const { lat, lng, radius = "20000" } = req.query;
+        const { lat, lng, radius = "20000", search, pageToken } = req.query;
 
         if (!lat || !lng) {
             throw new ApiError(400, "Latitude and longitude are required");
@@ -380,24 +444,30 @@ export const getNearbyTransport = asyncHandler(
             throw new ApiError(500, "Google Places API key not configured");
         }
 
-        const types = ["airport", "bus_station", "train_station", "subway_station", "car_rental", "gas_station"];
-        const allResults: PlaceResult[] = [];
+        const searchQuery = (search as string)?.trim();
+        const token = (pageToken as string)?.trim();
+        const isSearchResult = !!searchQuery;
+        let data: any = { results: [], next_page_token: null };
 
-        for (const type of types) {
-            const url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${GOOGLE_PLACES_API_KEY}`;
+        if (token) {
+            // Pagination
+            const url = `${PLACES_BASE_URL}/${searchQuery ? 'textsearch' : 'nearbysearch'}/json?pagetoken=${token}&key=${GOOGLE_PLACES_API_KEY}`;
             const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.status === "OK") {
-                allResults.push(...data.results);
-            }
+            data = await response.json();
+        } else if (searchQuery) {
+            // Text Search API - search by name only
+            const query = encodeURIComponent(searchQuery);
+            const url = `${PLACES_BASE_URL}/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(url);
+            data = await response.json();
+        } else {
+            // Nearby Search API - use single type for pagination support
+            const url = `${PLACES_BASE_URL}/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=transit_station&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(url);
+            data = await response.json();
         }
 
-        const uniquePlaces = allResults.filter(
-            (place, index, self) => index === self.findIndex((p) => p.place_id === place.place_id)
-        );
-
-        const places = uniquePlaces.map((place: PlaceResult) =>
+        const places = (data.results || []).map((place: PlaceResult) =>
             transformPlaceResult(place, parseFloat(lat as string), parseFloat(lng as string))
         );
 
@@ -422,6 +492,10 @@ export const getNearbyTransport = asyncHandler(
 
         return res
             .status(200)
-            .json(new ApiResponse(200, placesWithCategory, "Nearby transport fetched successfully"));
+            .json(new ApiResponse(200, {
+                places: placesWithCategory,
+                nextPageToken: data.next_page_token || null,
+                isSearchResult,
+            }, "Transport fetched successfully"));
     }
 );
