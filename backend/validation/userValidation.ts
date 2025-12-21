@@ -78,6 +78,8 @@ export const updateProfileSchema = z.object({
 
   travelStyle: z.enum(TRAVEL_STYLES as [string, ...string[]]).optional(),
 
+  profileVisibility: z.enum(["Public", "Private"] as [string, ...string[]]).optional(),
+
   languages: z.array(languageSchema).optional(),
 
   interests: z
@@ -90,3 +92,4 @@ export const updateProfileSchema = z.object({
 
   bio: z.string().max(500, "Bio cannot exceed 500 characters").optional(),
 });
+

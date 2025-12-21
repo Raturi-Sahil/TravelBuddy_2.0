@@ -1,9 +1,48 @@
+import { clerkClient } from "@clerk/clerk-sdk-node";
 import { NextFunction, Request, Response } from "express";
 
 import { User } from "../models/userModel";
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
 import asyncHandler from "../utils/asyncHandler";
+
+// Helper to enrich users with Clerk data
+async function enrichUsersWithClerkData(users: any[]) {
+  if (users.length === 0) return [];
+
+  const clerkIds = users.map((u: any) => u.clerk_id);
+  let clerkUsersMap: Record<string, { firstName: string; lastName: string; imageUrl: string }> = {};
+
+  try {
+    const clerkUsers = await clerkClient.users.getUserList({ userId: clerkIds });
+    const usersList = Array.isArray(clerkUsers) ? clerkUsers : (clerkUsers as any).data || [];
+    
+    clerkUsersMap = usersList.reduce((acc: any, clerkUser: any) => {
+      acc[clerkUser.id] = {
+        firstName: clerkUser.firstName || '',
+        lastName: clerkUser.lastName || '',
+        imageUrl: clerkUser.imageUrl || '',
+      };
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error("Error fetching Clerk users:", error);
+  }
+
+  return users.map((user: any) => {
+    const clerkData = clerkUsersMap[user.clerk_id] || { firstName: '', lastName: '', imageUrl: '' };
+    return {
+      _id: user._id,
+      clerk_id: user.clerk_id,
+      firstName: clerkData.firstName,
+      lastName: clerkData.lastName,
+      imageUrl: clerkData.imageUrl,
+      nationality: user.nationality,
+      travelStyle: user.travelStyle,
+      gender: user.gender,
+    };
+  });
+}
 
 // Send Friend Request
 export const sendFriendRequest = asyncHandler(
@@ -155,15 +194,18 @@ export const removeFriend = asyncHandler(
 export const getFriends = asyncHandler(
   async (req: Request | any, res: Response, next: NextFunction) => {
     const userId = req.user._id;
-    const user = await User.findById(userId).populate("friends", "firstName lastName imageUrl nationality travelStyle");
+    const user = await User.findById(userId).populate("friends", "clerk_id nationality travelStyle gender");
 
     if (!user) {
       throw new ApiError(404, "User not found");
     }
 
+    // Enrich with Clerk data
+    const enrichedFriends = await enrichUsersWithClerkData(user.friends as any[]);
+
     return res
       .status(200)
-      .json(new ApiResponse(200, user.friends, "Friends fetched successfully"));
+      .json(new ApiResponse(200, enrichedFriends, "Friends fetched successfully"));
   }
 );
 
@@ -172,18 +214,25 @@ export const getFriendRequests = asyncHandler(
     async (req: Request | any, res: Response, next: NextFunction) => {
       const userId = req.user._id;
       const user = await User.findById(userId)
-        .populate("friendRequests", "firstName lastName imageUrl nationality travelStyle gender")
-        .populate("sentFriendRequests", "firstName lastName imageUrl nationality travelStyle gender");
+        .populate("friendRequests", "clerk_id nationality travelStyle gender")
+        .populate("sentFriendRequests", "clerk_id nationality travelStyle gender");
   
       if (!user) {
         throw new ApiError(404, "User not found");
       }
+
+      // Enrich both lists with Clerk data
+      const [enrichedReceived, enrichedSent] = await Promise.all([
+        enrichUsersWithClerkData(user.friendRequests as any[]),
+        enrichUsersWithClerkData(user.sentFriendRequests as any[]),
+      ]);
   
       return res
         .status(200)
         .json(new ApiResponse(200, {
-            received: user.friendRequests,
-            sent: user.sentFriendRequests
+            received: enrichedReceived,
+            sent: enrichedSent
         }, "Friend requests fetched successfully"));
     }
 );
+

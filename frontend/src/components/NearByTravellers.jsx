@@ -14,6 +14,7 @@ import {
   Users,
   X} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useGoogleMaps } from '../context/GoogleMapsContext';
 import { createAuthenticatedApi, userService } from '../redux/services/api';
@@ -158,6 +159,7 @@ const darkMapStyles = [
 function AllTravelersOnMap() {
   const { isLoaded } = useGoogleMaps();
   const { getToken } = useAuth();
+  const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTraveler, setSelectedTraveler] = useState(null);
@@ -518,10 +520,10 @@ function AllTravelersOnMap() {
               {filteredTravelers.map((traveler) => (
                 <div
                   key={traveler._id}
-                  onClick={() => setSelectedTraveler(traveler)}
+                  onClick={() => setSelectedTraveler(selectedTraveler?._id === traveler._id ? null : traveler)}
                   className={`group relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 ${
                     selectedTraveler?._id === traveler._id
-                      ? 'bg-gradient-to-br from-blue-950/50 to-blue-900/30 shadow-lg shadow-blue-500/10 scale-[1.02] border-2 border-blue-500'
+                      ? 'bg-gradient-to-br from-blue-950/50 to-blue-900/30 shadow-lg shadow-blue-500/10 border-2 border-blue-500'
                       : 'bg-zinc-800/50 hover:bg-zinc-800 shadow-md hover:shadow-lg border-2 border-transparent hover:border-zinc-700'
                   }`}
                 >
@@ -578,11 +580,47 @@ function AllTravelersOnMap() {
                         </div>
                       </div>
 
-                      {/* Arrow Icon */}
+                      {/* Expand/Collapse Icon */}
                       <ChevronRight className={`h-5 w-5 text-zinc-600 group-hover:text-blue-500 transition-all ${
-                        selectedTraveler?._id === traveler._id ? 'translate-x-1 text-blue-500' : ''
+                        selectedTraveler?._id === traveler._id ? 'rotate-90 text-blue-500' : ''
                       }`} />
                     </div>
+
+                    {/* Expanded Details */}
+                    {selectedTraveler?._id === traveler._id && (
+                      <div className="mt-4 pt-4 border-t border-zinc-700/50 animate-in slide-in-from-top-2 duration-200">
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {traveler.nationality && (
+                            <span className="px-2 py-1 bg-zinc-800 text-zinc-300 rounded-lg text-xs border border-zinc-700">
+                              🌍 {traveler.nationality}
+                            </span>
+                          )}
+                          {traveler.travelStyle && (
+                            <span className="px-2 py-1 bg-zinc-800 text-zinc-300 rounded-lg text-xs border border-zinc-700">
+                              ✈️ {traveler.travelStyle}
+                            </span>
+                          )}
+                          {traveler.gender && (
+                            <span className="px-2 py-1 bg-zinc-800 text-zinc-300 rounded-lg text-xs border border-zinc-700">
+                              {traveler.gender === 'Male' ? '👨' : traveler.gender === 'Female' ? '👩' : '🧑'} {traveler.gender}
+                            </span>
+                          )}
+                        </div>
+                        {traveler.bio && (
+                          <p className="text-sm text-zinc-400 mb-3 line-clamp-2">{traveler.bio}</p>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/traveler/${traveler._id}`);
+                          }}
+                          className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                        >
+                          <Users className="w-4 h-4" />
+                          View Profile
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

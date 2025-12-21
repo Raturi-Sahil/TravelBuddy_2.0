@@ -16,9 +16,11 @@ import CreateActivity from "./pages/Activity/createActivity";
 import ActivityNearMe from "./pages/Activity/getNearByActivity";
 import PaymentStatus from "./pages/paymentStatus";
 import CompleteRegistration from "./pages/User/completeRegistration";
+import Connections from "./pages/User/Connections";
 import ProfilePage from "./pages/User/profile";
 import SignUpPage from "./pages/User/signUp";
 import SignInPage from "./pages/User/singIn";
+import TravelerProfile from "./pages/User/TravelerProfile";
 import HomePage from "./pages/userHome";
 
 function App() {
@@ -37,6 +39,7 @@ function App() {
            <ProfilePage />
          </AuthGuard>
        } />
+       <Route path="connections" element={<AuthGuard><Connections /></AuthGuard>} />
        <Route path="complete-registration" element={<CompleteRegistration />} />
        <Route path="about-us" element={<AboutUs />} />
 
@@ -48,6 +51,7 @@ function App() {
        <Route path="map/shopping" element={<AuthGuard><ShoppingEntertainment /></AuthGuard>} />
        <Route path="map/emergency" element={<AuthGuard><EmergencyServices /></AuthGuard>} />
        <Route path="map/transport" element={<AuthGuard><TransportTravel /></AuthGuard>} />
+       <Route path="traveler/:id" element={<AuthGuard><TravelerProfile /></AuthGuard>} />
 
        {/* Activity Routes */}
        <Route path="create-activity" element={<AuthGuard><CreateActivity /></AuthGuard>} />
@@ -59,7 +63,6 @@ function App() {
     </Routes>
   );
 }
-// sign up and sign in pages
 
 export default App;
 
