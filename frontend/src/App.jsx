@@ -23,6 +23,7 @@ import SignInPage from "./pages/User/singIn";
 import TravelerProfile from "./pages/User/TravelerProfile";
 import HomePage from "./pages/userHome";
 import AiTripPlanner from "./pages/AiFeatures/AiTripPlanner";
+import UserPosts from "./pages/UserPosts";
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
 
        {/* Ai Features Routes */}
        <Route path="ai-trip-planner" element={<AuthGuard><AiTripPlanner /></AuthGuard>} />
+       <Route path="user-posts" element={<AuthGuard><UserPosts /></AuthGuard>} />
      </Route>
 
     </Routes>

@@ -199,7 +199,7 @@ function NavBar() {
         { name: 'Transport', path: '/map/transport', icon: Plane },
       ]
     },
-    { name: 'Travel Stories', path: '/travel-stories', icon: Camera },
+    { name: 'Traveler Posts', path: '/user-posts', icon: Camera },
     { name: 'Activities', path: '/activities', icon: Calendar },
     { name: 'About Us', path: '/about-us', icon: Info },
   ];
