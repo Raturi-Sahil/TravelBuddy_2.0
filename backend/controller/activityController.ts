@@ -341,6 +341,12 @@ export const joinActivity = asyncHandler(
        );
     }
 
+    /* 👇 PAYMENT CHECK GOES HERE (FUTURE)
+   - You already know activity exists
+   - You know userId
+   - Before any state change
+    */
+
     if(activity.participants.some(
       (participantId) => participantId.toString() === userId.toString()
     )) {
@@ -431,6 +437,60 @@ export const leaveActivity = asyncHandler(
             200, 
             updatedActivity,
             "Activity left successfully"
+          )
+        );
+  } 
+);
+
+export const deleteActivity = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => { 
+    if(!req.user) {
+        throw new ApiError(
+          401, 
+          "Unauthorized"
+       );
+    }
+
+    const userId = req.user._id;
+
+    const {id} = req.params;
+
+    //Validate the objectId.
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+       throw new ApiError(
+          400, 
+          "Invalid activity id"
+       );
+    }
+
+    //Fetch activity
+    const activity =  await Activity.findById(id);
+
+    //Handle, if the activity not found.
+    if(!activity) {
+      throw new ApiError(
+          404, 
+          "Requested Activity doesn't exist"
+       );
+    }
+
+    if(activity.createdBy.toString() !== userId.toString()) {
+      throw new ApiError(
+          403, 
+          "Not the creater"
+       );
+    }
+
+
+    //delete the activity
+    await Activity.findByIdAndDelete(id);
+
+    //Response
+    return res.status(200).json(
+          new ApiResponse(
+            200, 
+            null,
+            "Activity deleted successfully"
           )
         );
   } 
