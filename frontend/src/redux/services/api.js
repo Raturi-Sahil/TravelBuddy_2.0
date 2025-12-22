@@ -272,6 +272,11 @@ export const activityService = {
   getActivities: async (authApi) => {
     const response = await authApi.get('/activities');
     return response.data;
+  },
+
+  getActivityById: async (authApi, id) => {
+    const response = await authApi.get(`/activities/${id}`);
+    return response.data;
   }
 };
 
