@@ -42,6 +42,22 @@ export const fetchActivities = createAsyncThunk(
   }
 );
 
+// Async Thunk to fetch a single activity by ID
+export const fetchActivityById = createAsyncThunk(
+  'activity/fetchById',
+  async ({ getToken, id }, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await activityService.getActivityById(authApi, id);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to fetch activity'
+      );
+    }
+  }
+);
+
 const activitySlice = createSlice({
   name: 'activity',
   initialState,
@@ -87,6 +103,21 @@ const activitySlice = createSlice({
       .addCase(fetchActivities.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || 'Failed to fetch activities';
+      })
+
+      // Fetch Single Activity
+      .addCase(fetchActivityById.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchActivityById.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentActivity = action.payload.data;
+        state.error = null;
+      })
+      .addCase(fetchActivityById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to fetch activity';
       });
   },
 });
