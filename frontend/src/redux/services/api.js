@@ -280,5 +280,19 @@ export const activityService = {
   }
 };
 
+// AI Service functions
+export const aiService = {
+  generateTripPlan: async (authApi, tripData) => {
+    const response = await authApi.post('/ai/plan-trip', tripData);
+    return response.data;
+  },
+
+  generateDescription: async (authApi, activityData) => {
+    const response = await authApi.post('/ai/generate-description', activityData);
+    return response.data;
+  }
+};
+
 export default api;
+
 

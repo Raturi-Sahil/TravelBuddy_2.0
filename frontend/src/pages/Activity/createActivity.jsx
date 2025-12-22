@@ -1,13 +1,12 @@
 import { Autocomplete,GoogleMap, Marker } from "@react-google-maps/api";
 import { useAuth } from "@clerk/clerk-react";
-import axios from "axios";
 import { AlignLeft, Clock, DollarSign, Image as ImageIcon, Loader2,MapPin, Mic, MicOff, Plus, Search, Send, Sparkles, Users, Video, X } from "lucide-react";
 import React, { useCallback, useEffect,useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { createActivity } from "../../redux/slices/ActivitySlice";
-import { useDispatch } from "react-redux";
+import { generateDescription } from "../../redux/slices/aiSlice";
 
 import { useGoogleMaps } from "../../context/GoogleMapsContext";
 
@@ -45,8 +44,8 @@ export default function CreateActivity() {
   const navigate = useNavigate();
   const { getToken } = useAuth();
   const { profile } = useSelector((state) => state.user);
+  const { isGenerating } = useSelector((state) => state.ai);
   const [isLoading, setIsLoading] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const mapRef = useRef(null);
   const dispatch = useDispatch();
@@ -56,7 +55,9 @@ export default function CreateActivity() {
 
   const [formData, setFormData] = useState({
     title: "", description: "", category: "", date: "", startTime: "", endTime: "",
-    price: "", foreignerPrice: "", maxCapacity: "", gender: "Any", location: null, photos: [], videos: []
+    price: "", foreignerPrice: "", maxCapacity: "", gender: "Any",
+    location: null, // {lat, lng, address}
+    photos: [], videos: []
   });
 
   const { isLoaded } = useGoogleMaps();
@@ -71,12 +72,16 @@ export default function CreateActivity() {
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
     if (place?.geometry?.location) {
-      const loc = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
+      const loc = {
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng(),
+        address: place.formatted_address || place.name || ''
+      };
       setFormData(prev => ({ ...prev, location: loc }));
-      setCenter(loc);
+      setCenter({ lat: loc.lat, lng: loc.lng });
     } else toast.error("Please select a location from the dropdown");
   };
-  const onMapClick = useCallback((e) => setFormData(prev => ({ ...prev, location: { lat: e.latLng.lat(), lng: e.latLng.lng() }})), []);
+  const onMapClick = useCallback((e) => setFormData(prev => ({ ...prev, location: { lat: e.latLng.lat(), lng: e.latLng.lng(), address: '' }})), []);
 
   const handlePhotoSelect = (e) => {
     if (e.target.files?.length) {
@@ -109,14 +114,32 @@ export default function CreateActivity() {
 
   const handleGenerateDescription = async () => {
     if (!formData.title || !formData.category) return toast.error("Title and Category required");
-    setIsGenerating(true);
+
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/ai/generate-description`, {
-        ...formData, location: formData.location ? `${formData.location.lat}, ${formData.location.lng}` : undefined
-      });
-      if (data.data) { setFormData(prev => ({ ...prev, description: data.data })); toast.success("Description generated!"); }
-    } catch (err) { toast.error(err.response?.data?.message || "Generation failed"); }
-    finally { setIsGenerating(false); }
+      // Prepare activity data with address instead of coordinates
+      const activityData = {
+        title: formData.title,
+        category: formData.category,
+        ...(formData.location?.address && { location: formData.location.address }),
+        ...(formData.date && { date: formData.date }),
+        ...(formData.startTime && { startTime: formData.startTime }),
+        ...(formData.price && { price: formData.price }),
+        ...(formData.maxCapacity && { maxCapacity: formData.maxCapacity }),
+      };
+
+      const result = await dispatch(generateDescription({
+        getToken,
+        activityData
+      })).unwrap();
+
+      // Access result.data to get the actual description text
+      if (result && result.data) {
+        setFormData(prev => ({ ...prev, description: result.data }));
+        toast.success("Description generated!");
+      }
+    } catch (err) {
+      toast.error(err || "Generation failed");
+    }
   };
 
   const handleSubmit = async (e) => {

@@ -4,6 +4,8 @@ import {
   Bed,
   Bell,
   Calendar,
+  CalendarDays,
+  Camera,
   ChevronDown,
   Compass,
   Globe,
@@ -13,11 +15,13 @@ import {
   LogOut,
   MapPin,
   Menu,
+  MessageSquare,
   Plane,
   Plus,
   Settings,
   ShieldAlert,
   ShoppingBag,
+  Sparkles,
   Trash2,
   User,
   Users,
@@ -180,6 +184,7 @@ function NavBar() {
 
   const navLinks = [
     { name: 'Discover', path: '/', icon: Compass },
+    { name: 'Ai Trip Planner', path: '/ai-trip-planner', icon: Sparkles },
     {
       name: 'Map',
       path: '/map',
@@ -194,6 +199,7 @@ function NavBar() {
         { name: 'Transport', path: '/map/transport', icon: Plane },
       ]
     },
+    { name: 'Travel Stories', path: '/travel-stories', icon: Camera },
     { name: 'Activities', path: '/activities', icon: Calendar },
     { name: 'About Us', path: '/about-us', icon: Info },
   ];
@@ -208,34 +214,38 @@ function NavBar() {
 
   return (
     <div className={`fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-500 ease-in-out ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
-    <nav className="w-full max-w-7xl pointer-events-auto bg-white/80 backdrop-blur-xl shadow-lg border border-gray-100/50 rounded-2xl transition-all duration-300">
+    <nav className="w-full max-w-[95%] pointer-events-auto bg-white/80 backdrop-blur-xl shadow-lg border border-gray-100/50 rounded-2xl transition-all duration-300">
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center h-20 justify-between">
 
-          <button
-            onClick={() => handleNavigation('/')}
-            className="flex items-center space-x-3 group"
-          >
-            <div className="bg-gradient-to-tr from-amber-500 to-orange-600 p-2.5 rounded-xl shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">
-              <Globe className="text-white" size={24} strokeWidth={2.5} />
-            </div>
-            <div className="flex flex-col items-start">
-              <span className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight">
-                TravelBuddy
-              </span>
-              <span className="text-[10px] font-medium text-amber-600 tracking-wider uppercase ml-0.5">Find your companion</span>
-            </div>
-          </button>
+          {/* Left Section: Logo + Location */}
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => handleNavigation('/')}
+              className="flex items-center space-x-3 group flex-shrink-0"
+            >
+              <div className="bg-gradient-to-tr from-amber-500 to-orange-600 p-2.5 rounded-xl shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">
+                <Globe className="text-white" size={24} strokeWidth={2.5} />
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight">
+                  TravelBuddy
+                </span>
+                <span className="text-[10px] font-medium text-amber-600 tracking-wider uppercase ml-0.5">Find your companion</span>
+              </div>
+            </button>
 
-          {isSignedIn && (
-            <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-600 bg-gray-50/80 px-4 py-2 rounded-full border border-gray-100 hover:bg-white hover:shadow-md transition-all duration-300 group cursor-default">
-              <MapPin size={16} className="text-amber-500 group-hover:animate-bounce" />
-              <span className="truncate max-w-[200px] font-medium">{currentLocationName}</span>
-            </div>
-          )}
+             {isSignedIn && (
+              <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-600 bg-gray-50/80 px-4 py-2 rounded-full border border-gray-100 hover:bg-white hover:shadow-md transition-all duration-300 group cursor-default">
+                <MapPin size={16} className="text-amber-500 group-hover:animate-bounce" />
+                <span className="truncate max-w-[200px] font-medium">{currentLocationName}</span>
+              </div>
+            )}
+          </div>
 
-          <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
+          {/* Center Section: Navigation Links (Excluding AI Trip Planner) */}
+          <div className="hidden md:flex items-center justify-center space-x-8">
+            {navLinks.filter(link => link.name !== 'Ai Trip Planner').map((link) => (
               link.children ? (
                 <div key={link.name} className="relative group z-50">
                   <button className={`flex items-center space-x-1.5 py-2 text-sm font-medium transition-colors duration-200 ${
@@ -284,6 +294,18 @@ function NavBar() {
                 </button>
               )
             ))}
+          </div>
+
+          {/* Right Actions: AI Planner, Create Activity, Profile */}
+          <div className="hidden md:flex items-center space-x-4">
+             {/* Ai Trip Planner Button - Placed here next to Create Activity */}
+             <button
+                onClick={() => handleNavigation('/ai-trip-planner')}
+                className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-violet-600 text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-sm group"
+              >
+                <Sparkles size={18} className="group-hover:rotate-12 transition-transform duration-300" />
+                <span className="hidden xl:inline">Ai Trip Planner</span>
+              </button>
 
             {isSignedIn ? (
               <div className="flex items-center space-x-4">
@@ -366,7 +388,7 @@ function NavBar() {
                 </div>
               </div>
             ) : (
-              <div className="hidden md:flex items-center space-x-4">
+              <div className="flex items-center space-x-4">
                 <button
                   onClick={() => handleLogin('/sign-in')}
                   className="text-gray-600 hover:text-gray-900 font-semibold text-sm transition-colors py-2 px-4 hover:bg-gray-50 rounded-lg"
@@ -381,14 +403,14 @@ function NavBar() {
                 </button>
               </div>
             )}
+          </div>
 
             <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+            className="md:hidden p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors ml-auto"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-          </div>
         </div>
 
         {/* Mobile menu */}

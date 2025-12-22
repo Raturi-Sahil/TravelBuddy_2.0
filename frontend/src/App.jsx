@@ -22,6 +22,7 @@ import SignUpPage from "./pages/User/signUp";
 import SignInPage from "./pages/User/singIn";
 import TravelerProfile from "./pages/User/TravelerProfile";
 import HomePage from "./pages/userHome";
+import AiTripPlanner from "./pages/AiFeatures/AiTripPlanner";
 
 function App() {
   return (
@@ -59,7 +60,11 @@ function App() {
        <Route path="subscription" element={<AuthGuard><BuySubscription /></AuthGuard>} />
        <Route path="payment-status" element={<AuthGuard><PaymentStatus /></AuthGuard>} />
        <Route path="activity/:id" element={<AuthGuard><ActivityDetails /></AuthGuard>} />
+
+       {/* Ai Features Routes */}
+       <Route path="ai-trip-planner" element={<AuthGuard><AiTripPlanner /></AuthGuard>} />
      </Route>
+
     </Routes>
   );
 }
