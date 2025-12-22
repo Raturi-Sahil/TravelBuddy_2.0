@@ -149,7 +149,7 @@ export const createActivity = asyncHandler(
 
 
 export const getActivities = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => { 
+  async (req: Request, res: Response) => { 
   
     const now = new Date();
 
@@ -169,6 +169,268 @@ export const getActivities = asyncHandler(
             200, 
             activities,
             "Activities fetched successfully"
+          )
+        );
+  } 
+);
+
+export const getActivityById = asyncHandler(
+  async (req: Request, res: Response) => { 
+  
+    const {id} = req.params;
+
+    //Validate the objectId.
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+       throw new ApiError(
+          400, 
+          "Invalid activity id"
+       );
+    }
+
+    //Fetch activity
+    const activity =  await Activity.findById(id).populate("createdBy", "name email mobile profileImage").lean();
+
+    //Handle, if the activity not found.
+    if(!activity) {
+      throw new ApiError(
+          404, 
+          "Requested Activity doesn't exist"
+       );
+    }
+
+    //Response
+    return res.status(200).json(
+          new ApiResponse(
+            200, 
+            activity,
+            "Activity fetched successfully"
+          )
+        );
+  } 
+);
+
+export const getParticipants = asyncHandler(
+  async (req: Request, res: Response) => { 
+  
+    const {id} = req.params;
+
+    //Validate the objectId.
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+       throw new ApiError(
+          400, 
+          "Invalid activity id"
+       );
+    }
+
+    //Fetch activity
+    const activity =  await Activity.findById(id)
+    .select("participants")
+    .populate("participants", "name profileImage")
+    .lean();
+
+    //Handle, if the activity not found.
+    if(!activity) {
+      throw new ApiError(
+          404, 
+          "Requested Activity doesn't exist"
+       );
+    }
+
+    //Response
+    return res.status(200).json(
+          new ApiResponse(
+            200, 
+            activity.participants,
+            "participants fetched successfully"
+          )
+        );
+  } 
+);
+
+export const updateActivity = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => { 
+    if(!req.user) {
+        throw new ApiError(
+          401, 
+          "Unauthorized"
+       );
+    }
+
+    const updateActivityZodSchema = activityZodSchema.partial();
+    const validatedData = updateActivityZodSchema.parse(req.body);
+
+    const userId = req.user._id;
+
+    const {id} = req.params;
+
+    //Validate the objectId.
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+       throw new ApiError(
+          400, 
+          "Invalid activity id"
+       );
+    }
+
+    //Fetch activity
+    const activity =  await Activity.findById(id);
+
+    //Handle, if the activity not found.
+    if(!activity) {
+      throw new ApiError(
+          404, 
+          "Requested Activity doesn't exist"
+       );
+    }
+
+    if(activity.createdBy.toString() !== userId.toString()) {
+      throw new ApiError(
+          403, 
+          "You are not allowed to update this activity"
+       );
+    }
+
+    //update the activity
+    const updatedActivity = await Activity.findByIdAndUpdate(
+        id,
+        validatedData,
+        {new: true, runValidators: true}
+    )
+    .populate("createdBy", "name email mobile profileImage")
+    .lean();
+
+    //Response
+    return res.status(200).json(
+          new ApiResponse(
+            200, 
+            updatedActivity,
+            "Activity updated successfully"
+          )
+        );
+  } 
+);
+
+export const joinActivity = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => { 
+    if(!req.user) {
+        throw new ApiError(
+          401, 
+          "Unauthorized"
+       );
+    }
+
+    const userId = req.user._id;
+
+    const {id} = req.params;
+
+    //Validate the objectId.
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+       throw new ApiError(
+          400, 
+          "Invalid activity id"
+       );
+    }
+
+    //Fetch activity
+    const activity =  await Activity.findById(id);
+
+    //Handle, if the activity not found.
+    if(!activity) {
+      throw new ApiError(
+          404, 
+          "Requested Activity doesn't exist"
+       );
+    }
+
+    if(activity.participants.some(
+      (participantId) => participantId.toString() === userId.toString()
+    )) {
+      throw new ApiError(
+          409, 
+          "conflict"
+       );
+    }
+
+    //check if space is available
+    if (activity.participants.length >= activity.maxCapacity) {
+      throw new ApiError(409, "Activity is already full");
+    }
+
+    //update the activity
+    const updatedActivity = await Activity.findByIdAndUpdate(
+        id,
+        { $addToSet: { participants: userId } },
+        {new: true, runValidators: true}
+    )
+    .populate("createdBy", "name email mobile profileImage")
+    .lean();
+
+    //Response
+    return res.status(200).json(
+          new ApiResponse(
+            200, 
+            updatedActivity,
+            "Activity joined successfully"
+          )
+        );
+  } 
+);
+
+export const leaveActivity = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => { 
+    if(!req.user) {
+        throw new ApiError(
+          401, 
+          "Unauthorized"
+       );
+    }
+
+    const userId = req.user._id;
+
+    const {id} = req.params;
+
+    //Validate the objectId.
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+       throw new ApiError(
+          400, 
+          "Invalid activity id"
+       );
+    }
+
+    //Fetch activity
+    const activity =  await Activity.findById(id);
+
+    //Handle, if the activity not found.
+    if(!activity) {
+      throw new ApiError(
+          404, 
+          "Requested Activity doesn't exist"
+       );
+    }
+
+    if(!activity.participants.some(
+      (participantId) => participantId.toString() === userId.toString()
+    )) {
+      throw new ApiError(
+          409, 
+          "conflict"
+       );
+    }
+
+    //update the activity
+    const updatedActivity = await Activity.findByIdAndUpdate(
+        id,
+        { $pull: { participants: userId } },
+        {new: true, runValidators: true}
+    )
+    .populate("createdBy", "name email mobile profileImage")
+    .lean();
+
+    //Response
+    return res.status(200).json(
+          new ApiResponse(
+            200, 
+            updatedActivity,
+            "Activity left successfully"
           )
         );
   } 
