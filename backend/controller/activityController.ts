@@ -495,3 +495,191 @@ export const deleteActivity = asyncHandler(
         );
   } 
 );
+
+export const inviteUsers = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => { 
+    if(!req.user) {
+        throw new ApiError(
+          401, 
+          "Unauthorized"
+       );
+    }
+
+    const creatorId = req.user._id;
+
+    const {id} = req.params;
+
+    //Validate the objectId.
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+       throw new ApiError(
+          400, 
+          "Invalid activity id"
+       );
+    }
+
+    //Fetch activity
+    const activity =  await Activity.findById(id);
+
+    //Handle, if the activity not found.
+    if(!activity) {
+      throw new ApiError(
+          404, 
+          "Requested Activity doesn't exist"
+       );
+    }
+
+    // check if user is the creator of the activity.
+    if(activity.createdBy.toString() !== creatorId.toString()) {
+        throw new ApiError(
+            403, 
+            "Not allowed to invite users"
+        );   
+    }
+
+    const userIds = req.body.userIds;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      throw new ApiError(400, "userIds must be a non-empty array");
+    }
+
+    for(const userId of userIds) {
+        // if the user Id is invlid 
+        if(!mongoose.Types.ObjectId.isValid(userId)) {
+          throw new ApiError(
+            400,
+            "Invalid user id"
+          );
+        }
+        //Check if the user Exists or not
+        const userExists = await User.exists({_id: userId});
+        if(!userExists) {
+            throw new ApiError (
+              404,
+              "user no found"
+            );
+        }
+
+        // if the user is already a participant in the activity.
+        if(activity.participants.some(
+          (pid) => pid.toString() === userId.toString()
+        )) {
+            throw new ApiError(
+              409,
+              "user already a participant"
+          );
+        }
+        //If user is already invited
+        if(activity.invitedUsers.some(
+          (invite) => invite.userId.toString() === userId.toString()
+        )) {
+            throw new ApiError(
+              409,
+              "User already invited"
+          );
+        }
+
+    }
+
+    await Activity.findByIdAndUpdate(
+      id,
+      {
+        $addToSet: {
+          invitedUsers: userIds.map((uid)=> ({
+              userId: uid,
+              status: "Pending"
+          }))
+        }
+      },
+      {new: true}
+    );
+
+    //Response
+    return res.status(200).json(
+          new ApiResponse(
+            200, 
+            null,
+            "Invite sent successfully"
+          )
+        );
+  } 
+);
+
+export const respondToInvite = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => { 
+    if(!req.user) {
+        throw new ApiError(
+          401, 
+          "Unauthorized"
+       );
+    }
+
+    const userId = req.user._id;
+
+    const {id} = req.params;
+
+    //Validate the objectId.
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+       throw new ApiError(
+          400, 
+          "Invalid activity id"
+       );
+    }
+
+
+    //Fetch activity
+    const activity =  await Activity.findById(id);
+
+    //Handle, if the activity not found.
+    if(!activity) {
+      throw new ApiError(
+          404, 
+          "Requested Activity doesn't exist"
+       );
+    }
+
+    const invite = activity.invitedUsers.find(
+        (invite) => invite.userId.toString() === userId.toString()
+    );
+
+    if (!invite) throw new ApiError(404, "Invite not found");
+
+    if (invite.status !== "Pending") {
+      throw new ApiError(409, "Invite already responded");
+    }
+    
+    const {status} = req.body;
+
+    if(status == "Accepted") {
+        //Check if the activity is full
+        if (activity.participants.length >= activity.maxCapacity) {
+          throw new ApiError(409, "Activity is full");
+        }
+
+        await Activity.findByIdAndUpdate(
+          {_id: id, "invitedUsers.userId": userId},
+          {$set: {"invitedUsers.$.status": "Accepted"}}
+        );
+        await Activity.findByIdAndUpdate(
+          id,
+          {
+            $addToSet: {participants: userId}
+          }
+        )
+    } else {
+        await Activity.findByIdAndUpdate(
+          {_id: id, "invitedUsers.userId": userId},
+          {$set: {"invitedUsers.$.status": "Rejected"}}
+        );
+    }
+
+    //Response
+    return res.status(200).json(
+          new ApiResponse(
+            200, 
+            status,
+            "updated invite status"
+          )
+        );
+  } 
+);
+
