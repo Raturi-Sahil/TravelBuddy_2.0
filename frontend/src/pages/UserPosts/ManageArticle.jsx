@@ -15,82 +15,12 @@ import {
   Users,
   X
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAuth } from '@clerk/clerk-react';
 
-// Dummy user articles data
-const dummyUserArticles = [
-  {
-    id: 1,
-    title: "My Amazing Journey Through Japan",
-    content: "Japan has always been on my bucket list, and finally experiencing it was beyond my wildest dreams. From the bustling streets of Tokyo to the serene temples of Kyoto, every moment was magical...",
-    category: "Destination Guide",
-    coverImage: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=800",
-    visibility: "Public",
-    status: "Published",
-    createdAt: "2025-01-20",
-    views: 1234,
-    likes: 89,
-    comments: 23,
-    readTime: "8 min read"
-  },
-  {
-    id: 2,
-    title: "Budget Travel Tips for Southeast Asia",
-    content: "Traveling through Southeast Asia doesn't have to break the bank. Here are my tried and tested tips for exploring this beautiful region on a budget...",
-    category: "Travel Tips",
-    coverImage: "https://images.unsplash.com/photo-1528181304800-259b08848526?w=800",
-    visibility: "Public",
-    status: "Published",
-    createdAt: "2025-01-18",
-    views: 2156,
-    likes: 167,
-    comments: 45,
-    readTime: "6 min read"
-  },
-  {
-    id: 3,
-    title: "Working Remotely from Bali - A Digital Nomad's Guide",
-    content: "Bali has become a hotspot for digital nomads, and for good reason. Fast internet, affordable living, and stunning beaches make it the perfect remote work destination...",
-    category: "Digital Nomad",
-    coverImage: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800",
-    visibility: "Friends",
-    status: "Draft",
-    createdAt: "2025-01-15",
-    views: 543,
-    likes: 34,
-    comments: 12,
-    readTime: "10 min read"
-  },
-  {
-    id: 4,
-    title: "Food Adventures in Vietnam",
-    content: "Vietnamese cuisine is one of the world's best kept secrets. From pho to banh mi, every dish tells a story...",
-    category: "Food & Culture",
-    coverImage: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800",
-    visibility: "Public",
-    status: "Published",
-    createdAt: "2025-01-12",
-    views: 3421,
-    likes: 298,
-    comments: 67,
-    readTime: "7 min read"
-  },
-  {
-    id: 5,
-    title: "Photography Tips from My Europe Trip",
-    content: "Capturing the perfect travel photo takes more than just having a good camera. Here's what I learned photographing across Europe...",
-    category: "Photography",
-    coverImage: "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=800",
-    visibility: "Private",
-    status: "Draft",
-    createdAt: "2025-01-10",
-    views: 0,
-    likes: 0,
-    comments: 0,
-    readTime: "9 min read"
-  }
-];
+import { fetchMyArticles, updateArticle, deleteArticle } from '../../redux/slices/articleSlice';
 
 // Edit Modal Component
 function EditArticleModal({ article, onClose, onSave }) {
@@ -236,15 +166,22 @@ function EditArticleModal({ article, onClose, onSave }) {
 }
 
 function ManageArticle() {
-  const [articles, setArticles] = useState(dummyUserArticles);
+  const dispatch = useDispatch();
+  const { getToken } = useAuth();
+
+  const { myArticles, isLoading, isUpdating, isDeleting, error } = useSelector((state) => state.article);
   const [editingArticle, setEditingArticle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVisibility, setFilterVisibility] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
-  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Fetch user's articles on mount
+  useEffect(() => {
+    dispatch(fetchMyArticles({ getToken, page: 1, limit: 100 }));
+  }, [dispatch, getToken]);
 
   // Filter articles
-  const filteredArticles = articles.filter(article => {
+  const filteredArticles = myArticles.filter(article => {
     const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       article.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
       article.category.toLowerCase().includes(searchQuery.toLowerCase());
@@ -257,37 +194,45 @@ function ManageArticle() {
 
   // Calculate stats
   const stats = {
-    total: articles.length,
-    published: articles.filter(a => a.status === 'Published').length,
-    draft: articles.filter(a => a.status === 'Draft').length,
-    public: articles.filter(a => a.visibility === 'Public').length,
-    totalViews: articles.reduce((sum, a) => sum + a.views, 0),
-    totalLikes: articles.reduce((sum, a) => sum + a.likes, 0),
+    total: myArticles.length,
+    published: myArticles.filter(a => a.status === 'Published').length,
+    draft: myArticles.filter(a => a.status === 'Draft').length,
+    public: myArticles.filter(a => a.visibility === 'Public').length,
+    totalViews: myArticles.reduce((sum, a) => sum + (a.views || 0), 0),
+    totalLikes: myArticles.reduce((sum, a) => sum + (a.likesCount || 0), 0),
   };
 
   // Handle edit
-  const handleEditArticle = (updatedData) => {
-    setArticles(articles.map(article =>
-      article.id === editingArticle.id
-        ? { ...article, ...updatedData }
-        : article
-    ));
-    toast.success('Article updated successfully! ✨');
-    setEditingArticle(null);
+  const handleEditArticle = async (updatedData) => {
+    try {
+      await dispatch(updateArticle({
+        getToken,
+        id: editingArticle._id,
+        updateData: updatedData
+      })).unwrap();
+
+      toast.success('Article updated successfully! ✨');
+      setEditingArticle(null);
+
+      // Refresh articles
+      dispatch(fetchMyArticles({ getToken, page: 1, limit: 100 }));
+    } catch (err) {
+      toast.error(err || 'Failed to update article');
+    }
   };
 
   // Handle delete
-  const handleDeleteArticle = (articleId) => {
+  const handleDeleteArticle = async (articleId) => {
     if (!window.confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
       return;
     }
 
-    setIsDeleting(true);
-    setTimeout(() => {
-      setArticles(articles.filter(a => a.id !== articleId));
+    try {
+      await dispatch(deleteArticle({ getToken, id: articleId })).unwrap();
       toast.success('Article deleted successfully! 🗑️');
-      setIsDeleting(false);
-    }, 500);
+    } catch (err) {
+      toast.error(err || 'Failed to delete article');
+    }
   };
 
   // Format date
@@ -391,8 +336,33 @@ function ManageArticle() {
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-20">
+            <Loader2 className="animate-spin mx-auto mb-4 text-amber-600" size={48} />
+            <p className="text-gray-600 text-lg">Loading your articles...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="text-center py-20">
+            <div className="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <FileText className="text-red-600" size={32} />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Articles</h3>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <button
+              onClick={() => dispatch(fetchMyArticles({ getToken, page: 1, limit: 100 }))}
+              className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 font-semibold"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Articles Grid */}
-        {filteredArticles.length === 0 ? (
+        {!isLoading && !error && filteredArticles.length === 0 ? (
           <div className="text-center py-20">
             <div className="bg-amber-100 w-20 h-20 rounded-full flex items-center justify-center mb-4 mx-auto">
               <FileText className="text-amber-600" size={32} />
@@ -408,7 +378,7 @@ function ManageArticle() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredArticles.map((article) => (
               <div
-                key={article.id}
+                key={article._id}
                 className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group"
               >
                 {/* Cover Image */}
@@ -451,7 +421,7 @@ function ManageArticle() {
                       <Edit size={20} />
                     </button>
                     <button
-                      onClick={() => handleDeleteArticle(article.id)}
+                      onClick={() => handleDeleteArticle(article._id)}
                       disabled={isDeleting}
                       className="p-3 bg-white rounded-full hover:bg-red-500 hover:text-white transition-all duration-200 transform hover:scale-110 disabled:opacity-50"
                     >
@@ -481,15 +451,15 @@ function ManageArticle() {
                   <div className="flex items-center gap-4 text-sm pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-1 text-gray-600">
                       <Eye size={16} className="text-blue-500" />
-                      <span className="font-semibold">{article.views}</span>
+                      <span className="font-semibold">{article.views || 0}</span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-600">
                       <Heart size={16} className="text-red-500" />
-                      <span className="font-semibold">{article.likes}</span>
+                      <span className="font-semibold">{article.likesCount || 0}</span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-600">
                       <MessageCircle size={16} className="text-green-500" />
-                      <span className="font-semibold">{article.comments}</span>
+                      <span className="font-semibold">{article.commentsCount || 0}</span>
                     </div>
                   </div>
 
@@ -508,9 +478,9 @@ function ManageArticle() {
         )}
 
         {/* Result Count */}
-        {filteredArticles.length > 0 && (
+        {filteredArticles.length > 0 && !isLoading && (
           <div className="text-center mt-8 text-sm text-gray-500">
-            Showing {filteredArticles.length} of {articles.length} articles
+            Showing {filteredArticles.length} of {myArticles.length} articles
           </div>
         )}
       </div>
