@@ -12,6 +12,7 @@ import TouristPlaces from "./components/TouristPlaces";
 import TransportTravel from "./components/TransportTravel";
 import AboutUs from "./pages/aboutUs";
 import ActivityDetails from "./pages/Activity/ActivityDetails";
+import ActivityPaymentStatus from "./pages/Activity/ActivityPaymentStatus";
 import BuySubscription from "./pages/Activity/buySubscription";
 import CreateActivity from "./pages/Activity/createActivity";
 import ActivityNearMe from "./pages/Activity/getNearByActivity";
@@ -78,6 +79,7 @@ function App() {
         <Route path="activities" element={<AuthGuard><ActivityNearMe /></AuthGuard>} />
         <Route path="subscription" element={<AuthGuard><BuySubscription /></AuthGuard>} />
         <Route path="payment-status" element={<AuthGuard><PaymentStatus /></AuthGuard>} />
+        <Route path="activity-payment-status" element={<AuthGuard><ActivityPaymentStatus /></AuthGuard>} />
         <Route path="activity/:id" element={<AuthGuard><ActivityDetails /></AuthGuard>} />
 
         {/* Ai Features Routes */}

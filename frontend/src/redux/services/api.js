@@ -279,16 +279,27 @@ export const activityService = {
     return response.data;
   },
 
-  getNearbyActivities: async (authApi, { lat, lng, radius = 50000, search = '', page = 1, limit = 50 } = {}) => {
-    const params = new URLSearchParams();
-    if (lat !== undefined && lat !== null) params.append('lat', lat);
-    if (lng !== undefined && lng !== null) params.append('lng', lng);
-    if (radius) params.append('radius', radius);
-    if (search) params.append('search', search);
-    params.append('page', page);
-    params.append('limit', limit);
+  // Create payment order for joining activity
+  createPaymentOrder: async (authApi, activityId) => {
+    const response = await authApi.post(`/activities/${activityId}/payment`);
+    return response.data;
+  },
 
-    const response = await authApi.get(`/activities/nearby?${params.toString()}`);
+  // Verify payment and join activity
+  verifyPayment: async (authApi, { orderId, activityId }) => {
+    const response = await authApi.post('/activities/payment/verify', { orderId, activityId });
+    return response.data;
+  },
+
+  // Join activity directly (for free activities or after payment)
+  joinActivity: async (authApi, activityId) => {
+    const response = await authApi.post(`/activities/${activityId}/join`);
+    return response.data;
+  },
+
+  // Leave activity
+  leaveActivity: async (authApi, activityId) => {
+    const response = await authApi.post(`/activities/${activityId}/leave`);
     return response.data;
   }
 };

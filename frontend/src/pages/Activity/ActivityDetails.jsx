@@ -19,12 +19,14 @@ import {
   Users,
   Video} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '@clerk/clerk-react';
+import { load } from '@cashfreepayments/cashfree-js';
+import toast from 'react-hot-toast';
 
 import { useGoogleMaps } from '../../context/GoogleMapsContext';
-import { fetchActivityById } from '../../redux/slices/ActivitySlice';
+import { fetchActivityById, createActivityPayment } from '../../redux/slices/ActivitySlice';
 
 const getEmbedUrl = (url) => {
   if (!url) return null;
@@ -45,21 +47,74 @@ const mapContainerStyle = {
 
 function IndividualActivity() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { getToken } = useAuth();
 
-  const { currentActivity, isLoading, error } = useSelector((state) => state.activity);
+  const { currentActivity, isLoading, error, isPaymentProcessing, paymentSessionId } = useSelector((state) => state.activity);
+  const { profile: currentUser } = useSelector((state) => state.user);
 
   const [isJoined, setIsJoined] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
   const { isLoaded } = useGoogleMaps();
 
+  let cashfree;
+  useEffect(() => {
+    const initializeSDK = async () => {
+      cashfree = await load({
+        mode: "sandbox" // Change to "production" for live
+      });
+    };
+    initializeSDK();
+  }, []);
+
   useEffect(() => {
     if (id) {
       dispatch(fetchActivityById({ getToken, id }));
     }
   }, [id, dispatch, getToken]);
+
+  // Handle payment session ID change - trigger Cashfree checkout
+  useEffect(() => {
+    const processCashfreePayment = async () => {
+      if (paymentSessionId) {
+        const checkoutOptions = {
+          paymentSessionId: paymentSessionId,
+          redirectTarget: "_self",
+        };
+
+        if (cashfree) {
+          cashfree.checkout(checkoutOptions);
+        } else {
+          // Fallback if cashfree didn't load yet
+          const cf = await load({ mode: "sandbox" });
+          cf.checkout(checkoutOptions);
+        }
+      }
+    };
+    processCashfreePayment();
+  }, [paymentSessionId]);
+
+  const handleJoinActivity = async () => {
+    if (isPaymentProcessing) return;
+
+    try {
+      const result = await dispatch(createActivityPayment({ getToken, activityId: id })).unwrap();
+
+      // Check if it's a free activity (joined directly)
+      if (result.data?.isFree) {
+        toast.success('Successfully joined the activity!');
+        setIsJoined(true);
+        // Refresh activity data
+        dispatch(fetchActivityById({ getToken, id }));
+      }
+      // For paid activities, the useEffect will handle Cashfree checkout
+    } catch (err) {
+      console.error('Join activity error:', err);
+      toast.error(err || 'Failed to join activity');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -106,6 +161,12 @@ function IndividualActivity() {
   const currentParticipants = activity.participants ? activity.participants.length : 0;
   const spotsLeft = (activity.maxCapacity || 0) - currentParticipants;
   const isFull = spotsLeft <= 0;
+
+  // Check if current user is the creator or already a participant
+  const isCreator = currentUser?._id && creator?._id && currentUser._id === creator._id;
+  const isAlreadyParticipant = currentUser?._id && activity.participants?.some(
+    (p) => (typeof p === 'string' ? p : p._id) === currentUser._id
+  );
 
   // Handle photos: could be strings (URLs) or objects (if frontend state was different previously, but backend sends strings usually)
   // Check if photos are objects with preview or just strings
@@ -358,23 +419,34 @@ function IndividualActivity() {
                 </div>
               </div>
 
-              {isFull ? (
+              {isCreator ? (
+                <button disabled className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl flex items-center justify-center gap-2">
+                  <Star className="w-5 h-5" />
+                  You're Hosting This Activity
+                </button>
+              ) : isAlreadyParticipant || isJoined ? (
+                <button disabled className="w-full py-4 bg-green-600 text-white font-bold rounded-xl flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Already Joined
+                </button>
+              ) : isFull ? (
                 <button disabled className="w-full py-4 bg-slate-200 text-slate-500 font-bold rounded-xl ">
                   Fully Booked
                 </button>
               ) : (
                 <button
-                  onClick={() => { setIsJoined(true); setTimeout(() => alert("Booking confirmed!"), 300); }}
+                  onClick={handleJoinActivity}
+                  disabled={isPaymentProcessing}
                   className={`w-full py-4 font-bold rounded-xl text-white shadow-lg transition-all text-lg flex items-center justify-center gap-2 ${
-                    isJoined
-                      ? 'bg-green-600 cursor-default'
+                    isPaymentProcessing
+                      ? 'bg-slate-400 cursor-not-allowed'
                       : 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 active:scale-95 shadow-orange-300'
                   }`}
                 >
-                  {isJoined ? (
+                  {isPaymentProcessing ? (
                     <>
-                      <CheckCircle2 className="w-5 h-5" />
-                      Booking Confirmed!
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Processing...
                     </>
                   ) : (
                     'Reserve Your Spot'

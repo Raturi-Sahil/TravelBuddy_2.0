@@ -3,6 +3,7 @@ import { Router } from "express";
 
 import {
     createActivity,
+    createActivityPaymentOrder,
     deleteActivity,
     getActivities,
     getActivityById,
@@ -13,6 +14,7 @@ import {
     leaveActivity,
     respondToInvite,
     updateActivity,
+    verifyActivityPayment,
 } from "../controller/activityController";
 import { requireProfile } from "../middlewares/authMiddleware";
 import upload from "../middlewares/multerMiddleware";
@@ -29,6 +31,10 @@ router.get("/nearby", getNearbyActivities);
 router.get("/:id", getActivityById);
 router.put("/:id", updateActivity);
 router.delete("/:id", deleteActivity);
+
+// Payment routes (must come before :id/join to avoid conflict)
+router.post("/:id/payment", createActivityPaymentOrder);
+router.post("/payment/verify", verifyActivityPayment);
 
 // // Social Actions
 router.post("/:id/join", joinActivity);
@@ -58,4 +64,5 @@ router.post(
 );
 
 export default router;
+
 

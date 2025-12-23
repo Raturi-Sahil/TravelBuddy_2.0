@@ -7,6 +7,8 @@ const initialState = {
   currentActivity: null,
   isLoading: false,
   isCreating: false,
+  isPaymentProcessing: false,
+  paymentSessionId: null,
   error: null,
 };
 
@@ -53,6 +55,38 @@ export const fetchActivityById = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || error.message || 'Failed to fetch activity'
+      );
+    }
+  }
+);
+
+// Async Thunk to create payment order for joining activity
+export const createActivityPayment = createAsyncThunk(
+  'activity/createPayment',
+  async ({ getToken, activityId }, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await activityService.createPaymentOrder(authApi, activityId);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to create payment'
+      );
+    }
+  }
+);
+
+// Async Thunk to verify payment and join activity
+export const verifyActivityPayment = createAsyncThunk(
+  'activity/verifyPayment',
+  async ({ getToken, orderId, activityId }, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await activityService.verifyPayment(authApi, { orderId, activityId });
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to verify payment'
       );
     }
   }
@@ -118,6 +152,45 @@ const activitySlice = createSlice({
       .addCase(fetchActivityById.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || 'Failed to fetch activity';
+      })
+
+      // Create Activity Payment
+      .addCase(createActivityPayment.pending, (state) => {
+        state.isPaymentProcessing = true;
+        state.paymentSessionId = null;
+        state.error = null;
+      })
+      .addCase(createActivityPayment.fulfilled, (state, action) => {
+        state.isPaymentProcessing = false;
+        // Check if it's a free activity (joined directly)
+        if (action.payload.data?.isFree) {
+          state.currentActivity = action.payload.data.activity;
+        } else {
+          state.paymentSessionId = action.payload.data?.payment_session_id;
+        }
+        state.error = null;
+      })
+      .addCase(createActivityPayment.rejected, (state, action) => {
+        state.isPaymentProcessing = false;
+        state.error = action.payload || 'Failed to create payment';
+      })
+
+      // Verify Activity Payment
+      .addCase(verifyActivityPayment.pending, (state) => {
+        state.isPaymentProcessing = true;
+        state.error = null;
+      })
+      .addCase(verifyActivityPayment.fulfilled, (state, action) => {
+        state.isPaymentProcessing = false;
+        if (action.payload.data?.activity) {
+          state.currentActivity = action.payload.data.activity;
+        }
+        state.paymentSessionId = null;
+        state.error = null;
+      })
+      .addCase(verifyActivityPayment.rejected, (state, action) => {
+        state.isPaymentProcessing = false;
+        state.error = action.payload || 'Failed to verify payment';
       });
   },
 });

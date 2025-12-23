@@ -1,9 +1,11 @@
 import {Request, Response } from "express";
+import axios from "axios";
 import mongoose from "mongoose";
 
 import uploadOnCloudinary from "../middlewares/cloudinary";
 import deleteFromCloudinaryByUrl from "../middlewares/deleteCloudinary";
 import { Activity } from "../models/activityModel";
+import { ActivityPayment } from "../models/activityPaymentModel";
 import { User } from "../models/userModel";
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
@@ -149,8 +151,8 @@ export const createActivity = asyncHandler(
 
 
 export const getActivities = asyncHandler(
-  async (req: Request, res: Response) => { 
-  
+  async (req: Request, res: Response) => {
+
     const now = new Date();
 
     const activities = await Activity.find(
@@ -166,12 +168,12 @@ export const getActivities = asyncHandler(
         .status(200)
         .json(
           new ApiResponse(
-            200, 
+            200,
             activities,
             "Activities fetched successfully"
           )
         );
-  } 
+  }
 );
 
 export const getNearbyActivities = asyncHandler(
@@ -276,14 +278,14 @@ export const getNearbyActivities = asyncHandler(
 );
 
 export const getActivityById = asyncHandler(
-  async (req: Request, res: Response) => { 
-  
+  async (req: Request, res: Response) => {
+
     const {id} = req.params;
 
     //Validate the objectId.
     if(!mongoose.Types.ObjectId.isValid(id)) {
        throw new ApiError(
-          400, 
+          400,
           "Invalid activity id"
        );
     }
@@ -294,7 +296,7 @@ export const getActivityById = asyncHandler(
     //Handle, if the activity not found.
     if(!activity) {
       throw new ApiError(
-          404, 
+          404,
           "Requested Activity doesn't exist"
        );
     }
@@ -302,23 +304,23 @@ export const getActivityById = asyncHandler(
     //Response
     return res.status(200).json(
           new ApiResponse(
-            200, 
+            200,
             activity,
             "Activity fetched successfully"
           )
         );
-  } 
+  }
 );
 
 export const getParticipants = asyncHandler(
-  async (req: Request, res: Response) => { 
-  
+  async (req: Request, res: Response) => {
+
     const {id} = req.params;
 
     //Validate the objectId.
     if(!mongoose.Types.ObjectId.isValid(id)) {
        throw new ApiError(
-          400, 
+          400,
           "Invalid activity id"
        );
     }
@@ -332,7 +334,7 @@ export const getParticipants = asyncHandler(
     //Handle, if the activity not found.
     if(!activity) {
       throw new ApiError(
-          404, 
+          404,
           "Requested Activity doesn't exist"
        );
     }
@@ -340,19 +342,19 @@ export const getParticipants = asyncHandler(
     //Response
     return res.status(200).json(
           new ApiResponse(
-            200, 
+            200,
             activity.participants,
             "participants fetched successfully"
           )
         );
-  } 
+  }
 );
 
 export const updateActivity = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => { 
+  async (req: Request & { user?: any }, res: Response) => {
     if(!req.user) {
         throw new ApiError(
-          401, 
+          401,
           "Unauthorized"
        );
     }
@@ -367,7 +369,7 @@ export const updateActivity = asyncHandler(
     //Validate the objectId.
     if(!mongoose.Types.ObjectId.isValid(id)) {
        throw new ApiError(
-          400, 
+          400,
           "Invalid activity id"
        );
     }
@@ -378,14 +380,14 @@ export const updateActivity = asyncHandler(
     //Handle, if the activity not found.
     if(!activity) {
       throw new ApiError(
-          404, 
+          404,
           "Requested Activity doesn't exist"
        );
     }
 
     if(activity.createdBy.toString() !== userId.toString()) {
       throw new ApiError(
-          403, 
+          403,
           "You are not allowed to update this activity"
        );
     }
@@ -402,19 +404,19 @@ export const updateActivity = asyncHandler(
     //Response
     return res.status(200).json(
           new ApiResponse(
-            200, 
+            200,
             updatedActivity,
             "Activity updated successfully"
           )
         );
-  } 
+  }
 );
 
 export const joinActivity = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => { 
+  async (req: Request & { user?: any }, res: Response) => {
     if(!req.user) {
         throw new ApiError(
-          401, 
+          401,
           "Unauthorized"
        );
     }
@@ -426,7 +428,7 @@ export const joinActivity = asyncHandler(
     //Validate the objectId.
     if(!mongoose.Types.ObjectId.isValid(id)) {
        throw new ApiError(
-          400, 
+          400,
           "Invalid activity id"
        );
     }
@@ -437,7 +439,7 @@ export const joinActivity = asyncHandler(
     //Handle, if the activity not found.
     if(!activity) {
       throw new ApiError(
-          404, 
+          404,
           "Requested Activity doesn't exist"
        );
     }
@@ -452,7 +454,7 @@ export const joinActivity = asyncHandler(
       (participantId) => participantId.toString() === userId.toString()
     )) {
       throw new ApiError(
-          409, 
+          409,
           "conflict"
        );
     }
@@ -474,19 +476,19 @@ export const joinActivity = asyncHandler(
     //Response
     return res.status(200).json(
           new ApiResponse(
-            200, 
+            200,
             updatedActivity,
             "Activity joined successfully"
           )
         );
-  } 
+  }
 );
 
 export const leaveActivity = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => { 
+  async (req: Request & { user?: any }, res: Response) => {
     if(!req.user) {
         throw new ApiError(
-          401, 
+          401,
           "Unauthorized"
        );
     }
@@ -498,7 +500,7 @@ export const leaveActivity = asyncHandler(
     //Validate the objectId.
     if(!mongoose.Types.ObjectId.isValid(id)) {
        throw new ApiError(
-          400, 
+          400,
           "Invalid activity id"
        );
     }
@@ -509,7 +511,7 @@ export const leaveActivity = asyncHandler(
     //Handle, if the activity not found.
     if(!activity) {
       throw new ApiError(
-          404, 
+          404,
           "Requested Activity doesn't exist"
        );
     }
@@ -518,7 +520,7 @@ export const leaveActivity = asyncHandler(
       (participantId) => participantId.toString() === userId.toString()
     )) {
       throw new ApiError(
-          409, 
+          409,
           "conflict"
        );
     }
@@ -535,19 +537,19 @@ export const leaveActivity = asyncHandler(
     //Response
     return res.status(200).json(
           new ApiResponse(
-            200, 
+            200,
             updatedActivity,
             "Activity left successfully"
           )
         );
-  } 
+  }
 );
 
 export const deleteActivity = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => { 
+  async (req: Request & { user?: any }, res: Response) => {
     if(!req.user) {
         throw new ApiError(
-          401, 
+          401,
           "Unauthorized"
        );
     }
@@ -559,7 +561,7 @@ export const deleteActivity = asyncHandler(
     //Validate the objectId.
     if(!mongoose.Types.ObjectId.isValid(id)) {
        throw new ApiError(
-          400, 
+          400,
           "Invalid activity id"
        );
     }
@@ -570,14 +572,14 @@ export const deleteActivity = asyncHandler(
     //Handle, if the activity not found.
     if(!activity) {
       throw new ApiError(
-          404, 
+          404,
           "Requested Activity doesn't exist"
        );
     }
 
     if(activity.createdBy.toString() !== userId.toString()) {
       throw new ApiError(
-          403, 
+          403,
           "Not the creater"
        );
     }
@@ -589,19 +591,19 @@ export const deleteActivity = asyncHandler(
     //Response
     return res.status(200).json(
           new ApiResponse(
-            200, 
+            200,
             null,
             "Activity deleted successfully"
           )
         );
-  } 
+  }
 );
 
 export const inviteUsers = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => { 
+  async (req: Request & { user?: any }, res: Response) => {
     if(!req.user) {
         throw new ApiError(
-          401, 
+          401,
           "Unauthorized"
        );
     }
@@ -613,7 +615,7 @@ export const inviteUsers = asyncHandler(
     //Validate the objectId.
     if(!mongoose.Types.ObjectId.isValid(id)) {
        throw new ApiError(
-          400, 
+          400,
           "Invalid activity id"
        );
     }
@@ -624,7 +626,7 @@ export const inviteUsers = asyncHandler(
     //Handle, if the activity not found.
     if(!activity) {
       throw new ApiError(
-          404, 
+          404,
           "Requested Activity doesn't exist"
        );
     }
@@ -632,9 +634,9 @@ export const inviteUsers = asyncHandler(
     // check if user is the creator of the activity.
     if(activity.createdBy.toString() !== creatorId.toString()) {
         throw new ApiError(
-            403, 
+            403,
             "Not allowed to invite users"
-        );   
+        );
     }
 
     const userIds = req.body.userIds;
@@ -644,7 +646,7 @@ export const inviteUsers = asyncHandler(
     }
 
     for(const userId of userIds) {
-        // if the user Id is invlid 
+        // if the user Id is invlid
         if(!mongoose.Types.ObjectId.isValid(userId)) {
           throw new ApiError(
             400,
@@ -697,19 +699,19 @@ export const inviteUsers = asyncHandler(
     //Response
     return res.status(200).json(
           new ApiResponse(
-            200, 
+            200,
             null,
             "Invite sent successfully"
           )
         );
-  } 
+  }
 );
 
 export const respondToInvite = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => { 
+  async (req: Request & { user?: any }, res: Response) => {
     if(!req.user) {
         throw new ApiError(
-          401, 
+          401,
           "Unauthorized"
        );
     }
@@ -721,7 +723,7 @@ export const respondToInvite = asyncHandler(
     //Validate the objectId.
     if(!mongoose.Types.ObjectId.isValid(id)) {
        throw new ApiError(
-          400, 
+          400,
           "Invalid activity id"
        );
     }
@@ -733,7 +735,7 @@ export const respondToInvite = asyncHandler(
     //Handle, if the activity not found.
     if(!activity) {
       throw new ApiError(
-          404, 
+          404,
           "Requested Activity doesn't exist"
        );
     }
@@ -747,7 +749,7 @@ export const respondToInvite = asyncHandler(
     if (invite.status !== "Pending") {
       throw new ApiError(409, "Invite already responded");
     }
-    
+
     const {status} = req.body;
 
     if(status == "Accepted") {
@@ -776,11 +778,224 @@ export const respondToInvite = asyncHandler(
     //Response
     return res.status(200).json(
           new ApiResponse(
-            200, 
+            200,
             status,
             "updated invite status"
           )
         );
-  } 
+  }
+);
+
+// Helper function for Cashfree config
+const getCashfreeConfig = () => {
+  const CF_APP_ID = process.env.CASHFREE_APP_ID;
+  const CF_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
+  const CF_ENV = process.env.CASHFREE_ENV || "TEST";
+  const BASE_URL = CF_ENV === "PROD"
+    ? "https://api.cashfree.com/pg"
+    : "https://sandbox.cashfree.com/pg";
+  return { CF_APP_ID, CF_SECRET_KEY, BASE_URL };
+};
+
+// Create payment order for joining activity
+export const createActivityPaymentOrder = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    if (!req.user) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const { CF_APP_ID, CF_SECRET_KEY, BASE_URL } = getCashfreeConfig();
+    const userId = req.user._id;
+    const { id } = req.params; // activity id
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new ApiError(400, "Invalid activity id");
+    }
+
+    const activity = await Activity.findById(id);
+    if (!activity) {
+      throw new ApiError(404, "Activity not found");
+    }
+
+    // Check if already joined
+    if (activity.participants.some(
+      (participantId) => participantId.toString() === userId.toString()
+    )) {
+      throw new ApiError(409, "Already joined this activity");
+    }
+
+    // Check if activity is full
+    if (activity.participants.length >= activity.maxCapacity) {
+      throw new ApiError(409, "Activity is already full");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    if (!CF_APP_ID || !CF_SECRET_KEY) {
+      console.error("Cashfree credentials missing");
+      throw new ApiError(500, "Payment configuration missing");
+    }
+
+    const orderId = `ACTIVITY_${Date.now()}_${userId.toString().slice(-4)}`;
+    const amount = activity.price;
+
+    // If activity is free, directly join
+    if (amount === 0) {
+      const updatedActivity = await Activity.findByIdAndUpdate(
+        id,
+        { $addToSet: { participants: userId } },
+        { new: true, runValidators: true }
+      )
+        .populate("createdBy", "name email mobile profileImage")
+        .lean();
+
+      return res.status(200).json(
+        new ApiResponse(200, { activity: updatedActivity, isFree: true }, "Joined activity successfully")
+      );
+    }
+
+    const payload = {
+      order_id: orderId,
+      order_amount: amount,
+      order_currency: "INR",
+      customer_details: {
+        customer_id: userId.toString(),
+        customer_email: "user@example.com",
+        customer_phone: user.mobile,
+        customer_name: user.name || "TravelBuddy User"
+      },
+      order_meta: {
+        return_url: `${process.env.FRONTEND_URL}/activity-payment-status?order_id=${orderId}&activity_id=${id}`
+      },
+      order_tags: {
+        activityId: id,
+        activityTitle: activity.title
+      }
+    };
+
+    const response = await axios.post(`${BASE_URL}/orders`, payload, {
+      headers: {
+        "x-client-id": CF_APP_ID,
+        "x-client-secret": CF_SECRET_KEY,
+        "x-api-version": "2023-08-01",
+        "Content-Type": "application/json"
+      }
+    });
+
+    // Save payment record
+    await ActivityPayment.create({
+      userId: userId,
+      activityId: id,
+      orderId: orderId,
+      cfOrderId: response.data.cf_order_id,
+      paymentSessionId: response.data.payment_session_id,
+      amount: amount,
+      currency: "INR",
+      orderStatus: response.data.order_status || "ACTIVE",
+      rawResponse: response.data,
+    });
+
+    return res.status(200).json(
+      new ApiResponse(200, response.data, "Payment order created successfully")
+    );
+  }
+);
+
+// Verify payment and join activity
+export const verifyActivityPayment = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    if (!req.user) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const { CF_APP_ID, CF_SECRET_KEY, BASE_URL } = getCashfreeConfig();
+    const { orderId, activityId } = req.body;
+    const userId = req.user._id;
+
+    if (!orderId || !activityId) {
+      throw new ApiError(400, "Order ID and Activity ID required");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(activityId)) {
+      throw new ApiError(400, "Invalid activity id");
+    }
+
+    const response = await axios.get(`${BASE_URL}/orders/${orderId}`, {
+      headers: {
+        "x-client-id": CF_APP_ID,
+        "x-client-secret": CF_SECRET_KEY,
+        "x-api-version": "2023-08-01"
+      }
+    });
+
+    const orderData = response.data;
+    const orderStatus = orderData.order_status;
+
+    // Update payment record
+    const paymentRecord = await ActivityPayment.findOne({ orderId: orderId });
+    if (paymentRecord) {
+      paymentRecord.orderStatus = orderStatus;
+      paymentRecord.rawResponse = orderData;
+
+      if (orderData.payments && orderData.payments.length > 0) {
+        const paymentDetails = orderData.payments[0];
+        paymentRecord.paymentStatus = paymentDetails.payment_status;
+        paymentRecord.paymentMethod = paymentDetails.payment_method?.card?.channel ||
+          paymentDetails.payment_method?.upi?.channel ||
+          paymentDetails.payment_method?.netbanking?.channel ||
+          "Unknown";
+        paymentRecord.paymentTime = paymentDetails.payment_time
+          ? new Date(paymentDetails.payment_time)
+          : undefined;
+        paymentRecord.cfPaymentId = paymentDetails.cf_payment_id;
+        paymentRecord.bankReference = paymentDetails.bank_reference;
+      }
+
+      await paymentRecord.save();
+    }
+
+    if (orderStatus === "PAID") {
+      // Join user to activity
+      const activity = await Activity.findById(activityId);
+      if (!activity) {
+        throw new ApiError(404, "Activity not found");
+      }
+
+      // Check if already joined
+      if (activity.participants.some(
+        (participantId) => participantId.toString() === userId.toString()
+      )) {
+        return res.status(200).json(
+          new ApiResponse(200, { status: "PAID", alreadyJoined: true }, "Already joined this activity")
+        );
+      }
+
+      // Check if activity is full
+      if (activity.participants.length >= activity.maxCapacity) {
+        throw new ApiError(409, "Activity is full");
+      }
+
+      const updatedActivity = await Activity.findByIdAndUpdate(
+        activityId,
+        { $addToSet: { participants: userId } },
+        { new: true, runValidators: true }
+      )
+        .populate("createdBy", "name email mobile profileImage")
+        .lean();
+
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          { status: "PAID", activity: updatedActivity, payment: paymentRecord },
+          "Payment verified and joined activity successfully"
+        )
+      );
+    } else {
+      throw new ApiError(400, `Payment not completed. Status: ${orderStatus}`);
+    }
+  }
 );
 
