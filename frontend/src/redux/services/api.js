@@ -293,6 +293,123 @@ export const aiService = {
   }
 };
 
+// Post Service functions
+export const postService = {
+  // Create a new post
+  createPost: async (authApi, postData) => {
+    const formData = new FormData();
+
+    // Append images
+    if (postData.images && postData.images.length > 0) {
+      postData.images.forEach((image) => {
+        formData.append('images', image);
+      });
+    }
+
+    // Append videos
+    if (postData.videos && postData.videos.length > 0) {
+      postData.videos.forEach((video) => {
+        formData.append('videos', video);
+      });
+    }
+
+    // Append other fields
+    Object.keys(postData).forEach(key => {
+      if (key !== 'images' && key !== 'videos') {
+        const value = postData[key];
+        if (value !== undefined && value !== null) {
+          if (typeof value === 'object') {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value);
+          }
+        }
+      }
+    });
+
+    const response = await authApi.post('/posts', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Get posts with pagination
+  getPosts: async (authApi, { page = 1, limit = 10, visibility, userId } = {}) => {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('limit', limit);
+    if (visibility) params.append('visibility', visibility);
+    if (userId) params.append('userId', userId);
+
+    const response = await authApi.get(`/posts?${params.toString()}`);
+    return response.data;
+  },
+
+  // Get nearby posts
+  getNearbyPosts: async (authApi, { lat, lng, maxDistance = 10000 } = {}) => {
+    const params = new URLSearchParams();
+    params.append('lat', lat);
+    params.append('lng', lng);
+    params.append('maxDistance', maxDistance);
+
+    const response = await authApi.get(`/posts/nearby?${params.toString()}`);
+    return response.data;
+  },
+
+  // Get posts by tags
+  getPostsByTags: async (authApi, tags) => {
+    const params = new URLSearchParams();
+    params.append('tags', Array.isArray(tags) ? tags.join(',') : tags);
+
+    const response = await authApi.get(`/posts/tags?${params.toString()}`);
+    return response.data;
+  },
+
+  // Get single post by ID
+  getPostById: async (authApi, id) => {
+    const response = await authApi.get(`/posts/${id}`);
+    return response.data;
+  },
+
+  // Update post
+  updatePost: async (authApi, id, updateData) => {
+    const response = await authApi.put(`/posts/${id}`, updateData);
+    return response.data;
+  },
+
+  // Delete post
+  deletePost: async (authApi, id) => {
+    const response = await authApi.delete(`/posts/${id}`);
+    return response.data;
+  },
+
+  // Toggle like on a post
+  toggleLike: async (authApi, id) => {
+    const response = await authApi.post(`/posts/${id}/like`);
+    return response.data;
+  },
+
+  // Add comment to a post
+  addComment: async (authApi, id, text) => {
+    const response = await authApi.post(`/posts/${id}/comments`, { text });
+    return response.data;
+  },
+
+  // Delete comment from a post
+  deleteComment: async (authApi, postId, commentId) => {
+    const response = await authApi.delete(`/posts/${postId}/comments/${commentId}`);
+    return response.data;
+  },
+
+  // Increment share count
+  incrementShare: async (authApi, id) => {
+    const response = await authApi.post(`/posts/${id}/share`);
+    return response.data;
+  },
+};
+
 export default api;
 
 
