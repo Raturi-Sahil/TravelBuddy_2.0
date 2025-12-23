@@ -12,6 +12,7 @@ import subscriptionRoutes from "./routes/subscriptionRoutes";
 import userRoutes from "./routes/userRoute";
 import activityRoutes from "./routes/activityRoutes";
 import postRoutes from "./routes/postRoutes";
+import articleRoutes from "./routes/articleRoutes";
 
 const app: Application = express();
 
@@ -46,6 +47,7 @@ app.use("/ai", aiRoutes);
 app.use("/activities", activityRoutes);
 app.use("/places", placesRoutes);
 app.use("/posts", postRoutes);
+app.use("/articles", articleRoutes);
 
 // Global Error Handler
 app.use(errorMiddleware);
