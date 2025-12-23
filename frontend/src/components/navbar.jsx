@@ -217,38 +217,38 @@ function NavBar() {
   ];
 
   return (
-    <div className={`fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-500 ease-in-out ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
-    <nav className="w-full max-w-[95%] pointer-events-auto bg-white/80 backdrop-blur-xl shadow-lg border border-gray-100/50 rounded-2xl transition-all duration-300">
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-20 justify-between">
+    <div className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-all duration-500 ease-in-out ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-[-100%] opacity-0'}`}>
+    <nav className="w-full pointer-events-auto bg-white/80 backdrop-blur-xl shadow-lg border-b border-gray-100/50 transition-all duration-300">
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8">
+        <div className="flex items-center h-16 sm:h-20 justify-between gap-2 sm:gap-4">
 
           {/* Left Section: Logo + Location */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 sm:gap-4 md:gap-6 flex-shrink-0">
             <button
               onClick={() => handleNavigation('/')}
-              className="flex items-center space-x-3 group flex-shrink-0"
+              className="flex items-center space-x-2 sm:space-x-3 group flex-shrink-0"
             >
-              <div className="bg-gradient-to-tr from-amber-500 to-orange-600 p-2.5 rounded-xl shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">
-                <Globe className="text-white" size={24} strokeWidth={2.5} />
+              <div className="bg-gradient-to-tr from-amber-500 to-orange-600 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">
+                <Globe className="text-white" size={20} strokeWidth={2.5} />
               </div>
               <div className="flex flex-col items-start">
-                <span className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight">
+                <span className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight">
                   TravelBuddy
                 </span>
-                <span className="text-[10px] font-medium text-amber-600 tracking-wider uppercase ml-0.5">Find your companion</span>
+                <span className="hidden sm:block text-[10px] font-medium text-amber-600 tracking-wider uppercase ml-0.5">Find your companion</span>
               </div>
             </button>
 
              {isSignedIn && (
-              <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-600 bg-gray-50/80 px-4 py-2 rounded-full border border-gray-100 hover:bg-white hover:shadow-md transition-all duration-300 group cursor-default">
-                <MapPin size={16} className="text-amber-500 group-hover:animate-bounce" />
-                <span className="truncate max-w-[200px] font-medium">{currentLocationName}</span>
+              <div className="hidden lg:flex items-center space-x-2 text-xs lg:text-sm text-gray-600 bg-gray-50/80 px-3 lg:px-4 py-2 rounded-full border border-gray-100 hover:bg-white hover:shadow-md transition-all duration-300 group cursor-default">
+                <MapPin size={14} className="text-amber-500 group-hover:animate-bounce flex-shrink-0" />
+                <span className="truncate max-w-[120px] xl:max-w-[200px] font-medium">{currentLocationName}</span>
               </div>
             )}
           </div>
 
           {/* Center Section: Navigation Links (Excluding AI Trip Planner) */}
-          <div className="hidden md:flex items-center justify-center space-x-8">
+          <div className="hidden md:flex items-center justify-center space-x-3 lg:space-x-6 xl:space-x-8 flex-1 max-w-4xl mx-auto">
             {navLinks.filter(link => link.name !== 'Ai Trip Planner').map((link) => (
               link.children ? (
                 <div key={link.name} className="relative group z-50">
@@ -301,24 +301,24 @@ function NavBar() {
           </div>
 
           {/* Right Actions: AI Planner, Create Activity, Profile */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-3 xl:space-x-4 flex-shrink-0">
              {/* Ai Trip Planner Button - Placed here next to Create Activity */}
              <button
                 onClick={() => handleNavigation('/ai-trip-planner')}
-                className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-violet-600 text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-sm group"
+                className="flex items-center space-x-1.5 lg:space-x-2 bg-gradient-to-r from-purple-500 to-violet-600 text-white px-3 lg:px-4 xl:px-5 py-2 lg:py-2.5 rounded-lg lg:rounded-xl hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-xs lg:text-sm group"
               >
-                <Sparkles size={18} className="group-hover:rotate-12 transition-transform duration-300" />
-                <span className="hidden xl:inline">Ai Trip Planner</span>
+                <Sparkles size={16} className="group-hover:rotate-12 transition-transform duration-300 flex-shrink-0" />
+                <span className="hidden xl:inline whitespace-nowrap">Ai Trip Planner</span>
               </button>
 
             {isSignedIn ? (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 lg:space-x-3 xl:space-x-4">
                  <button
                   onClick={() => handleCreateActivity()}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-amber-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-sm group"
+                  className="flex items-center space-x-1.5 lg:space-x-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-3 lg:px-4 xl:px-5 py-2 lg:py-2.5 rounded-lg lg:rounded-xl hover:shadow-lg hover:shadow-amber-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-xs lg:text-sm group"
                 >
-                  <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-                  <span className="hidden lg:inline">Create Activity</span>
+                  <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300 flex-shrink-0" />
+                  <span className="hidden lg:inline whitespace-nowrap">Create Activity</span>
                 </button>
 
                 {/* Profile Dropdown Menu */}
@@ -331,11 +331,11 @@ function NavBar() {
                       <img
                         src={userImage || 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png'}
                         alt={userDisplayName}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md ring-1 ring-gray-100"
+                        className="w-8 h-8 lg:w-9 lg:h-9 xl:w-10 xl:h-10 rounded-full object-cover border-2 border-white shadow-md ring-1 ring-gray-100"
                       />
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                      <div className="absolute bottom-0 right-0 w-2.5 h-2.5 lg:w-3 lg:h-3 bg-green-500 border-2 border-white rounded-full"></div>
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-3 h-3 lg:w-4 lg:h-4 text-gray-500 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Dropdown Menu */}
@@ -411,16 +411,16 @@ function NavBar() {
 
             <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors ml-auto"
+            className="md:hidden p-1.5 sm:p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex-shrink-0"
           >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
         {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 shadow-xl animate-in slide-in-from-top-5 duration-200 z-40">
-            <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
+          <div className="md:hidden absolute top-[calc(100%+0.5rem)] left-0 right-0 w-full bg-white border border-gray-100 rounded-2xl shadow-xl animate-in slide-in-from-top-5 duration-200 z-40 mx-2 sm:mx-4">
+            <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto">
 
               {isSignedIn && (
                 <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
@@ -488,12 +488,12 @@ function NavBar() {
                 <>
                   <button
                     onClick={() => {
-                      handleNavigation('/create-activity');
+                      handleCreateActivity();
                       setIsMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-3.5 rounded-xl font-semibold shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+                    className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-3 sm:py-3.5 rounded-xl font-semibold shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
                   >
-                    <Plus size={20} />
+                    <Plus size={18} />
                     <span>Create Activity</span>
                   </button>
 
