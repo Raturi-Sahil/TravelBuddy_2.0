@@ -27,6 +27,7 @@ import UserPosts from "./pages/UserPosts/UserPosts";
 import UploadPost from "./pages/UserPosts/UploadPost";
 import ManagePost from "./pages/UserPosts/ManagePost";
 import ReadArticle from "./pages/UserPosts/RealArticle";
+import ManageArticle from "./pages/UserPosts/ManageArticle";
 import PrivacyPolicy from "./pages/miscellaneous/PrivacyPolicy";
 import TermsOfService from "./pages/miscellaneous/TermsOfService";
 import CookiePolicy from "./pages/miscellaneous/CookiePolicy";
@@ -76,6 +77,7 @@ function App() {
         <Route path="upload-post" element={<AuthGuard><UploadPost /></AuthGuard>} />
         <Route path="manage-posts" element={<AuthGuard><ManagePost /></AuthGuard>} />
         <Route path="read-article" element={<AuthGuard><ReadArticle /></AuthGuard>} />
+        <Route path="manage-article" element={<AuthGuard><ManageArticle /></AuthGuard>} />
 
         {/* Miscellaneous/Legal Pages */}
         <Route path="privacy" element={<PrivacyPolicy />} />
