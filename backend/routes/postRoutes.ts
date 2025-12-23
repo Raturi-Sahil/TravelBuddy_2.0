@@ -5,6 +5,7 @@ import {
   createPost,
   deleteComment,
   deletePost,
+  getMyPosts,
   getNearbyPosts,
   getPostById,
   getPosts,
@@ -31,6 +32,7 @@ router.post(
   createPost
 );
 router.get("/", getPosts);
+router.get("/my-posts", getMyPosts); // Get posts created by authenticated user
 router.get("/nearby", getNearbyPosts);
 router.get("/tags", getPostsByTags);
 router.get("/:id", getPostById);

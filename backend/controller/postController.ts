@@ -38,8 +38,7 @@ export const createPost = asyncHandler(
       ];
     }
 
-    console.log(`createPost: Processing ${files.length} files`);
-
+    // Upload media to Cloudinary
     const uploadedImageUrls: string[] = [];
     const uploadedVideoUrls: string[] = [];
 
@@ -173,6 +172,48 @@ export const getPosts = asyncHandler(
   }
 );
 
+// Get MY posts - posts created by the authenticated user
+export const getMyPosts = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    if (!req.user) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const userId = req.user._id.toString();
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 100;
+    const skip = (page - 1) * limit;
+
+    const filter: any = {
+      userId: userId, // Only get posts by this user
+    };
+
+    const posts = await Post.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const totalPosts = await Post.countDocuments(filter);
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          posts,
+          pagination: {
+            currentPage: page,
+            totalPages: Math.ceil(totalPosts / limit),
+            totalPosts,
+            hasMore: page * limit < totalPosts,
+          },
+        },
+        "Your posts fetched successfully"
+      )
+    );
+  }
+);
+
 // Get nearby posts based on location
 export const getNearbyPosts = asyncHandler(
   async (req: Request, res: Response) => {
@@ -252,7 +293,6 @@ export const updatePost = asyncHandler(
     const { caption, locationName, lat, lng, tags, visibility } = req.body;
 
     const updateData: any = {};
-
     if (caption !== undefined) updateData.caption = caption;
     if (visibility !== undefined) updateData.visibility = visibility;
     if (tags !== undefined)

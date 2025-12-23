@@ -57,8 +57,8 @@ export const fetchMyPosts = createAsyncThunk(
   async ({ getToken, page = 1, limit = 100 }, { rejectWithValue }) => {
     try {
       const authApi = createAuthenticatedApi(getToken);
-      // This will fetch posts created by the current user
-      const response = await postService.getPosts(authApi, { page, limit, myPosts: true });
+      // Use the dedicated endpoint for fetching only user's posts
+      const response = await postService.getMyPosts(authApi, { page, limit });
       return response;
     } catch (error) {
       return rejectWithValue(

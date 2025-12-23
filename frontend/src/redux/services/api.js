@@ -352,6 +352,16 @@ export const postService = {
     return response.data;
   },
 
+  // Get MY posts - posts created by authenticated user
+  getMyPosts: async (authApi, { page = 1, limit = 100 } = {}) => {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('limit', limit);
+
+    const response = await authApi.get(`/posts/my-posts?${params.toString()}`);
+    return response.data;
+  },
+
   // Get nearby posts
   getNearbyPosts: async (authApi, { lat, lng, maxDistance = 10000 } = {}) => {
     const params = new URLSearchParams();
