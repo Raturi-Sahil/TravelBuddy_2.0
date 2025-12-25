@@ -5,7 +5,7 @@ import { useAuth } from "@clerk/clerk-react";
 import { fetchJoinedActivities, leaveActivity } from "../../redux/slices/userActivitySlice";
 import {
   Loader2, MapPin, Users, Calendar, Search, Star, Clock,
-  ChevronLeft, ChevronRight, Zap, Heart, LogOut
+  ChevronLeft, ChevronRight, Zap, Heart, LogOut, Eye
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -206,7 +206,7 @@ function JoinedActivites() {
                   toast.error('This activity has been cancelled by the host.');
                   return;
                 }
-                navigate(`/activity/${activity._id}`);
+                navigate(`/manage-joined-activity/${activity._id}`);
               };
 
               return (
@@ -243,6 +243,17 @@ function JoinedActivites() {
                     </div>
 
                     <div className="absolute top-4 right-4 flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/manage-joined-activity/${activity._id}`);
+                        }}
+                        className="p-2 bg-white/90 backdrop-blur-md rounded-full text-slate-700 hover:bg-blue-500 hover:text-white transition-colors"
+                        title="View Activity"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+
                       {!isPast && !isCancelled && (
                         <button
                           onClick={(e) => handleLeaveActivity(e, activity._id)}
@@ -318,7 +329,7 @@ function JoinedActivites() {
 
                       <button
                         className="px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-orange-200 active:scale-95 flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/activity/${activity._id}`); }}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/manage-joined-activity/${activity._id}`); }}
                       >
                         View <ChevronRight className="w-4 h-4" />
                       </button>
