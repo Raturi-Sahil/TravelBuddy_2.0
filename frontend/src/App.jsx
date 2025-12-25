@@ -16,6 +16,7 @@ import ActivityPaymentStatus from "./pages/Activity/ActivityPaymentStatus";
 import BuySubscription from "./pages/Activity/buySubscription";
 import CreateActivity from "./pages/Activity/createActivity";
 import ActivityNearMe from "./pages/Activity/getNearByActivity";
+import JoinedActivities from "./pages/Activity/JoinedActivities";
 import AiTripPlanner from "./pages/AiFeatures/AiTripPlanner";
 import CommunityGuidelines from "./pages/miscellaneous/CommunityGuidelines";
 import CookiePolicy from "./pages/miscellaneous/CookiePolicy";
@@ -37,11 +38,6 @@ import UserPosts from "./pages/UserPosts/UserPosts";
 import ManageArticle from "./pages/UserPosts/ManageArticle";
 import UploadArticle from "./pages/UserPosts/UploadArticle";
 import ArticleDetail from "./pages/UserPosts/ArticleDetail";
-import PrivacyPolicy from "./pages/miscellaneous/PrivacyPolicy";
-import TermsOfService from "./pages/miscellaneous/TermsOfService";
-import CookiePolicy from "./pages/miscellaneous/CookiePolicy";
-import CommunityGuidelines from "./pages/miscellaneous/CommunityGuidelines";
-import RefundPolicy from "./pages/miscellaneous/RefundPolicy";
 
 function App() {
   return (
@@ -77,6 +73,7 @@ function App() {
         {/* Activity Routes */}
         <Route path="create-activity" element={<AuthGuard><CreateActivity /></AuthGuard>} />
         <Route path="activities" element={<AuthGuard><ActivityNearMe /></AuthGuard>} />
+        <Route path="joined-activities" element={<AuthGuard><JoinedActivities /></AuthGuard>} />
         <Route path="subscription" element={<AuthGuard><BuySubscription /></AuthGuard>} />
         <Route path="payment-status" element={<AuthGuard><PaymentStatus /></AuthGuard>} />
         <Route path="activity-payment-status" element={<AuthGuard><ActivityPaymentStatus /></AuthGuard>} />

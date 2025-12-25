@@ -177,10 +177,39 @@ export const getActivities = asyncHandler(
   }
 );
 
+// Get activities where the authenticated user is a participant
+export const getJoinedActivities = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    if (!req.user) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const userId = req.user._id;
+
+    const activities = await Activity.find({
+      participants: userId
+    })
+      .sort({ date: 1, startTime: 1 })
+      .populate("createdBy", "name email mobile profileImage")
+      .lean();
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          activities,
+          "Joined activities fetched successfully"
+        )
+      );
+  }
+);
+
+
 export const getNearbyActivities = asyncHandler(
   async (req: Request, res: Response) => {
     const { lat, lng, radius = 50000, search = '', page = 1, limit = 50 } = req.query;
-    
+
     const pageNum = Math.max(1, parseInt(page as string) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 50));
     const skip = (pageNum - 1) * limitNum;
@@ -242,18 +271,18 @@ export const getNearbyActivities = asyncHandler(
         const [actLng, actLat] = activity.location.coordinates;
         const userLat = parseFloat(lat as string);
         const userLng = parseFloat(lng as string);
-        
+
         // Haversine formula
         const R = 6371; // Earth's radius in km
         const dLat = (actLat - userLat) * Math.PI / 180;
         const dLng = (actLng - userLng) * Math.PI / 180;
-        const a = 
+        const a =
           Math.sin(dLat/2) * Math.sin(dLat/2) +
-          Math.cos(userLat * Math.PI / 180) * Math.cos(actLat * Math.PI / 180) * 
+          Math.cos(userLat * Math.PI / 180) * Math.cos(actLat * Math.PI / 180) *
           Math.sin(dLng/2) * Math.sin(dLng/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         const distanceKm = (R * c).toFixed(1);
-        
+
         return { ...activity, distanceKm };
       }
       return { ...activity, distanceKm: null };
@@ -450,7 +479,7 @@ export const joinActivity = asyncHandler(
 
       if(!payment) {
         throw new ApiError(
-          402, 
+          402,
           "Payment required to join this activity"
         )
       }
@@ -465,7 +494,7 @@ export const joinActivity = asyncHandler(
        );
     }
 
-    //check if space is available, and refund the money if user has paid but space is not available. 
+    //check if space is available, and refund the money if user has paid but space is not available.
     if (activity.participants.length >= activity.maxCapacity) {
       throw new ApiError(409, "Activity is already full");
     }

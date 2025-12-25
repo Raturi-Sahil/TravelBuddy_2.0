@@ -24,22 +24,51 @@ export const activityPaymentSchema = new Schema<IActivityPayment>(
             type: String,
             default: "INR"
         },
-    
+
         status: {
             type: String,
             enum: ["PENDING", "SUCCESS", "REFUNDED", "FAILED"],
             default: "PENDING"
         },
 
+        // Cashfree-specific fields
+        orderId: {
+            type: String
+        },
+        cfOrderId: {
+            type: String
+        },
+        paymentSessionId: {
+            type: String
+        },
+        orderStatus: {
+            type: String
+        },
+        paymentStatus: {
+            type: String
+        },
+        paymentMethod: {
+            type: String
+        },
+        paymentTime: {
+            type: Date
+        },
+        cfPaymentId: {
+            type: String
+        },
+        bankReference: {
+            type: String
+        },
+
         provider: {
             type: String,
-            required: true
+            default: "Cashfree"
         }, // Razorpay / Stripe / Cashfree etc.
 
         providerRef: {
             type: String
         },// payment/order id from gateway
-    
+
         rawResponse: {
             type: Object
         }

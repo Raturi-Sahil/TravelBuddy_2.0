@@ -301,6 +301,12 @@ export const activityService = {
   leaveActivity: async (authApi, activityId) => {
     const response = await authApi.post(`/activities/${activityId}/leave`);
     return response.data;
+  },
+
+  // Get joined activities for current user
+  getJoinedActivities: async (authApi) => {
+    const response = await authApi.get('/activities/joined');
+    return response.data;
   }
 };
 
