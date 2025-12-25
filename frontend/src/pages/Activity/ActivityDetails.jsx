@@ -55,6 +55,7 @@ function IndividualActivity() {
   const { profile: currentUser } = useSelector((state) => state.user);
 
   const [isJoined, setIsJoined] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
   const { isLoaded } = useGoogleMaps();
@@ -106,8 +107,15 @@ function IndividualActivity() {
       if (result.data?.isFree) {
         toast.success('Successfully joined the activity!');
         setIsJoined(true);
+        setIsRedirecting(true);
+
         // Refresh activity data
         dispatch(fetchActivityById({ getToken, id }));
+
+        // Redirect to manage page after 2 seconds
+        setTimeout(() => {
+          navigate(`/manage-joined-activity/${id}`);
+        }, 2000);
       }
       // For paid activities, the useEffect will handle Cashfree checkout
     } catch (err) {
@@ -503,6 +511,15 @@ function IndividualActivity() {
           </div>
         </div>
       </div>
+
+      {/* Redirect Overlay */}
+      {isRedirecting && (
+        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-white/60 backdrop-blur-md animate-fade-in text-slate-900">
+           <Loader2 className="w-12 h-12 text-orange-600 animate-spin mb-4" />
+           <h3 className="text-2xl font-bold">Successfully Joined!</h3>
+           <p className="text-slate-600 mt-2 font-medium">Redirecting to your dashboard...</p>
+        </div>
+      )}
     </div>
   );
 }

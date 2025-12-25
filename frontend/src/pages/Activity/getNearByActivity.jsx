@@ -223,6 +223,7 @@ export default function ActivityNearMe() {
   const dispatch = useDispatch();
   const { getToken } = useAuth();
   const { activities, isLoading, error } = useSelector((state) => state.activity);
+  const { profile: currentUser } = useSelector((state) => state.user);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -244,6 +245,16 @@ export default function ActivityNearMe() {
   // Derived filtered & sorted activities
   const filteredActivities = (activities || [])
     .filter(act => {
+      // Exclude joined activities
+      const isJoined = act.participants?.some(p =>
+        (typeof p === 'string' ? p : p._id) === currentUser?._id
+      );
+      if (isJoined) return false;
+
+      // Exclude activities created by the current user (optional, but good practice for "Nearby" usually)
+      const isCreatedBy = (act.createdBy?._id || act.createdBy) === currentUser?._id;
+      if (isCreatedBy) return false;
+
       // Search Query
       const matchesSearch =
         act.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
