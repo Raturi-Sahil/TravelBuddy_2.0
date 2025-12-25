@@ -75,8 +75,14 @@ function JoinedActivites() {
     }
   }, [dispatch, currentUser, getToken]);
 
-  // Filter activities based on search
+  // Filter activities based on search and exclude created by current user
   const filteredActivities = joinedActivities.filter(activity => {
+    // Exclude activities created by the current user
+    const isCreatedByCurrentUser = 
+      activity.createdBy?._id === currentUser?._id || 
+      activity.createdBy === currentUser?._id;
+    if (isCreatedByCurrentUser) return false;
+
     const matchesSearch = !searchQuery ||
       activity.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       activity.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||

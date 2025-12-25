@@ -858,16 +858,27 @@ export default function ProfilePage() {
 
                 {/* Created Activities */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h3 className="flex items-center gap-2 font-semibold text-gray-900 mb-4">
-                        <span className="bg-purple-100 p-2 rounded-lg text-purple-600"><Sparkles size={20} /></span>
-                        Created Activities
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="flex items-center gap-2 font-semibold text-gray-900">
+                            <span className="bg-purple-100 p-2 rounded-lg text-purple-600"><Sparkles size={20} /></span>
+                            Created Activities
+                        </h3>
+                        {(profile?.JoinActivity || []).filter(a => a.createdBy?._id === profile?._id || a.createdBy === profile?._id).length > 2 && (
+                            <button 
+                                onClick={() => navigate('/my-activities')}
+                                className="text-sm text-orange-600 hover:text-orange-700 font-medium hover:underline"
+                            >
+                                View All →
+                            </button>
+                        )}
+                    </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {(profile?.JoinActivity || [])
                             .filter(activity => activity.createdBy?._id === profile?._id || activity.createdBy === profile?._id)
+                            .slice(0, 2)
                             .map((activity) => (
-                            <div key={activity._id} className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow group">
+                            <div key={activity._id} onClick={() => navigate(`/activity/${activity._id}`)} className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow group cursor-pointer">
                                 <div className="h-32 bg-gray-200 relative">
                                     {activity.photos?.[0] ? (
                                         <img src={activity.photos[0]} alt={activity.title} className="w-full h-full object-cover" />
@@ -900,16 +911,27 @@ export default function ProfilePage() {
 
                 {/* Joined Activities */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h3 className="flex items-center gap-2 font-semibold text-gray-900 mb-4">
-                        <span className="bg-orange-100 p-2 rounded-lg text-orange-600"><PartyPopper size={20} /></span>
-                        Joined Activities
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="flex items-center gap-2 font-semibold text-gray-900">
+                            <span className="bg-orange-100 p-2 rounded-lg text-orange-600"><PartyPopper size={20} /></span>
+                            Joined Activities
+                        </h3>
+                        {(profile?.JoinActivity || []).filter(a => a.createdBy?._id !== profile?._id && a.createdBy !== profile?._id).length > 2 && (
+                            <button 
+                                onClick={() => navigate('/joined-activities')}
+                                className="text-sm text-orange-600 hover:text-orange-700 font-medium hover:underline"
+                            >
+                                View All →
+                            </button>
+                        )}
+                    </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {(profile?.JoinActivity || [])
                             .filter(activity => activity.createdBy?._id !== profile?._id && activity.createdBy !== profile?._id)
+                            .slice(0, 2)
                             .map((activity) => (
-                            <div key={activity._id} className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow group">
+                            <div key={activity._id} onClick={() => navigate(`/activity/${activity._id}`)} className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow group cursor-pointer">
                                 <div className="h-32 bg-gray-200 relative">
                                     {activity.photos?.[0] ? (
                                         <img src={activity.photos[0]} alt={activity.title} className="w-full h-full object-cover" />
