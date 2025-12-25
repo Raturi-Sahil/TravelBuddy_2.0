@@ -1,14 +1,14 @@
-import { Autocomplete,GoogleMap, Marker } from "@react-google-maps/api";
 import { useAuth } from "@clerk/clerk-react";
-import { AlignLeft, Clock, DollarSign, Image as ImageIcon, Loader2,MapPin, Mic, MicOff, Plus, Search, Send, Sparkles, Users, Video, X } from "lucide-react";
+import { Autocomplete,GoogleMap, Marker } from "@react-google-maps/api";
+import { AlignLeft, Clock, Crosshair, DollarSign, Image as ImageIcon, Loader2,MapPin, Mic, MicOff, Plus, Search, Send, Sparkles, Users, Video, X } from "lucide-react";
 import React, { useCallback, useEffect,useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { createActivity } from "../../redux/slices/ActivitySlice";
-import { generateDescription } from "../../redux/slices/aiSlice";
 
 import { useGoogleMaps } from "../../context/GoogleMapsContext";
+import { createActivity } from "../../redux/slices/ActivitySlice";
+import { generateDescription } from "../../redux/slices/aiSlice";
 
 const containerStyle = { width: "100%", height: "100%", borderRadius: "0.75rem" };
 const categories = ["Adventure", "Culture", "Food", "Nightlife", "Sports", "Nature", "Other"];
@@ -82,6 +82,28 @@ export default function CreateActivity() {
     } else toast.error("Please select a location from the dropdown");
   };
   const onMapClick = useCallback((e) => setFormData(prev => ({ ...prev, location: { lat: e.latLng.lat(), lng: e.latLng.lng(), address: '' }})), []);
+
+  const handleCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const loc = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            address: ''
+          };
+          setFormData(prev => ({ ...prev, location: loc }));
+          setCenter({ lat: loc.lat, lng: loc.lng });
+          toast.success("Current location set!");
+        },
+        (error) => {
+          toast.error("Unable to get your location. Please enable location services.");
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by your browser.");
+    }
+  };
 
   const handlePhotoSelect = (e) => {
     if (e.target.files?.length) {
@@ -238,13 +260,21 @@ export default function CreateActivity() {
           <div className="space-y-6">
             <Section icon={MapPin} title="Location">
               {isLoaded ? (
-                <div className="mb-4">
-                  <Autocomplete onLoad={onAutocompleteLoad} onPlaceChanged={onPlaceChanged}>
+                <div className="mb-4 flex gap-2">
+                  <Autocomplete onLoad={onAutocompleteLoad} onPlaceChanged={onPlaceChanged} className="flex-1">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input type="text" placeholder="Search for a place..." className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
                     </div>
                   </Autocomplete>
+                  <button
+                    type="button"
+                    onClick={handleCurrentLocation}
+                    className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-600 rounded-lg transition-colors flex items-center gap-1"
+                    title="Use current location"
+                  >
+                    <Crosshair className="w-4 h-4" />
+                  </button>
                 </div>
               ) : null}
               <div className="h-64 bg-gray-100 rounded-xl overflow-hidden relative">
