@@ -7,12 +7,12 @@ import connectToDB from "./db/db";
 import errorMiddleware from "./middlewares/errorMiddleware";
 import activityRoutes from "./routes/activityRoutes";
 import aiRoutes from "./routes/aiRoute";
+import articleRoutes from "./routes/articleRoutes";
 import friendRoutes from "./routes/friendRoute";
 import placesRoutes from "./routes/placesRoute";
 import postRoutes from "./routes/postRoutes";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
 import userRoutes from "./routes/userRoute";
-import articleRoutes from "./routes/articleRoutes";
 
 const app: Application = express();
 
@@ -21,10 +21,7 @@ connectToDB();
 
 // CORS
 app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true,
-  })
+  cors()
 );
 
 // HTTP request logger - logs all route hits in dev
