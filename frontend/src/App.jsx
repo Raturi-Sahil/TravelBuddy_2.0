@@ -18,6 +18,7 @@ import CreateActivity from "./pages/Activity/createActivity";
 import ActivityNearMe from "./pages/Activity/getNearByActivity";
 import JoinedActivities from "./pages/Activity/JoinedActivities";
 import MyCreatedActivities from "./pages/Activity/MyCreatedActivites";
+import ManageActivity from "./pages/Activity/UpdateActivity";
 import AiTripPlanner from "./pages/AiFeatures/AiTripPlanner";
 import CommunityGuidelines from "./pages/miscellaneous/CommunityGuidelines";
 import CookiePolicy from "./pages/miscellaneous/CookiePolicy";
@@ -81,6 +82,7 @@ function App() {
         <Route path="payment-status" element={<AuthGuard><PaymentStatus /></AuthGuard>} />
         <Route path="activity-payment-status" element={<AuthGuard><ActivityPaymentStatus /></AuthGuard>} />
         <Route path="activity/:id" element={<AuthGuard><ActivityDetails /></AuthGuard>} />
+        <Route path="manage-activity/:id" element={<AuthGuard><ManageActivity /></AuthGuard>} />
 
         {/* Ai Features Routes */}
         <Route path="ai-trip-planner" element={<AuthGuard><AiTripPlanner /></AuthGuard>} />

@@ -247,7 +247,7 @@ function MyCreatedActivities() {
                     key={activity._id}
                     className={`animate-fade-in-up group bg-gray-50 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 transform transition-all duration-300 overflow-hidden border border-gray-100 hover:border-amber-200 cursor-pointer ${isPast ? 'opacity-75' : ''}`}
                     style={{ animationDelay: `${index * 100}ms` }}
-                    onClick={() => navigate(`/activity/${activity._id}`)}
+                    onClick={() => navigate(`/manage-activity/${activity._id}`)}
                   >
                     {/* Card Header */}
                     <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white relative overflow-hidden">

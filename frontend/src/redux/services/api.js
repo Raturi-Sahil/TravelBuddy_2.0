@@ -313,6 +313,12 @@ export const activityService = {
   getMyCreatedActivities: async (authApi) => {
     const response = await authApi.get('/activities/my-created');
     return response.data;
+  },
+
+  // Get participants of an activity
+  getActivityParticipants: async (authApi, activityId) => {
+    const response = await authApi.get(`/activities/${activityId}/participants`);
+    return response.data;
   }
 };
 
