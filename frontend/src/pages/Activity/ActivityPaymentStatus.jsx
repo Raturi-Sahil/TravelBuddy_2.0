@@ -40,7 +40,7 @@ const ActivityPaymentStatus = () => {
 
           // Redirect after a few seconds
           setTimeout(() => {
-            navigate(`/activity/${activityId}`);
+            navigate(`/manage-joined-activity/${activityId}`);
           }, 3000);
         } else {
           setStatus('failed');
@@ -93,12 +93,12 @@ const ActivityPaymentStatus = () => {
                 <span className="font-semibold">Order ID:</span> {orderId}
               </p>
             </div>
-            <p className="text-sm text-slate-400">Redirecting you to activity details...</p>
+            <p className="text-sm text-slate-400">Redirecting you to activity dashboard...</p>
             <button
-              onClick={() => navigate(`/activity/${activityId}`)}
+              onClick={() => navigate(`/manage-joined-activity/${activityId}`)}
               className="mt-4 flex items-center gap-2 text-orange-600 font-semibold hover:gap-3 transition-all"
             >
-              View Activity Details <ArrowRight className="w-4 h-4" />
+              Go to Dashboard <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         )}
