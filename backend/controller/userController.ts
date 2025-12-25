@@ -144,6 +144,7 @@ export const updateProfile = asyncHandler(
     }
 
     const {
+      name,
       mobile,
       dob,
       gender,
@@ -201,6 +202,7 @@ export const updateProfile = asyncHandler(
     }
 
     // Update fields if provided (already validated by Zod)
+    if (name) user.name = name;
     if (mobile) user.mobile = mobile;
     if (dob) user.dob = new Date(dob);
     if (gender) user.gender = gender;

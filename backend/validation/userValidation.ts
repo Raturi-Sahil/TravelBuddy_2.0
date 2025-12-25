@@ -62,6 +62,8 @@ export const registerUserSchema = z.object({
 
 // Schema for updating profile - all fields optional
 export const updateProfileSchema = z.object({
+  name: z.string().min(1, "Name is required").optional(),
+
   mobile: z
     .string()
     .regex(/^\d{10}$/, "Mobile number must be exactly 10 digits")
