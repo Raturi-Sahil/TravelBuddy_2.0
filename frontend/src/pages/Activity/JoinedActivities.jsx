@@ -6,6 +6,25 @@ import { fetchJoinedActivities, leaveActivity } from "../../redux/slices/userAct
 import { Loader2, MapPin, Users, Calendar, Search, Star, Clock, Zap } from "lucide-react";
 import ReverseGeocode from "../../helpers/reverseGeoCode";
 
+// Animation styles
+const cardAnimationStyles = `
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+  }
+`;
+
 function JoinedActivites() {
   const { getToken } = useAuth();
   const currentUser = useSelector((state) => state.user.profile);
@@ -82,11 +101,13 @@ function JoinedActivites() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-orange-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50  to-orange-100">
+      {/* Inject animation styles */}
+      <style>{cardAnimationStyles}</style>
       {/* Header Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-400 to-yellow-400">
         <div className="absolute inset-0 bg-black opacity-10"></div>
-        <div className="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        <div className="relative max-w-7xl mx-auto px-4 py-16 mt-16 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-white/20 backdrop-blur-sm rounded-full">
@@ -198,7 +219,7 @@ function JoinedActivites() {
                 return (
                   <div
                     key={activity._id}
-                    className="group bg-gray-50 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transform transition-all duration-300 overflow-hidden border border-gray-100 hover:border-amber-200 cursor-pointer"
+                    className="animate-fade-in-up group bg-gray-50 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 transform transition-all duration-300 overflow-hidden border border-gray-100 hover:border-amber-200 cursor-pointer"
                     style={{ animationDelay: `${index * 100}ms` }}
                     onClick={() => navigate(`/activity/${activity._id}`)}
                   >

@@ -205,6 +205,34 @@ export const getJoinedActivities = asyncHandler(
   }
 );
 
+// Get activities created by the authenticated user
+export const getMyCreatedActivities = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    if (!req.user) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const userId = req.user._id;
+
+    const activities = await Activity.find({
+      createdBy: userId
+    })
+      .sort({ date: -1 })
+      .populate("createdBy", "name email mobile profileImage")
+      .lean();
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          activities,
+          "Created activities fetched successfully"
+        )
+      );
+  }
+);
+
 
 export const getNearbyActivities = asyncHandler(
   async (req: Request, res: Response) => {

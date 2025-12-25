@@ -207,7 +207,7 @@ function NavBar() {
   const profileMenuItems = [
     { name: 'Profile', path: '/profile', icon: User },
     { name: 'Joined Activities', path: '/joined-activities', icon: Activity },
-    { name: 'My Activities', path: '/created-activities', icon: Calendar },
+    { name: 'My Activities', path: '/my-activities', icon: Calendar },
 
     { name: 'Upload Post', path: '/upload-post', icon: Upload },
     { name: 'Upload Article', path: '/upload-article', icon: Upload },

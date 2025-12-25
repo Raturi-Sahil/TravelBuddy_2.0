@@ -307,6 +307,12 @@ export const activityService = {
   getJoinedActivities: async (authApi) => {
     const response = await authApi.get('/activities/joined');
     return response.data;
+  },
+
+  // Get activities created by current user
+  getMyCreatedActivities: async (authApi) => {
+    const response = await authApi.get('/activities/my-created');
+    return response.data;
   }
 };
 

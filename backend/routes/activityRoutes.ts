@@ -8,6 +8,7 @@ import {
     getActivities,
     getActivityById,
     getJoinedActivities,
+    getMyCreatedActivities,
     getNearbyActivities,
     getParticipants,
     inviteUsers,
@@ -29,6 +30,7 @@ router.use(requireProfile);
 router.post("/", upload.fields([{ name: "photos", maxCount: 5 }]), createActivity);
 router.get("/", getActivities);
 router.get("/joined", getJoinedActivities);
+router.get("/my-created", getMyCreatedActivities);
 router.get("/nearby", getNearbyActivities);
 router.get("/:id", getActivityById);
 router.put("/:id", updateActivity);
