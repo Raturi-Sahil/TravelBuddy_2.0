@@ -48,9 +48,10 @@ export default function ChatPanel({ friends = [], onClose }) {
   }, [dispatch, getToken, currentChatUserId]);
 
   // Auto-scroll to bottom on new messages
+  const currentMessagesForScroll = messages[currentChatUserId];
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages[currentChatUserId]]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [currentMessagesForScroll]);
 
   // Get current user from conversations or friends
   const currentChatUser = conversations.find(c => c.user._id === currentChatUserId)?.user

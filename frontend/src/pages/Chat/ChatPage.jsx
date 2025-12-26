@@ -96,7 +96,7 @@ export default function ChatPage() {
   // Auto-scroll to bottom on new messages
   const currentMessagesForScroll = messages[currentChatUserId];
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [currentMessagesForScroll]);
 
   // Focus input when chat loads
