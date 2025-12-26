@@ -441,6 +441,83 @@ export const generateWeatherForecast = asyncHandler(async (req: Request, res: Re
       console.error("AI Error in weather summary:", error);
       // Return raw weather only if AI fails
       // ... mapping code similar to above but without AI parts ...
-       throw new ApiError(500, "Failed to analyze weather data");
+   }
+});
+
+export const generateLocalGuide = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+   const { location, interests, duration } = req.body;
+
+   if (!location) {
+      throw new ApiError(400, "Location is required");
+   }
+
+   console.log('Generating AI local guide for:', location);
+
+   // Groq AI uses OpenAI-compatible API
+   const client = new OpenAI({
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+   });
+
+   try {
+      const prompt = `
+     You are a knowledgeable local tour guide. Create a curated guide for a traveler.
+
+     Details:
+     - Location: ${location}
+     - Duration: ${duration}
+     - Interests: ${interests.join(", ")}
+
+     IMPORTANT: Return ONLY valid JSON (no markdown, no code blocks) with this exact structure:
+     {
+       "title": "Engaging Title for the Guide",
+       "summary": "Inviting summary of the experience (2 sentences)",
+       "spots": [
+         {
+           "name": "Spot Name",
+           "type": "Type (e.g. Food, Landmark, Culture, Nature)",
+           "description": "Why it's special (1 sentence)",
+           "icon": "Choose one: food, landmark, culture, nature"
+         }
+       ],
+       "tips": ["Local tip 1", "Local tip 2", "Local tip 3"]
+     }
+
+     Requirements:
+     - Suggest 4-6 spots that fit the duration and interests
+     - Focus on "Hidden Gems" if requested
+     - Ensure the "type" and "icon" fields match the spot (icons must be one of: food, landmark, culture, nature)
+     - Simple, clear English
+     `;
+
+      const completion = await client.chat.completions.create({
+         model: "llama-3.1-8b-instant",
+         messages: [{ role: "user", content: prompt }],
+         temperature: 0.7,
+      });
+
+      const rawResponse = completion.choices[0]?.message?.content;
+
+      if (!rawResponse) {
+         throw new Error("No guide generated");
+      }
+
+      // Clean and parse JSON response
+      let guideData;
+      try {
+         // Remove markdown code blocks if present
+         const cleanedResponse = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
+         guideData = JSON.parse(cleanedResponse);
+      } catch (parseError) {
+         console.error("JSON Parse Error:", parseError);
+         console.log("Raw AI Response:", rawResponse);
+         throw new Error("Failed to parse AI response as JSON");
+      }
+
+      return res.status(200).json(new ApiResponse(200, guideData, "Local guide generated successfully"));
+
+   } catch (error: any) {
+      console.error("Groq AI Error:", error);
+      throw new ApiError(500, error.message || "Failed to generate local guide via AI");
    }
 });

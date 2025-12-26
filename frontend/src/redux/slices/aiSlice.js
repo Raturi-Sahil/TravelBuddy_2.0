@@ -86,6 +86,21 @@ export const generateWeatherForecast = createAsyncThunk(
   }
 );
 
+export const generateLocalGuide = createAsyncThunk(
+  'ai/generateLocalGuide',
+  async ({ getToken, guideData }, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await aiService.generateLocalGuide(authApi, guideData);
+      return response;
+    } catch (error) {
+       return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to generate local guide'
+      );
+    }
+  }
+);
+
 // AI slice
 const aiSlice = createSlice({
   name: 'ai',
@@ -93,6 +108,7 @@ const aiSlice = createSlice({
     ...initialState,
     packingList: null,
     weatherData: null,
+    guideData: null,
   },
   reducers: {
     clearError: (state) => {
@@ -109,6 +125,9 @@ const aiSlice = createSlice({
     },
     clearWeatherForecast: (state) => {
       state.weatherData = null;
+    },
+    clearLocalGuide: (state) => {
+      state.guideData = null;
     },
   },
   extraReducers: (builder) => {
@@ -182,9 +201,23 @@ const aiSlice = createSlice({
       .addCase(generateWeatherForecast.rejected, (state, action) => {
         state.isGenerating = false;
         state.error = action.payload || 'Failed to generate weather forecast';
+      })
+      // Generate Local Guide
+      .addCase(generateLocalGuide.pending, (state) => {
+        state.isGenerating = true;
+        state.error = null;
+      })
+      .addCase(generateLocalGuide.fulfilled, (state, action) => {
+        state.isGenerating = false;
+        state.guideData = action.payload.data;
+        state.error = null;
+      })
+      .addCase(generateLocalGuide.rejected, (state, action) => {
+        state.isGenerating = false;
+        state.error = action.payload || 'Failed to generate local guide';
       });
   },
 });
 
-export const { clearError, clearTripPlan, clearDescription, clearPackingList, clearWeatherForecast } = aiSlice.actions;
+export const { clearError, clearTripPlan, clearDescription, clearPackingList, clearWeatherForecast, clearLocalGuide } = aiSlice.actions;
 export default aiSlice.reducer;

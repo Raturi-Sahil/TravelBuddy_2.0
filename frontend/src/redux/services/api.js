@@ -353,6 +353,11 @@ export const aiService = {
   generateWeatherForecast: async (authApi, weatherData) => {
     const response = await authApi.post('/ai/generate-weather', weatherData);
     return response.data;
+  },
+
+  generateLocalGuide: async (authApi, guideData) => {
+    const response = await authApi.post('/ai/generate-local-guide', guideData);
+    return response.data;
   }
 };
 
