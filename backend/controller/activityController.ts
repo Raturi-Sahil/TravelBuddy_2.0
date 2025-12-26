@@ -7,6 +7,7 @@ import uploadOnCloudinary from "../middlewares/cloudinary";
 import deleteFromCloudinaryByUrl from "../middlewares/deleteCloudinary";
 import { Activity } from "../models/activityModel";
 import { ActivityPayment } from "../models/activityPaymentModel";
+import { ChatGroup } from "../models/chatGroupModel";
 import { User } from "../models/userModel";
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
@@ -128,6 +129,18 @@ export const createActivity = asyncHandler(
 
       await User.findByIdAndUpdate(userId, userUpdate);
       console.log("createActivity: User updated");
+
+      // create activty chat group
+      await ChatGroup.findOneAndUpdate(
+        {activityId: activity._id},
+        {
+        activityId: activity._id,
+        name: activity.title,
+        createdBy: userId,
+        participants: [userId],
+        },
+        {upsert: true, new: true},
+      );
 
       return res
         .status(201)
@@ -549,6 +562,12 @@ export const joinActivity = asyncHandler(
         { $addToSet: { JoinActivity: id } }
     );
 
+    //Add user to the chat group
+    await ChatGroup.findOneAndUpdate(
+      { activityId: id },
+      { $addToSet: {participants: userId} }
+    );
+
     //Response
     return res.status(200).json(
           new ApiResponse(
@@ -609,6 +628,13 @@ export const leaveActivity = asyncHandler(
     )
     .populate("createdBy", "name email mobile profileImage")
     .lean();
+
+    await ChatGroup.findOneAndUpdate(
+        {activityId: id},
+        {
+          $pull: { participants: userId }
+        }
+    );
 
     //Response
     return res.status(200).json(
