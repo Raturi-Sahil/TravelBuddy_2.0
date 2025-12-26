@@ -433,9 +433,12 @@ function IndividualActivity() {
                   You're Hosting This Activity
                 </button>
               ) : isAlreadyParticipant || isJoined ? (
-                <button disabled className="w-full py-4 bg-green-600 text-white font-bold rounded-xl flex items-center justify-center gap-2">
-                  <CheckCircle2 className="w-5 h-5" />
-                  Already Joined
+                <button
+                  onClick={() => navigate(`/manage-joined-activity/${activity._id}`)}
+                  className="w-full py-4 bg-green-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-green-700 transition-all shadow-lg shadow-green-200"
+                >
+                  <Users className="w-5 h-5" />
+                  Open Group
                 </button>
               ) : isFull ? (
                 <button disabled className="w-full py-4 bg-slate-200 text-slate-500 font-bold rounded-xl ">
@@ -457,7 +460,7 @@ function IndividualActivity() {
                       Processing...
                     </>
                   ) : (
-                    'Reserve Your Spot'
+                    'Join Group'
                   )}
                 </button>
               )}

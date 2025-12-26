@@ -18,8 +18,10 @@ import CreateActivity from "./pages/Activity/createActivity";
 import ActivityNearMe from "./pages/Activity/getNearByActivity";
 import JoinedActivities from "./pages/Activity/JoinedActivities";
 import ManageJoinedActivity from "./pages/Activity/ManageJoinedActivity";
+import JoinActivityGroup from "./pages/Activity/JoinActivityGroup";
 import MyCreatedActivities from "./pages/Activity/MyCreatedActivites";
 import ManageActivity from "./pages/Activity/UpdateActivity";
+import AiBuddyHomePage from "./pages/AiFeatures/AiBuddyHomePage";
 import AiTripPlanner from "./pages/AiFeatures/AiTripPlanner";
 import ChatPage from "./pages/Chat/ChatPage";
 import CommunityGuidelines from "./pages/miscellaneous/CommunityGuidelines";
@@ -86,9 +88,12 @@ function App() {
         <Route path="activity-payment-status" element={<AuthGuard><ActivityPaymentStatus /></AuthGuard>} />
         <Route path="activity/:id" element={<AuthGuard><ActivityDetails /></AuthGuard>} />
         <Route path="manage-activity/:id" element={<AuthGuard><ManageActivity /></AuthGuard>} />
+        <Route path="manage-activity/:id" element={<AuthGuard><ManageActivity /></AuthGuard>} />
         <Route path="manage-joined-activity/:id" element={<AuthGuard><ManageJoinedActivity /></AuthGuard>} />
+        <Route path="join-activity-chat-group/:id" element={<AuthGuard><JoinActivityGroup /></AuthGuard>} />
 
         {/* Ai Features Routes */}
+        <Route path="ai-buddy" element={<AuthGuard><AiBuddyHomePage /></AuthGuard>} />
         <Route path="ai-trip-planner" element={<AuthGuard><AiTripPlanner /></AuthGuard>} />
         <Route path="user-posts" element={<AuthGuard><UserPosts /></AuthGuard>} />
         <Route path="upload-post" element={<AuthGuard><UploadPost /></AuthGuard>} />

@@ -29,6 +29,7 @@ import {
   User,
   Users,
   UtensilsCrossed,
+  Bot,
   X} from 'lucide-react';
 import  { useEffect, useRef,useState } from 'react';
 import toast from 'react-hot-toast';
@@ -183,7 +184,7 @@ function NavBar() {
 
   const navLinks = [
     {name:'Read Article',path:'/read-article',icon:BookOpen},
-    { name: 'Ai Trip Planner', path: '/ai-trip-planner', icon: Sparkles },
+    { name: 'Ai Buddy', path: '/ai-buddy', icon: Bot },
     {
       name: 'Map',
       path: '/map',
@@ -248,9 +249,9 @@ function NavBar() {
             )}
           </div>
 
-          {/* Center Section: Navigation Links (Excluding AI Trip Planner) */}
+          {/* Center Section: Navigation Links (Excluding AI Buddy) */}
           <div className="hidden md:flex items-center justify-center space-x-3 lg:space-x-6 xl:space-x-8 flex-1 max-w-4xl mx-auto">
-            {navLinks.filter(link => link.name !== 'Ai Trip Planner').map((link) => (
+            {navLinks.filter(link => link.name !== 'Ai Buddy').map((link) => (
               link.children ? (
                 <div key={link.name} className="relative group z-50">
                   <button className={`flex items-center space-x-1.5 py-2 text-sm font-medium transition-colors duration-200 ${
@@ -303,13 +304,13 @@ function NavBar() {
 
           {/* Right Actions: AI Planner, Create Activity, Profile */}
           <div className="hidden md:flex items-center space-x-2 lg:space-x-3 xl:space-x-4 flex-shrink-0">
-             {/* Ai Trip Planner Button - Placed here next to Create Activity */}
+             {/* Ai Buddy Button - Placed here next to Create Activity */}
              <button
-                onClick={() => handleNavigation('/ai-trip-planner')}
+                onClick={() => handleNavigation('/ai-buddy')}
                 className="flex items-center space-x-1.5 lg:space-x-2 bg-gradient-to-r from-purple-500 to-violet-600 text-white px-3 lg:px-4 xl:px-5 py-2 lg:py-2.5 rounded-lg lg:rounded-xl hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-xs lg:text-sm group"
               >
-                <Sparkles size={16} className="group-hover:rotate-12 transition-transform duration-300 flex-shrink-0" />
-                <span className="hidden xl:inline whitespace-nowrap">Ai Trip Planner</span>
+                <Bot size={16} className="group-hover:rotate-12 transition-transform duration-300 flex-shrink-0" />
+                <span className="hidden xl:inline whitespace-nowrap">Ai Buddy</span>
               </button>
 
             {isSignedIn ? (
