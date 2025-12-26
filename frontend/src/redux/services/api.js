@@ -343,6 +343,16 @@ export const aiService = {
   generatePostCaption: async (authApi, postData) => {
     const response = await authApi.post('/ai/generate-post-caption', postData);
     return response.data;
+  },
+
+  generatePackingList: async (authApi, packingData) => {
+    const response = await authApi.post('/ai/generate-packing-list', packingData);
+    return response.data;
+  },
+
+  generateWeatherForecast: async (authApi, weatherData) => {
+    const response = await authApi.post('/ai/generate-weather', weatherData);
+    return response.data;
   }
 };
 

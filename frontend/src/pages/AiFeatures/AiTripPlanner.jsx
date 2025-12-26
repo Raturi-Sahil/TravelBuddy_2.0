@@ -55,7 +55,7 @@ function AiTripPlanner() {
     e.preventDefault();
 
     try {
-      const result = await dispatch(generateTripPlan({
+      await dispatch(generateTripPlan({
         getToken,
         tripData: formData
       })).unwrap();
@@ -128,16 +128,19 @@ function AiTripPlanner() {
     };
   }, [dispatch]);
 
+  // Prevent past dates
+  const today = new Date().toISOString().split('T')[0];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50 pt-28 pb-16 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 pt-28 pb-16 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2 rounded-full mb-4">
-            <Sparkles className="text-amber-600" size={20} />
-            <span className="text-amber-700 font-semibold text-sm">AI-Powered Trip Planning</span>
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-sky-100 px-4 py-2 rounded-full mb-4">
+            <Sparkles className="text-blue-600" size={20} />
+            <span className="text-blue-700 font-semibold text-sm">AI-Powered Trip Planning</span>
           </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-sky-600 to-blue-600 bg-clip-text text-transparent mb-4">
             Plan Your Perfect Trip
           </h1>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -149,8 +152,8 @@ function AiTripPlanner() {
           {/* Form Section */}
           <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-amber-100 rounded-xl">
-                <Wand2 className="text-amber-600" size={24} />
+              <div className="p-2 bg-blue-100 rounded-xl">
+                <Wand2 className="text-blue-600" size={24} />
               </div>
               <h2 className="text-2xl font-bold text-gray-900">Trip Details</h2>
             </div>
@@ -159,7 +162,7 @@ function AiTripPlanner() {
               {/* Destination */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Where do you want to go?
+                  Destination
                 </label>
                 {isLoaded ? (
                   <Autocomplete onLoad={onAutocompleteLoad} onPlaceChanged={onPlaceChanged}>
@@ -171,7 +174,7 @@ function AiTripPlanner() {
                         value={formData.destination}
                         onChange={handleInputChange}
                         placeholder="Search destination (e.g., Paris, Tokyo)"
-                        className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                        className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         required
                       />
                     </div>
@@ -181,11 +184,8 @@ function AiTripPlanner() {
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     <input
                       type="text"
-                      name="destination"
-                      value={formData.destination}
-                      onChange={handleInputChange}
-                      placeholder="Loading Google Maps..."
-                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50"
+                      placeholder="Loading Maps..."
                       disabled
                     />
                   </div>
@@ -195,45 +195,35 @@ function AiTripPlanner() {
               {/* Dates */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Start Date
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleInputChange}
-                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                  <input
+                    type="date"
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleInputChange}
+                    min={today}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    End Date
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={formData.endDate}
-                      onChange={handleInputChange}
-                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleInputChange}
+                     min={formData.startDate || today}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
                 </div>
               </div>
 
               {/* Budget & Travelers */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Budget (₹ INR)
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Budget (₹ INR)</label>
                   <div className="relative">
                     <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
@@ -242,22 +232,20 @@ function AiTripPlanner() {
                       value={formData.budget}
                       onChange={handleInputChange}
                       placeholder="e.g., 50000"
-                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Travelers
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Travelers</label>
                   <div className="relative">
                     <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <select
                       name="travelers"
                       value={formData.travelers}
                       onChange={handleInputChange}
-                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none bg-white"
+                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                     >
                       {[1, 2, 3, 4, 5, 6].map(num => (
                         <option key={num} value={num}>{num} {num === 1 ? 'Person' : 'People'}</option>
@@ -269,9 +257,7 @@ function AiTripPlanner() {
 
               {/* Travel Style */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  Travel Style
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">Travel Style</label>
                 <div className="grid grid-cols-3 gap-3">
                   {travelStyles.map(style => (
                     <button
@@ -280,8 +266,8 @@ function AiTripPlanner() {
                       onClick={() => setFormData(prev => ({ ...prev, travelStyle: style.id }))}
                       className={`p-4 rounded-xl border-2 transition-all duration-200 ${
                         formData.travelStyle === style.id
-                          ? 'border-amber-500 bg-amber-50 shadow-md'
-                          : 'border-gray-200 hover:border-amber-300 bg-white'
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
+                          : 'border-gray-200 hover:border-blue-300 bg-white'
                       }`}
                     >
                       <div className="text-2xl mb-1">{style.icon}</div>
@@ -304,7 +290,7 @@ function AiTripPlanner() {
                       onClick={() => toggleInterest(interest)}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                         formData.interests.includes(interest)
-                          ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/30'
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
@@ -318,13 +304,13 @@ function AiTripPlanner() {
               <button
                 type="submit"
                 disabled={isGenerating}
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:shadow-amber-500/30 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-blue-500 to-sky-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isGenerating ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                    Generating Your Perfect Trip...
-                  </>
+                   <>
+                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                   Generating Your Perfect Trip...
+                 </>
                 ) : (
                   <>
                     <Sparkles size={20} />
@@ -335,51 +321,53 @@ function AiTripPlanner() {
             </form>
           </div>
 
-          {/* Preview/Results Section */}
-          <div className="bg-gradient-to-br from-orange-100 via-orange-50 to-amber-100 rounded-3xl shadow-2xl border-2 border-orange-200 p-8">
+          {/* Results Section */}
+          <div className="bg-gradient-to-br from-blue-50 via-white to-sky-50 rounded-3xl shadow-xl border-2 border-blue-100 p-8">
             {!tripPlan ? (
-              <div className="h-full flex flex-col items-center justify-center text-center">
-                <div className="bg-gradient-to-br from-orange-200 to-amber-200 p-6 rounded-2xl mb-6">
-                  <Sparkles size={48} className="text-orange-600" />
-                </div>
-                <h3 className="text-2xl font-bold mb-3 text-gray-800">Your AI Trip Awaits</h3>
-                <p className="text-gray-600 max-w-md">
-                  Fill in your preferences and our AI will create a personalized itinerary with recommendations
-                  for activities, restaurants, and hidden gems.
-                </p>
-              </div>
+               <div className="h-full flex flex-col items-center justify-center text-center p-8">
+               <div className="bg-gradient-to-br from-blue-100 to-sky-100 p-6 rounded-2xl mb-6 animate-pulse">
+                 <Sparkles size={48} className="text-blue-600" />
+               </div>
+               <h3 className="text-2xl font-bold mb-3 text-gray-800">Your AI Trip Awaits</h3>
+               <p className="text-gray-600 max-w-md">
+                 Fill in your preferences and our AI will create a personalized itinerary with recommendations for activities, restaurants, and hidden gems.
+               </p>
+             </div>
             ) : (
-              <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="bg-gradient-to-br from-orange-200 to-amber-200 rounded-2xl p-6 border border-orange-300">
-                  <h3 className="text-3xl font-bold mb-2 text-gray-800">{tripPlan.title}</h3>
-                  <div className="flex items-center gap-4 text-gray-700">
-                    <div className="flex items-center gap-2">
-                      <Clock size={18} />
-                      <span>{tripPlan.days} Days</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users size={18} />
-                      <span>{formData.travelers} Travelers</span>
-                    </div>
-                  </div>
+              <div className="space-y-6 h-full flex flex-col animate-in fade-in duration-500">
+                {/* Trip Header Summary */}
+                <div className="bg-white rounded-2xl p-6 border border-blue-100 shadow-sm">
+                   <div className="flex items-start justify-between">
+                     <div>
+                       <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                         <MapPin className="text-blue-500" size={20} />
+                         {tripPlan.title}
+                       </h3>
+                       <div className="flex items-center gap-4 text-gray-600 mt-2 text-sm">
+                            <span className="flex items-center gap-1"><Clock size={16}/> {tripPlan.days} Days</span>
+                            <span className="flex items-center gap-1"><Users size={16}/> {formData.travelers} Travelers</span>
+                       </div>
+                     </div>
+                     <div className="bg-blue-50 p-3 rounded-xl">
+                        <DollarSign className="text-blue-600" size={24} />
+                     </div>
+                   </div>
                 </div>
 
-                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-300 scrollbar-track-orange-100">
-                  <h4 className="text-xl font-semibold text-gray-800 sticky top-0 bg-gradient-to-br from-orange-100 via-orange-50 to-amber-100 py-2 z-10">Day-by-Day Itinerary</h4>
+                {/* Day-by-Day Itinerary */}
+                <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[400px] scrollbar-thin scrollbar-thumb-blue-200">
                   {tripPlan.itinerary?.map((day) => (
-                    <div key={day.day} className="bg-white/80 backdrop-blur-sm rounded-xl p-5 border border-orange-200 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                          Day {day.day}
-                        </div>
-                        <h5 className="font-semibold text-lg text-gray-800">{day.title}</h5>
-                      </div>
-                      <ul className="space-y-2">
+                    <div key={day.day} className="bg-white/80 backdrop-blur-sm rounded-xl p-5 border border-blue-100">
+                      <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-3">
+                         <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">Day {day.day}</span>
+                         {day.title}
+                      </h4>
+                      <ul className="space-y-2 relative border-l-2 border-blue-100 ml-3 pl-4">
                         {day.activities?.map((activity, idx) => (
-                          <li key={idx} className="flex items-center gap-2 text-gray-700">
-                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>
-                            {activity}
-                          </li>
+                           <li key={idx} className="text-gray-600 text-sm relative">
+                             <div className="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-300 border-2 border-white"></div>
+                             {activity}
+                           </li>
                         ))}
                       </ul>
                     </div>
@@ -388,7 +376,7 @@ function AiTripPlanner() {
 
                 <button
                   onClick={handleDownloadItinerary}
-                  className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-orange-500/30 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                  className="w-full mt-auto bg-white border-2 border-blue-100 text-blue-600 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
                 >
                   <Download size={20} />
                   Download Full Itinerary
@@ -396,23 +384,6 @@ function AiTripPlanner() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Features Section */}
-        <div className="mt-16 grid md:grid-cols-3 gap-6">
-          {[
-            { icon: Sparkles, title: 'AI-Powered', desc: 'Smart recommendations based on your preferences' },
-            { icon: Clock, title: 'Save Time', desc: 'Get a complete itinerary in seconds' },
-            { icon: MapPin, title: 'Local Insights', desc: 'Discover hidden gems and local favorites' }
-          ].map((feature, idx) => (
-            <div key={idx} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl transition-shadow">
-              <div className="bg-amber-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
-                <feature.icon className="text-amber-600" size={24} />
-              </div>
-              <h3 className="font-bold text-lg mb-2 text-gray-900">{feature.title}</h3>
-              <p className="text-gray-600">{feature.desc}</p>
-            </div>
-          ))}
         </div>
       </div>
     </div>

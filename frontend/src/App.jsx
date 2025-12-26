@@ -23,6 +23,8 @@ import MyCreatedActivities from "./pages/Activity/MyCreatedActivites";
 import ManageActivity from "./pages/Activity/UpdateActivity";
 import AiBuddyHomePage from "./pages/AiFeatures/AiBuddyHomePage";
 import AiTripPlanner from "./pages/AiFeatures/AiTripPlanner";
+import AiPackagePlanner from "./pages/AiFeatures/AiPackagePlanner";
+import AiWeatherPlanner from "./pages/AiFeatures/AiWeatherPlanner";
 import ChatPage from "./pages/Chat/ChatPage";
 import CommunityGuidelines from "./pages/miscellaneous/CommunityGuidelines";
 import CookiePolicy from "./pages/miscellaneous/CookiePolicy";
@@ -95,6 +97,8 @@ function App() {
         {/* Ai Features Routes */}
         <Route path="ai-buddy" element={<AuthGuard><AiBuddyHomePage /></AuthGuard>} />
         <Route path="ai-trip-planner" element={<AuthGuard><AiTripPlanner /></AuthGuard>} />
+        <Route path="ai-packaging-planner" element={<AuthGuard><AiPackagePlanner /></AuthGuard>} />
+        <Route path="ai-weather-planner" element={<AuthGuard><AiWeatherPlanner /></AuthGuard>} />
         <Route path="user-posts" element={<AuthGuard><UserPosts /></AuthGuard>} />
         <Route path="upload-post" element={<AuthGuard><UploadPost /></AuthGuard>} />
         <Route path="manage-posts" element={<AuthGuard><ManagePost /></AuthGuard>} />
