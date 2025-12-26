@@ -56,10 +56,28 @@ export const generatePostCaption = createAsyncThunk(
   }
 );
 
+export const generatePackingList = createAsyncThunk(
+  'ai/generatePackingList',
+  async ({ getToken, packingData }, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await aiService.generatePackingList(authApi, packingData);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to generate packing list'
+      );
+    }
+  }
+);
+
 // AI slice
 const aiSlice = createSlice({
   name: 'ai',
-  initialState,
+  initialState: {
+    ...initialState,
+    packingList: null,
+  },
   reducers: {
     clearError: (state) => {
       state.error = null;
@@ -69,6 +87,9 @@ const aiSlice = createSlice({
     },
     clearDescription: (state) => {
       state.description = null;
+    },
+    clearPackingList: (state) => {
+      state.packingList = null;
     },
   },
   extraReducers: (builder) => {
@@ -114,9 +135,23 @@ const aiSlice = createSlice({
       .addCase(generatePostCaption.rejected, (state, action) => {
         state.isGenerating = false;
         state.error = action.payload || 'Failed to generate post caption';
+      })
+      // Generate Packing List
+      .addCase(generatePackingList.pending, (state) => {
+        state.isGenerating = true;
+        state.error = null;
+      })
+      .addCase(generatePackingList.fulfilled, (state, action) => {
+        state.isGenerating = false;
+        state.packingList = action.payload.data;
+        state.error = null;
+      })
+      .addCase(generatePackingList.rejected, (state, action) => {
+        state.isGenerating = false;
+        state.error = action.payload || 'Failed to generate packing list';
       });
   },
 });
 
-export const { clearError, clearTripPlan, clearDescription } = aiSlice.actions;
+export const { clearError, clearTripPlan, clearDescription, clearPackingList } = aiSlice.actions;
 export default aiSlice.reducer;

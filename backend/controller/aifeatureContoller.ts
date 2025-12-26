@@ -230,3 +230,95 @@ export const generatePostCaption = asyncHandler(async (req: Request, res: Respon
      throw new ApiError(500, error.message || "Failed to generate caption via AI");
    }
 })
+
+export const generatePackingList = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+   const { destination, travelDate, tripDuration, tripType, gender, activities } = req.body;
+
+   if (!destination || !travelDate || !tripDuration) {
+      throw new ApiError(400, "Destination, travel date, and duration are required");
+   }
+
+   console.log('Generating AI packing list for:', destination);
+
+   // Groq AI uses OpenAI-compatible API
+   const client = new OpenAI({
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+   });
+
+   try {
+      const prompt = `
+     You are an expert travel assistant. Generate a personalized packing list in JSON format.
+
+     Trip Details:
+     - Destination: ${destination}
+     - Date: ${travelDate}
+     - Duration: ${tripDuration} days
+     - Type: ${tripType}
+     - Traveler: ${gender}
+     - Activities: ${activities ? activities.join(", ") : "General sightseeing"}
+
+     IMPORTANT: Return ONLY valid JSON (no markdown, no code blocks) with this exact structure:
+     {
+       "title": "Packing List for [Destination]",
+       "weather": {
+         "condition": "Expected weather condition (e.g., Sunny/Rainy)",
+         "temp": "Average temperature range",
+         "advice": "Brief weather-related advice"
+       },
+       "categories": [
+         {
+           "name": "Category Name (e.g., Clothing, Hygiene)",
+           "items": ["Item 1", "Item 2", "Item 3"]
+         }
+       ]
+     }
+
+     Requirements:
+     - Categories should cover: Clothing, Toiletries, Electronics, Documents, Medicine, Miscellaneous
+     - Customize items based on gender (${gender}), trip type (${tripType}), and activities
+     - Include specific items for the destination's likely weather in [Month of Travel Date]
+     - Simple, clear English
+     `;
+
+      const completion = await client.chat.completions.create({
+         model: "llama-3.1-8b-instant",
+         messages: [{ role: "user", content: prompt }],
+         temperature: 0.7,
+      });
+
+      const rawResponse = completion.choices[0]?.message?.content;
+
+      if (!rawResponse) {
+         throw new Error("No packing list generated");
+      }
+
+      // Clean and parse JSON response
+      let packingData;
+      try {
+         // Remove markdown code blocks if present
+         const cleanedResponse = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
+         packingData = JSON.parse(cleanedResponse);
+      } catch (parseError) {
+         console.error("JSON Parse Error:", parseError);
+         console.log("Raw AI Response:", rawResponse);
+         throw new Error("Failed to parse AI response as JSON");
+      }
+
+      // Validate the structure
+      if (!packingData.categories || !Array.isArray(packingData.categories)) {
+         throw new Error("Invalid packing list structure from AI");
+      }
+
+      return res.status(200).json(new ApiResponse(200, packingData, "Packing list generated successfully"));
+
+   } catch (error: any) {
+      console.error("Groq AI Error:", error);
+
+      if (error.status === 401) {
+         throw new ApiError(401, "Invalid Groq API key.");
+      }
+
+      throw new ApiError(500, error.message || "Failed to generate packing list via AI");
+   }
+})
