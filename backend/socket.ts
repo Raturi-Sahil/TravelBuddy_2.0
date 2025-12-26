@@ -59,6 +59,17 @@ export const initializeSocket = (server: HttpServer) => {
                 }
             }
         });
+
+        // Typing indicator for chat
+        socket.on("typing", (data: { receiverId: string; isTyping: boolean }) => {
+            const receiverSocketId = userSocketMap[data.receiverId];
+            if (receiverSocketId) {
+                io?.to(receiverSocketId).emit("userTyping", {
+                    senderId: userId,
+                    isTyping: data.isTyping,
+                });
+            }
+        });
     });
 };
 

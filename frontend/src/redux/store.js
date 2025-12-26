@@ -2,10 +2,11 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import activityReducer from './slices/ActivitySlice';
 import aiReducer from './slices/aiSlice';
-import postReducer from './slices/postSlice';
-import userReducer from './slices/userSlice';
 import articleReducer from './slices/articleSlice';
+import chatReducer from './slices/chatSlice';
+import postReducer from './slices/postSlice';
 import userActivityReducer from './slices/userActivitySlice';
+import userReducer from './slices/userSlice';
 
 const store = configureStore({
   reducer: {
@@ -15,7 +16,9 @@ const store = configureStore({
     ai: aiReducer,
     post: postReducer,
     article: articleReducer,
+    chat: chatReducer,
   },
 });
 
 export default store;
+

@@ -473,6 +473,36 @@ export const postService = {
   },
 };
 
+// Chat Service functions
+export const chatService = {
+  // Get all conversations
+  getConversations: async (authApi) => {
+    const response = await authApi.get('/chat/conversations');
+    return response.data;
+  },
+
+  // Get messages with a specific user (paginated)
+  getMessages: async (authApi, userId, page = 1, limit = 50) => {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('limit', limit);
+    const response = await authApi.get(`/chat/messages/${userId}?${params.toString()}`);
+    return response.data;
+  },
+
+  // Send a message to a user
+  sendMessage: async (authApi, receiverId, message) => {
+    const response = await authApi.post(`/chat/send/${receiverId}`, { message });
+    return response.data;
+  },
+
+  // Mark messages as read
+  markAsRead: async (authApi, senderId) => {
+    const response = await authApi.put(`/chat/read/${senderId}`);
+    return response.data;
+  },
+};
+
 export default api;
 
 
