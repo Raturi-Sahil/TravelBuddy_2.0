@@ -2,18 +2,23 @@ import { useAuth } from '@clerk/clerk-react';
 import { Check, Loader2, MessageCircle, Search, UserCheck, UserMinus, UserPlus, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import ChatPanel from '../../components/Chat/ChatPanel';
+import ChatListItem from '../../components/Chat/ChatListItem';
 import { useSocket } from '../../hooks/useSocket';
 import { createAuthenticatedApi, userService } from '../../redux/services/api';
+import { fetchConversations } from '../../redux/slices/chatSlice';
 
 export default function Connections() {
   const navigate = useNavigate();
   const { getToken } = useAuth();
+  const dispatch = useDispatch();
   
   // Initialize socket connection
   useSocket();
+
+  const { conversations, loading: conversationsLoading } = useSelector((state) => state.chat);
 
   const [activeTab, setActiveTab] = useState('friends');
   const [friends, setFriends] = useState([]);
@@ -22,7 +27,11 @@ export default function Connections() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [showChat, setShowChat] = useState(true);
+
+  // Fetch conversations for chat list
+  useEffect(() => {
+    dispatch(fetchConversations(getToken));
+  }, [dispatch, getToken]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -168,40 +177,39 @@ export default function Connections() {
     </div>
   );
 
-  const EmptyState = ({ icon: Icon, title, description }) => (
+  const EmptyState = ({ icon: IconComponent, title, description }) => (
     <div className="text-center py-12">
       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <Icon className="w-8 h-8 text-gray-400" />
+        <IconComponent className="w-8 h-8 text-gray-400" />
       </div>
       <h3 className="text-lg font-semibold text-gray-700 mb-2">{title}</h3>
       <p className="text-gray-500 text-sm">{description}</p>
     </div>
   );
 
+  // Build chat list from conversations and friends without conversations
+  const chatList = [
+    ...conversations,
+    ...friends
+      .filter(f => !conversations.some(c => c.user._id === f._id))
+      .map(friend => ({
+        user: friend,
+        lastMessage: null,
+        unreadCount: 0,
+      })),
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 pt-28 pb-12 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">Connections</h1>
-            <p className="text-gray-500">Manage your friends and chat with them</p>
-          </div>
-          <button
-            onClick={() => setShowChat(!showChat)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
-              showChat 
-                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md' 
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            <MessageCircle className="w-4 h-4" />
-            {showChat ? 'Hide Chat' : 'Show Chat'}
-          </button>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">Connections</h1>
+          <p className="text-gray-500">Manage your friends and chat with them</p>
         </div>
 
         {/* Two Column Layout */}
-        <div className={`grid gap-6 ${showChat ? 'lg:grid-cols-2' : 'grid-cols-1 max-w-3xl mx-auto'}`}>
+        <div className="grid gap-6 lg:grid-cols-2">
           {/* Left Column - Friends List */}
           <div className="space-y-4">
             {/* Search */}
@@ -341,12 +349,42 @@ export default function Connections() {
             </div>
           </div>
 
-          {/* Right Column - Chat Panel */}
-          {showChat && (
-            <div className="lg:sticky lg:top-28 lg:h-[calc(100vh-160px)]">
-              <ChatPanel friends={friends} />
+          {/* Right Column - Compact Chat List */}
+          <div className="lg:sticky lg:top-28 lg:h-[calc(100vh-160px)]">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 h-full flex flex-col overflow-hidden">
+              {/* Chat List Header */}
+              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-orange-100">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-orange-500" />
+                  <h3 className="font-semibold text-gray-800">Messages</h3>
+                </div>
+              </div>
+
+              {/* Chat List */}
+              <div className="flex-1 overflow-y-auto">
+                {conversationsLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                  </div>
+                ) : chatList.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center text-gray-400 p-8">
+                    <div className="text-center">
+                      <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">No conversations yet</p>
+                      <p className="text-xs text-gray-400 mt-1">Add friends to start chatting</p>
+                    </div>
+                  </div>
+                ) : (
+                  chatList.map((conv) => (
+                    <ChatListItem 
+                      key={conv.user._id} 
+                      conversation={conv}
+                    />
+                  ))
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

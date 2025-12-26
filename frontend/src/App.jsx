@@ -17,15 +17,17 @@ import BuySubscription from "./pages/Activity/buySubscription";
 import CreateActivity from "./pages/Activity/createActivity";
 import ActivityNearMe from "./pages/Activity/getNearByActivity";
 import JoinedActivities from "./pages/Activity/JoinedActivities";
+import ManageJoinedActivity from "./pages/Activity/ManageJoinedActivity";
 import MyCreatedActivities from "./pages/Activity/MyCreatedActivites";
 import ManageActivity from "./pages/Activity/UpdateActivity";
-import ManageJoinedActivity from "./pages/Activity/ManageJoinedActivity";
 import AiTripPlanner from "./pages/AiFeatures/AiTripPlanner";
+import ChatPage from "./pages/Chat/ChatPage";
 import CommunityGuidelines from "./pages/miscellaneous/CommunityGuidelines";
 import CookiePolicy from "./pages/miscellaneous/CookiePolicy";
 import PrivacyPolicy from "./pages/miscellaneous/PrivacyPolicy";
 import RefundPolicy from "./pages/miscellaneous/RefundPolicy";
 import TermsOfService from "./pages/miscellaneous/TermsOfService";
+import NotFound from "./pages/NotFound";
 import PaymentStatus from "./pages/paymentStatus";
 import CompleteRegistration from "./pages/User/completeRegistration";
 import Connections from "./pages/User/Connections";
@@ -34,14 +36,13 @@ import SignUpPage from "./pages/User/signUp";
 import SignInPage from "./pages/User/singIn";
 import TravelerProfile from "./pages/User/TravelerProfile";
 import HomePage from "./pages/userHome";
+import ArticleDetail from "./pages/UserPosts/ArticleDetail";
+import ManageArticle from "./pages/UserPosts/ManageArticle";
 import ManagePost from "./pages/UserPosts/ManagePost";
 import ReadArticle from "./pages/UserPosts/RealArticle";
+import UploadArticle from "./pages/UserPosts/UploadArticle";
 import UploadPost from "./pages/UserPosts/UploadPost";
 import UserPosts from "./pages/UserPosts/UserPosts";
-import ManageArticle from "./pages/UserPosts/ManageArticle";
-import UploadArticle from "./pages/UserPosts/UploadArticle";
-import ArticleDetail from "./pages/UserPosts/ArticleDetail";
-import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -60,6 +61,7 @@ function App() {
           </AuthGuard>
         } />
         <Route path="connections" element={<AuthGuard><Connections /></AuthGuard>} />
+        <Route path="chat/:userId" element={<AuthGuard><ChatPage /></AuthGuard>} />
         <Route path="complete-registration" element={<CompleteRegistration />} />
         <Route path="about-us" element={<AboutUs />} />
 

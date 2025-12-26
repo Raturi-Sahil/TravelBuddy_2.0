@@ -206,7 +206,10 @@ export default function TravelerProfile() {
               <div className="flex gap-3 mt-6 sm:mt-0">
                 {profile.isFriend ? (
                   <>
-                    <button className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-black transition-all shadow-lg shadow-gray-900/20">
+                    <button 
+                      onClick={() => navigate(`/chat/${id}`)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white font-medium rounded-xl hover:bg-black transition-all shadow-lg shadow-gray-900/20"
+                    >
                       <MessageCircle className="w-5 h-5" /> Message
                     </button>
                     <button onClick={handleRemoveFriend} disabled={actionLoading} className="flex items-center gap-2 px-5 py-2.5 bg-red-50 text-red-500 font-medium rounded-xl hover:bg-red-100 border border-red-100 transition-all">
