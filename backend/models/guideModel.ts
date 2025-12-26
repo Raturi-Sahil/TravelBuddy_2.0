@@ -87,7 +87,7 @@ const guideBookingSchema = new Schema<IGuideBooking>(
     
     status: {
       type: String,
-      enum: ["pending", "confirmed", "completed", "cancelled"],
+      enum: ["pending", "accepted", "confirmed", "completed", "cancelled"],
       default: "pending",
     },
     cancellationReason: { type: String },

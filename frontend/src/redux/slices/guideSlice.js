@@ -200,6 +200,33 @@ export const fetchGuideReviews = createAsyncThunk(
   }
 );
 
+// Payment thunks
+export const createGuideBookingPayment = createAsyncThunk(
+  'guide/createGuideBookingPayment',
+  async ({ getToken, bookingId }, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await guideService.createGuideBookingPayment(authApi, bookingId);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to create payment order');
+    }
+  }
+);
+
+export const verifyGuideBookingPayment = createAsyncThunk(
+  'guide/verifyGuideBookingPayment',
+  async ({ getToken, bookingId, orderId }, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await guideService.verifyGuideBookingPayment(authApi, bookingId, orderId);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to verify payment');
+    }
+  }
+);
+
 const initialState = {
   // Browse guides
   guides: [],
@@ -222,6 +249,7 @@ const initialState = {
   guidesLoading: false,
   bookingsLoading: false,
   reviewsLoading: false,
+  paymentLoading: false,
   
   // Errors
   error: null,
@@ -434,6 +462,39 @@ const guideSlice = createSlice({
       })
       .addCase(fetchGuideReviews.rejected, (state, action) => {
         state.reviewsLoading = false;
+        state.error = action.payload;
+      })
+      
+      // Create guide booking payment
+      .addCase(createGuideBookingPayment.pending, (state) => {
+        state.paymentLoading = true;
+        state.error = null;
+      })
+      .addCase(createGuideBookingPayment.fulfilled, (state) => {
+        state.paymentLoading = false;
+      })
+      .addCase(createGuideBookingPayment.rejected, (state, action) => {
+        state.paymentLoading = false;
+        state.error = action.payload;
+      })
+      
+      // Verify guide booking payment
+      .addCase(verifyGuideBookingPayment.pending, (state) => {
+        state.paymentLoading = true;
+        state.error = null;
+      })
+      .addCase(verifyGuideBookingPayment.fulfilled, (state, action) => {
+        state.paymentLoading = false;
+        // Update booking in travelerBookings
+        if (action.payload.booking) {
+          const index = state.travelerBookings.findIndex(b => b._id === action.payload.booking._id);
+          if (index !== -1) {
+            state.travelerBookings[index] = action.payload.booking;
+          }
+        }
+      })
+      .addCase(verifyGuideBookingPayment.rejected, (state, action) => {
+        state.paymentLoading = false;
         state.error = action.payload;
       });
   },

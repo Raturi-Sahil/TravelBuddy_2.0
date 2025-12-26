@@ -694,6 +694,18 @@ export const guideService = {
     const response = await authApi.get(`/guides/${guideId}/reviews?${params.toString()}`);
     return response.data;
   },
+
+  // Create payment order for guide booking
+  createGuideBookingPayment: async (authApi, bookingId) => {
+    const response = await authApi.post(`/guides/bookings/${bookingId}/payment`);
+    return response.data;
+  },
+
+  // Verify payment for guide booking
+  verifyGuideBookingPayment: async (authApi, bookingId, orderId) => {
+    const response = await authApi.post(`/guides/bookings/${bookingId}/verify-payment`, { orderId });
+    return response.data;
+  },
 };
 
 export default api;

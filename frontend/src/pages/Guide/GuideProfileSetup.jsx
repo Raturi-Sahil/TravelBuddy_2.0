@@ -196,12 +196,26 @@ const GuideProfileSetup = () => {
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-8 text-white">
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">
-              {isEditing ? 'Edit Guide Profile' : 'Become a Local Guide'}
-            </h1>
-            <p className="text-orange-100">
-              Share your local expertise with travelers from around the world
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold mb-2">
+                  {isEditing ? 'Edit Guide Profile' : 'Become a Local Guide'}
+                </h1>
+                <p className="text-orange-100">
+                  Share your local expertise with travelers from around the world
+                </p>
+              </div>
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/guide-dashboard')}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl transition-colors"
+                >
+                  <X size={18} />
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
 
           <form className="p-6 md:p-8 space-y-6" onSubmit={handleSubmit}>

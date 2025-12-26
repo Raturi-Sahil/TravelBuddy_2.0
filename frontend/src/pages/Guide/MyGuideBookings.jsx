@@ -1,20 +1,23 @@
+import { load } from '@cashfreepayments/cashfree-js';
 import { useAuth } from '@clerk/clerk-react';
 import {
   Calendar,
   Clock,
+  CreditCard,
   DollarSign,
   MapPin,
   MessageCircle,
   Star,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import {
   cancelBooking,
+  createGuideBookingPayment,
   createReview,
   fetchMyBookingsAsTraveler,
 } from '../../redux/slices/guideSlice';
@@ -22,7 +25,7 @@ import {
 const MyGuideBookings = () => {
   const { getToken } = useAuth();
   const dispatch = useDispatch();
-  const { travelerBookings, bookingsLoading, loading } = useSelector(
+  const { travelerBookings, bookingsLoading, loading, paymentLoading } = useSelector(
     (state) => state.guide
   );
 
@@ -30,6 +33,17 @@ const MyGuideBookings = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
+
+  // Initialize Cashfree SDK
+  const cashfreeRef = useRef(null);
+  useEffect(() => {
+    const initializeSDK = async () => {
+      cashfreeRef.current = await load({
+        mode: "sandbox" // Change to "production" for live
+      });
+    };
+    initializeSDK();
+  }, []);
 
   useEffect(() => {
     dispatch(fetchMyBookingsAsTraveler({ getToken }));
@@ -48,6 +62,33 @@ const MyGuideBookings = () => {
       toast.success('Booking cancelled successfully');
     } catch (error) {
       toast.error(error || 'Failed to cancel booking');
+    }
+  };
+
+  // Handle payment for accepted booking
+  const handlePayment = async (booking) => {
+    try {
+      const result = await dispatch(
+        createGuideBookingPayment({ getToken, bookingId: booking._id })
+      ).unwrap();
+
+      if (result && result.payment_session_id) {
+        const checkoutOptions = {
+          paymentSessionId: result.payment_session_id,
+          redirectTarget: "_self",
+        };
+        if (cashfreeRef.current) {
+          cashfreeRef.current.checkout(checkoutOptions);
+        } else {
+          // Fallback if cashfree didn't load yet
+          const cf = await load({ mode: "sandbox" });
+          cf.checkout(checkoutOptions);
+        }
+      } else {
+        toast.error("Failed to initiate payment. Please try again.");
+      }
+    } catch (error) {
+      toast.error(error || 'Failed to create payment order');
     }
   };
 
@@ -103,7 +144,7 @@ const MyGuideBookings = () => {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map((tab) => (
+          {['all', 'pending', 'accepted', 'confirmed', 'completed', 'cancelled'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -156,11 +197,12 @@ const MyGuideBookings = () => {
                   </div>
                   <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
                     booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                    booking.status === 'accepted' ? 'bg-purple-100 text-purple-700' :
                     booking.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
                     booking.status === 'completed' ? 'bg-green-100 text-green-700' :
                     'bg-red-100 text-red-700'
                   }`}>
-                    {booking.status}
+                    {booking.status === 'accepted' ? 'Awaiting Payment' : booking.status}
                   </span>
                 </div>
 
@@ -198,6 +240,22 @@ const MyGuideBookings = () => {
                     >
                       Cancel Booking
                     </button>
+                  )}
+
+                  {booking.status === 'accepted' && (
+                    <>
+                      <button
+                        onClick={() => handlePayment(booking)}
+                        disabled={paymentLoading}
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <CreditCard size={14} />
+                        {paymentLoading ? 'Processing...' : 'Pay Now'}
+                      </button>
+                      <span className="text-sm text-purple-600 font-medium">
+                        Guide accepted! Pay ₹{booking.totalPrice} to confirm.
+                      </span>
+                    </>
                   )}
 
                   {booking.status === 'confirmed' && (

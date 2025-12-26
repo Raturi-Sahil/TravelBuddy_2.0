@@ -6,6 +6,7 @@ import {
   Edit,
   MapPin,
   Star,
+  Timer,
   Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -22,6 +23,112 @@ import {
   toggleGuideStatus,
 } from '../../redux/slices/guideSlice';
 
+// Helper component to show countdown and completion status
+const BookingTimeStatus = ({ booking }) => {
+  const [timeInfo, setTimeInfo] = useState({ canComplete: false, countdown: '', status: '' });
+
+  useEffect(() => {
+    const calculateTimeInfo = () => {
+      const now = new Date();
+      const bookingDate = new Date(booking.date);
+      
+      // Parse start and end times
+      const [startHour, startMin] = booking.startTime.split(':').map(Number);
+      const [endHour, endMin] = booking.endTime.split(':').map(Number);
+      
+      const startDateTime = new Date(bookingDate);
+      startDateTime.setHours(startHour, startMin, 0, 0);
+      
+      const endDateTime = new Date(bookingDate);
+      endDateTime.setHours(endHour, endMin, 0, 0);
+      
+      // If end time is before start time, assume it's next day
+      if (endDateTime <= startDateTime) {
+        endDateTime.setDate(endDateTime.getDate() + 1);
+      }
+      
+      const canComplete = now >= endDateTime;
+      const isOngoing = now >= startDateTime && now < endDateTime;
+      const isUpcoming = now < startDateTime;
+      
+      let countdown = '';
+      let status = '';
+      
+      if (isUpcoming) {
+        const diff = startDateTime - now;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        if (days > 0) {
+          countdown = `${days}d ${hours}h`;
+        } else if (hours > 0) {
+          countdown = `${hours}h ${minutes}m`;
+        } else {
+          countdown = `${minutes}m`;
+        }
+        status = 'upcoming';
+      } else if (isOngoing) {
+        const diff = endDateTime - now;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        countdown = hours > 0 ? `${hours}h ${minutes}m left` : `${minutes}m left`;
+        status = 'ongoing';
+      } else {
+        status = 'ended';
+      }
+      
+      setTimeInfo({ canComplete, countdown, status });
+    };
+
+    calculateTimeInfo();
+    const interval = setInterval(calculateTimeInfo, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, [booking]);
+
+  return (
+    <div className="flex items-center gap-2">
+      {timeInfo.status === 'upcoming' && (
+        <span className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">
+          <Timer size={12} />
+          Starts in {timeInfo.countdown}
+        </span>
+      )}
+      {timeInfo.status === 'ongoing' && (
+        <span className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 text-xs font-medium rounded-full animate-pulse">
+          <Timer size={12} />
+          🔴 Live - {timeInfo.countdown}
+        </span>
+      )}
+      {timeInfo.status === 'ended' && (
+        <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+          ✓ Session ended
+        </span>
+      )}
+    </div>
+  );
+};
+
+// Helper function to check if booking can be completed
+const canCompleteBooking = (booking) => {
+  const now = new Date();
+  const bookingDate = new Date(booking.date);
+  const [endHour, endMin] = booking.endTime.split(':').map(Number);
+  
+  const endDateTime = new Date(bookingDate);
+  endDateTime.setHours(endHour, endMin, 0, 0);
+  
+  // Handle overnight bookings
+  const [startHour] = booking.startTime.split(':').map(Number);
+  if (endHour < startHour) {
+    endDateTime.setDate(endDateTime.getDate() + 1);
+  }
+  
+  return now >= endDateTime;
+};
+
+
 const GuideDashboard = () => {
   const { getToken } = useAuth();
   const dispatch = useDispatch();
@@ -32,17 +139,23 @@ const GuideDashboard = () => {
   );
 
   const [activeTab, setActiveTab] = useState('pending');
+  const [profileFetched, setProfileFetched] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchMyGuideProfile({ getToken }));
-    dispatch(fetchMyBookingsAsGuide({ getToken }));
+    const fetchData = async () => {
+      await dispatch(fetchMyGuideProfile({ getToken }));
+      setProfileFetched(true);
+      dispatch(fetchMyBookingsAsGuide({ getToken }));
+    };
+    fetchData();
   }, [dispatch, getToken]);
 
   useEffect(() => {
-    if (myGuideProfile === null && !loading) {
+    // Only redirect after we've actually fetched and confirmed no profile exists
+    if (profileFetched && myGuideProfile === null && !loading) {
       navigate('/guide-setup');
     }
-  }, [myGuideProfile, loading, navigate]);
+  }, [myGuideProfile, loading, navigate, profileFetched]);
 
   const handleToggleStatus = async () => {
     try {
@@ -56,9 +169,9 @@ const GuideDashboard = () => {
   const handleConfirmBooking = async (bookingId) => {
     try {
       await dispatch(confirmBooking({ getToken, bookingId })).unwrap();
-      toast.success('Booking confirmed!');
+      toast.success('Booking accepted! Waiting for traveler payment.');
     } catch (error) {
-      toast.error(error || 'Failed to confirm booking');
+      toast.error(error || 'Failed to accept booking');
     }
   };
 
@@ -93,11 +206,31 @@ const GuideDashboard = () => {
   };
 
   const pendingCount = guideBookings.filter((b) => b.status === 'pending').length;
+  const acceptedCount = guideBookings.filter((b) => b.status === 'accepted').length;
   const confirmedCount = guideBookings.filter((b) => b.status === 'confirmed').length;
   const completedCount = guideBookings.filter((b) => b.status === 'completed').length;
+  const cancelledCount = guideBookings.filter((b) => b.status === 'cancelled').length;
   const totalEarnings = guideBookings
     .filter((b) => b.status === 'completed')
     .reduce((sum, b) => sum + b.totalPrice, 0);
+
+  // Tab count map for easy access
+  const tabCounts = {
+    pending: pendingCount,
+    accepted: acceptedCount,
+    confirmed: confirmedCount,
+    completed: completedCount,
+    cancelled: cancelledCount,
+  };
+
+  // Tab badge styles
+  const tabBadgeStyles = {
+    pending: 'bg-yellow-100 text-yellow-700',
+    accepted: 'bg-purple-100 text-purple-700',
+    confirmed: 'bg-blue-100 text-blue-700',
+    completed: 'bg-green-100 text-green-700',
+    cancelled: 'bg-red-100 text-red-700',
+  };
 
   if (!myGuideProfile) {
     return (
@@ -157,6 +290,13 @@ const GuideDashboard = () => {
           </div>
           <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-500">Accepted</span>
+              <Clock size={18} className="text-purple-500" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{acceptedCount}</p>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-500">Confirmed</span>
               <Calendar size={18} className="text-blue-500" />
             </div>
@@ -195,7 +335,7 @@ const GuideDashboard = () => {
 
           {/* Tabs */}
           <div className="flex border-b border-gray-100 overflow-x-auto">
-            {['pending', 'confirmed', 'completed', 'cancelled'].map((tab) => (
+            {['pending', 'accepted', 'confirmed', 'completed', 'cancelled'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -206,9 +346,9 @@ const GuideDashboard = () => {
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                {tab === 'pending' && pendingCount > 0 && (
-                  <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">
-                    {pendingCount}
+                {tabCounts[tab] > 0 && (
+                  <span className={`ml-2 px-2 py-0.5 text-xs font-bold rounded-full ${tabBadgeStyles[tab]}`}>
+                    {tabCounts[tab]}
                   </span>
                 )}
               </button>
@@ -244,11 +384,12 @@ const GuideDashboard = () => {
                       </div>
                       <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
                         booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                        booking.status === 'accepted' ? 'bg-purple-100 text-purple-700' :
                         booking.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
                         booking.status === 'completed' ? 'bg-green-100 text-green-700' :
                         'bg-red-100 text-red-700'
                       }`}>
-                        {booking.status}
+                        {booking.status === 'accepted' ? 'Awaiting Payment' : booking.status}
                       </span>
                     </div>
 
@@ -284,7 +425,7 @@ const GuideDashboard = () => {
                             onClick={() => handleConfirmBooking(booking._id)}
                             className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors"
                           >
-                            Confirm
+                            Accept
                           </button>
                           <button
                             onClick={() => handleCancelBooking(booking._id)}
@@ -294,14 +435,38 @@ const GuideDashboard = () => {
                           </button>
                         </>
                       )}
+                      {booking.status === 'accepted' && (
+                        <>
+                          <span className="px-4 py-2 bg-purple-100 text-purple-700 text-sm font-medium rounded-lg">
+                            ⏳ Awaiting traveler payment
+                          </span>
+                          <button
+                            onClick={() => handleCancelBooking(booking._id)}
+                            className="px-4 py-2 bg-red-100 text-red-600 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
                       {booking.status === 'confirmed' && (
                         <>
-                          <button
-                            onClick={() => handleCompleteBooking(booking._id)}
-                            className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors"
-                          >
-                            Mark Complete
-                          </button>
+                          <BookingTimeStatus booking={booking} />
+                          {canCompleteBooking(booking) ? (
+                            <button
+                              onClick={() => handleCompleteBooking(booking._id)}
+                              className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors"
+                            >
+                              Mark Complete
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="px-4 py-2 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-not-allowed"
+                              title="You can mark as complete after the session ends"
+                            >
+                              Mark Complete
+                            </button>
+                          )}
                           <button
                             onClick={() => handleCancelBooking(booking._id)}
                             className="px-4 py-2 bg-red-100 text-red-600 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors"

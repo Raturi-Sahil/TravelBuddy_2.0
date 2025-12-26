@@ -38,6 +38,7 @@ import { useLocation,useNavigate } from 'react-router-dom';
 
 import { useSocketContext } from '../context/socketContext';
 import ReverseGeocode from '../helpers/reverseGeoCode';
+import { fetchMyGuideProfile } from '../redux/slices/guideSlice';
 import { fetchProfile } from '../redux/slices/userSlice';
 
 
@@ -52,10 +53,12 @@ function NavBar() {
 
   const dispatch = useDispatch();
   const { profile: userProfile } = useSelector((state) => state.user);
+  const { myGuideProfile } = useSelector((state) => state.guide);
 
   useEffect(() => {
     if (isSignedIn) {
       dispatch(fetchProfile({ getToken }));
+      dispatch(fetchMyGuideProfile({ getToken }));
     }
   }, [isSignedIn, dispatch, getToken]);
 
@@ -210,6 +213,12 @@ function NavBar() {
     { name: 'Profile', path: '/profile', icon: User },
     { name: 'Joined Activities', path: '/joined-activities', icon: Activity },
     { name: 'My Activities', path: '/my-activities', icon: Calendar },
+    { name: 'My Guide Bookings', path: '/my-guide-bookings', icon: CalendarDays },
+    // Guide Dashboard - shown conditionally based on myGuideProfile
+    ...(myGuideProfile 
+      ? [{ name: 'Guide Dashboard', path: '/guide-dashboard', icon: Compass }]
+      : [{ name: 'Become a Guide', path: '/guide-setup', icon: Compass }]
+    ),
 
     { name: 'Upload Post', path: '/upload-post', icon: Upload },
     { name: 'Upload Article', path: '/upload-article', icon: Upload },

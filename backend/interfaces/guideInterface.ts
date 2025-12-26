@@ -47,7 +47,7 @@ export interface IGuideBooking extends Document {
   totalPrice: number;
   paymentStatus: "pending" | "paid" | "refunded";
   
-  status: "pending" | "confirmed" | "completed" | "cancelled";
+  status: "pending" | "accepted" | "confirmed" | "completed" | "cancelled";
   cancellationReason?: string;
   cancelledBy?: Types.ObjectId;
   

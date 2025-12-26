@@ -470,7 +470,7 @@ export const createBooking = asyncHandler(
   }
 );
 
-// Confirm booking (by guide)
+// Accept booking (by guide) - awaiting payment from traveler
 export const confirmBooking = asyncHandler(
   async (req: Request & { user?: any }, res: Response) => {
     if (!req.user) {
@@ -487,14 +487,14 @@ export const confirmBooking = asyncHandler(
 
     const guide = booking.guide as any;
     if (guide.user.toString() !== userId.toString()) {
-      throw new ApiError(403, "Not authorized to confirm this booking");
+      throw new ApiError(403, "Not authorized to accept this booking");
     }
 
     if (booking.status !== "pending") {
-      throw new ApiError(400, "Only pending bookings can be confirmed");
+      throw new ApiError(400, "Only pending bookings can be accepted");
     }
 
-    booking.status = "confirmed";
+    booking.status = "accepted";
     await booking.save();
 
     const populatedBooking = await GuideBooking.findById(id)
@@ -505,7 +505,7 @@ export const confirmBooking = asyncHandler(
       .populate("traveler", "name email profileImage mobile");
 
     return res.status(200).json(
-      new ApiResponse(200, populatedBooking, "Booking confirmed successfully")
+      new ApiResponse(200, populatedBooking, "Booking accepted. Awaiting payment from traveler.")
     );
   }
 );
@@ -745,5 +745,177 @@ export const getGuideReviews = asyncHandler(
         "Reviews fetched successfully"
       )
     );
+  }
+);
+
+// ==================== GUIDE BOOKING PAYMENT ====================
+
+// Cashfree config helper
+const getCashfreeConfig = () => {
+  const CF_APP_ID = process.env.CASHFREE_APP_ID;
+  const CF_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
+  const CF_ENV = process.env.CASHFREE_ENV || "TEST";
+  const BASE_URL = CF_ENV === "PROD"
+    ? "https://api.cashfree.com/pg"
+    : "https://sandbox.cashfree.com/pg";
+  return { CF_APP_ID, CF_SECRET_KEY, BASE_URL };
+};
+
+// Create payment order for guide booking
+export const createGuideBookingPayment = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    if (!req.user) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const userId = req.user._id;
+    const { id } = req.params; // booking id
+
+    const booking = await GuideBooking.findById(id)
+      .populate({
+        path: "guide",
+        populate: { path: "user", select: "name email profileImage" },
+      });
+
+    if (!booking) {
+      throw new ApiError(404, "Booking not found");
+    }
+
+    if (booking.traveler.toString() !== userId.toString()) {
+      throw new ApiError(403, "Not authorized to pay for this booking");
+    }
+
+    if (booking.status !== "accepted") {
+      throw new ApiError(400, "Payment can only be made for accepted bookings");
+    }
+
+    if (booking.paymentStatus === "paid") {
+      throw new ApiError(400, "Booking is already paid");
+    }
+
+    const { CF_APP_ID, CF_SECRET_KEY, BASE_URL } = getCashfreeConfig();
+
+    if (!CF_APP_ID || !CF_SECRET_KEY) {
+      throw new ApiError(500, "Payment configuration missing");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const orderId = `GUIDE_${Date.now()}_${userId.toString().slice(-4)}`;
+
+    // Dynamic import for axios
+    const axios = (await import("axios")).default;
+
+    const payload = {
+      order_id: orderId,
+      order_amount: booking.totalPrice,
+      order_currency: "INR",
+      customer_details: {
+        customer_id: userId.toString(),
+        customer_email: user.email || "user@travelbuddy.com",
+        customer_phone: user.mobile || "9999999999",
+        customer_name: user.name || "TravelBuddy User",
+      },
+      order_meta: {
+        return_url: `${process.env.FRONTEND_URL}/guide-booking-payment-status?order_id=${orderId}&booking_id=${id}`,
+      },
+      order_tags: {
+        bookingId: id,
+        type: "guide_booking",
+      },
+    };
+
+    const response = await axios.post(`${BASE_URL}/orders`, payload, {
+      headers: {
+        "x-client-id": CF_APP_ID,
+        "x-client-secret": CF_SECRET_KEY,
+        "x-api-version": "2023-08-01",
+        "Content-Type": "application/json",
+      },
+    });
+
+    return res.status(200).json(
+      new ApiResponse(200, {
+        ...response.data,
+        bookingId: id,
+        amount: booking.totalPrice,
+      }, "Payment order created successfully")
+    );
+  }
+);
+
+// Verify payment and confirm booking
+export const verifyGuideBookingPayment = asyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    if (!req.user) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const userId = req.user._id;
+    const { id } = req.params; // booking id
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      throw new ApiError(400, "Order ID is required");
+    }
+
+    const booking = await GuideBooking.findById(id).populate("guide");
+    if (!booking) {
+      throw new ApiError(404, "Booking not found");
+    }
+
+    if (booking.traveler.toString() !== userId.toString()) {
+      throw new ApiError(403, "Not authorized to verify payment for this booking");
+    }
+
+    if (booking.status !== "accepted") {
+      throw new ApiError(400, "Booking is not in accepted state");
+    }
+
+    const { CF_APP_ID, CF_SECRET_KEY, BASE_URL } = getCashfreeConfig();
+
+    // Dynamic import for axios
+    const axios = (await import("axios")).default;
+
+    const response = await axios.get(`${BASE_URL}/orders/${orderId}`, {
+      headers: {
+        "x-client-id": CF_APP_ID,
+        "x-client-secret": CF_SECRET_KEY,
+        "x-api-version": "2023-08-01",
+      },
+    });
+
+    const orderData = response.data;
+    const orderStatus = orderData.order_status;
+
+    if (orderStatus === "PAID") {
+      booking.status = "confirmed";
+      booking.paymentStatus = "paid";
+      await booking.save();
+
+      const populatedBooking = await GuideBooking.findById(id)
+        .populate({
+          path: "guide",
+          populate: { path: "user", select: "name email profileImage" },
+        })
+        .populate("traveler", "name email profileImage mobile");
+
+      return res.status(200).json(
+        new ApiResponse(200, {
+          status: "PAID",
+          booking: populatedBooking,
+        }, "Payment verified and booking confirmed")
+      );
+    } else {
+      return res.status(400).json(
+        new ApiResponse(400, {
+          status: orderStatus,
+          booking,
+        }, "Payment not completed")
+      );
+    }
   }
 );

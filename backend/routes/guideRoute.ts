@@ -5,6 +5,7 @@ import {
   completeBooking,
   confirmBooking,
   createBooking,
+  createGuideBookingPayment,
   createGuideProfile,
   createReview,
   getGuideById,
@@ -16,6 +17,7 @@ import {
   getNearbyGuides,
   toggleGuideStatus,
   updateGuideProfile,
+  verifyGuideBookingPayment,
 } from "../controller/guideController";
 import { requireProfile } from "../middlewares/authMiddleware";
 import upload from "../middlewares/multerMiddleware";
@@ -40,6 +42,10 @@ router.get("/bookings/guide", requireProfile, getMyBookingsAsGuide);
 router.patch("/bookings/:id/confirm", requireProfile, confirmBooking);
 router.patch("/bookings/:id/cancel", requireProfile, cancelBooking);
 router.patch("/bookings/:id/complete", requireProfile, completeBooking);
+
+// Payment Routes
+router.post("/bookings/:id/payment", requireProfile, createGuideBookingPayment);
+router.post("/bookings/:id/verify-payment", requireProfile, verifyGuideBookingPayment);
 
 // Review Routes
 router.post("/:id/reviews", requireProfile, createReview);

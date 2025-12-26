@@ -28,6 +28,7 @@ import AiTripPlanner from "./pages/AiFeatures/AiTripPlanner";
 import AiWeatherPlanner from "./pages/AiFeatures/AiWeatherPlanner";
 import ChatPage from "./pages/Chat/ChatPage";
 import BrowseGuides from "./pages/Guide/BrowseGuides";
+import GuideBookingPaymentStatus from "./pages/Guide/GuideBookingPaymentStatus";
 import GuideDashboard from "./pages/Guide/GuideDashboard";
 import GuideDetail from "./pages/Guide/GuideDetail";
 import GuideProfileSetup from "./pages/Guide/GuideProfileSetup";
@@ -106,6 +107,7 @@ function App() {
         <Route path="guide-setup" element={<AuthGuard><GuideProfileSetup /></AuthGuard>} />
         <Route path="guide-dashboard" element={<AuthGuard><GuideDashboard /></AuthGuard>} />
         <Route path="my-guide-bookings" element={<AuthGuard><MyGuideBookings /></AuthGuard>} />
+        <Route path="guide-booking-payment-status" element={<AuthGuard><GuideBookingPaymentStatus /></AuthGuard>} />
 
         {/* Ai Features Routes */}
         <Route path="ai-buddy" element={<AuthGuard><AiBuddyHomePage /></AuthGuard>} />
