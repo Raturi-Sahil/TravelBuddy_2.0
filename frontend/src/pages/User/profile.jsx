@@ -1,4 +1,5 @@
 import { useAuth, useUser } from '@clerk/clerk-react';
+import { Autocomplete } from '@react-google-maps/api';
 import {
   Briefcase,
   Calendar,
@@ -19,6 +20,7 @@ import {
   PartyPopper,
   Plus,
   Save,
+  Search,
   Sparkles,
   Trash2,
   Twitter,
@@ -30,6 +32,7 @@ import toast from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { useGoogleMaps } from '../../context/GoogleMapsContext';
 import {
   COUNTRIES,
   GENDERS,
@@ -79,7 +82,7 @@ export default function ProfilePage() {
 
   // Search/Dropdown States
   const [nationalitySearch, setNationalitySearch] = useState('');
-  const [showNationalityDropdown, setShowNationalityDropdown] = useState(false);
+  const [_showNationalityDropdown, setShowNationalityDropdown] = useState(false);
   const [languageSearch, setLanguageSearch] = useState('');
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [newLanguage, setNewLanguage] = useState({ name: '', level: 'Beginner' });
@@ -87,14 +90,34 @@ export default function ProfilePage() {
   const [showInterestDropdown, setShowInterestDropdown] = useState(false);
   
   // Future Destination Input
-  const [newDestination, setNewDestination] = useState('');
+  const [pendingDestination, setPendingDestination] = useState(null); // { name, coordinates }
+  const destinationAutocompleteRef = useRef(null);
 
   const nationalityRef = useRef(null);
   const languageRef = useRef(null);
   const interestRef = useRef(null);
 
+  // Google Maps
+  const { isLoaded: isGoogleMapsLoaded } = useGoogleMaps();
+
+  // Destination Autocomplete Handlers
+  const onDestinationAutocompleteLoad = (autocomplete) => {
+    destinationAutocompleteRef.current = autocomplete;
+  };
+
+  const onDestinationPlaceChanged = () => {
+    const place = destinationAutocompleteRef.current?.getPlace();
+    if (place?.geometry?.location) {
+      const destData = {
+        name: place.formatted_address || place.name || '',
+        coordinates: [place.geometry.location.lng(), place.geometry.location.lat()]
+      };
+      setPendingDestination(destData);
+    }
+  };
+
   // Filter lists
-  const filteredCountries = COUNTRIES.filter((c) =>
+  const _filteredCountries = COUNTRIES.filter((c) =>
     c.toLowerCase().includes(nationalitySearch.toLowerCase())
   );
   const filteredLanguages = LANGUAGES.filter((l) =>
@@ -229,17 +252,15 @@ export default function ProfilePage() {
   };
   
   const handleAddDestination = () => {
-    if (newDestination.trim() !== '') {
-        const currentDestinations = editData.futureDestinations || [];
-        // Creating a simple object structure for now as per schema requirements if needed, 
-        // or just sending the updated array if the backend handles text to object conversion 
-        // effectively (based on `userController` parsing, it expects JSON string if FormData, 
-        // but `futureDestinations` in schema has `name` and `coordinates`).
-        // We'll construct a proper object.
-        const newDestObj = { name: newDestination.trim(), coordinates: [0, 0] };
-        
-        handleEditChange('futureDestinations', [...currentDestinations, newDestObj]);
-        setNewDestination('');
+    if (pendingDestination && pendingDestination.name) {
+      const currentDestinations = editData.futureDestinations || [];
+      handleEditChange('futureDestinations', [...currentDestinations, pendingDestination]);
+      setPendingDestination(null);
+      // Clear the autocomplete input
+      const input = document.querySelector('#destination-autocomplete-input');
+      if (input) input.value = '';
+    } else {
+      toast.error('Please select a destination from the dropdown');
     }
   };
 
@@ -704,14 +725,35 @@ export default function ProfilePage() {
                     
                     {isEditing && (
                         <div className="flex gap-2 mb-4">
-                            <input 
-                                value={newDestination}
-                                onChange={(e) => setNewDestination(e.target.value)}
-                                placeholder="Add a dream destination..."
-                                className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-500"
-                                onKeyPress={(e) => e.key === 'Enter' && handleAddDestination()}
-                            />
-                            <button onClick={handleAddDestination} className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
+                            {isGoogleMapsLoaded ? (
+                              <Autocomplete 
+                                onLoad={onDestinationAutocompleteLoad} 
+                                onPlaceChanged={onDestinationPlaceChanged}
+                                className="flex-1"
+                              >
+                                <div className="relative">
+                                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                  <input 
+                                    id="destination-autocomplete-input"
+                                    type="text"
+                                    placeholder="Search for a destination..."
+                                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-500"
+                                  />
+                                </div>
+                              </Autocomplete>
+                            ) : (
+                              <input 
+                                type="text"
+                                placeholder="Loading places..."
+                                disabled
+                                className="flex-1 p-2 bg-gray-100 border border-gray-200 rounded-lg outline-none text-gray-400"
+                              />
+                            )}
+                            <button 
+                              onClick={handleAddDestination} 
+                              disabled={!pendingDestination}
+                              className={`p-2 rounded-lg transition-colors ${pendingDestination ? 'bg-gray-900 text-white hover:bg-gray-800' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                            >
                                 <Plus size={20} />
                             </button>
                         </div>

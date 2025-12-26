@@ -56,12 +56,12 @@ export default function ChatPanel({ friends = [], onClose }) {
   const currentChatUser = conversations.find(c => c.user._id === currentChatUserId)?.user
     || friends.find(f => f._id === currentChatUserId);
 
-  const handleSelectChat = (user) => {
+  const handleSelectChat = useCallback((user) => {
     dispatch(setCurrentChat(user._id));
     // Add conversation if it doesn't exist
     dispatch(addNewConversation(user));
     inputRef.current?.focus();
-  };
+  }, [dispatch]);
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() || sendingMessage || !currentChatUserId) return;
@@ -107,7 +107,7 @@ export default function ChatPanel({ friends = [], onClose }) {
 
   const handleStartChat = useCallback((friend) => {
     handleSelectChat(friend);
-  }, []);
+  }, [handleSelectChat]);
 
   const formatTime = (date) => {
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
