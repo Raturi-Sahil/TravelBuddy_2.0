@@ -46,6 +46,7 @@ import { fetchProfile } from '../redux/slices/userSlice';
 function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
   const profileMenuRef = useRef(null);
 
   const { user, isSignedIn } = useUser();
@@ -209,24 +210,37 @@ function NavBar() {
 
   ];
 
-  const profileMenuItems = [
-    { name: 'Profile', path: '/profile', icon: User },
-    { name: 'Joined Activities', path: '/joined-activities', icon: Activity },
-    { name: 'My Activities', path: '/my-activities', icon: Calendar },
-    { name: 'My Guide Bookings', path: '/my-guide-bookings', icon: CalendarDays },
-    // Guide Dashboard - shown conditionally based on myGuideProfile
-    ...(myGuideProfile 
-      ? [{ name: 'Guide Dashboard', path: '/guide-dashboard', icon: Compass }]
-      : [{ name: 'Become a Guide', path: '/guide-setup', icon: Compass }]
-    ),
-
-    { name: 'Upload Post', path: '/upload-post', icon: Upload },
-    { name: 'Upload Article', path: '/upload-article', icon: Upload },
-      { name: 'Manage Post', path: '/manage-posts', icon: Image },
-    { name: 'Manage Article', path: '/manage-article', icon: Image },
-    { name: 'Connections', path: '/connections', icon: Link },
-    { name: 'Notifications', path: '/notifications', icon: Bell, badge: notificationCount },
+  const profileTabs = [
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'activity', label: 'Activity', icon: Activity },
+    { id: 'posts', label: 'Posts', icon: Camera },
+    { id: 'articles', label: 'Articles', icon: BookOpen },
   ];
+
+  const profileContent = {
+    profile: [
+      { name: 'My Profile', path: '/profile', icon: User },
+      { name: 'Connections', path: '/connections', icon: Link },
+      { name: 'Notifications', path: '/notifications', icon: Bell, badge: notificationCount },
+      ...(myGuideProfile
+        ? [{ name: 'Guide Dashboard', path: '/guide-dashboard', icon: Compass }]
+        : [{ name: 'Become a Guide', path: '/guide-setup', icon: Compass }]
+      ),
+    ],
+    activity: [
+      { name: 'Joined Activities', path: '/joined-activities', icon: Activity },
+      { name: 'My Activities', path: '/my-activities', icon: Calendar },
+      { name: 'My Guide Bookings', path: '/my-guide-bookings', icon: CalendarDays },
+    ],
+    posts: [
+      { name: 'Upload Post', path: '/upload-post', icon: Upload },
+      { name: 'Manage Post', path: '/manage-posts', icon: Image },
+    ],
+    articles: [
+      { name: 'Upload Article', path: '/upload-article', icon: Upload },
+      { name: 'Manage Article', path: '/manage-article', icon: Image },
+    ],
+  };
 
   return (
     <div className={`fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-500 ease-in-out ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
@@ -352,7 +366,7 @@ function NavBar() {
 
                   {/* Dropdown Menu */}
                   {isProfileMenuOpen && (
-                    <div className="absolute right-0 mt-4 w-72 bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="absolute right-0 mt-4 w-80 md:w-96 bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
                       {/* User Info Header */}
                       <div className="px-6 py-5 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100">
                         <div className="flex items-center space-x-4">
@@ -368,26 +382,47 @@ function NavBar() {
                         </div>
                       </div>
 
-                      <div className="p-2">
-                        {profileMenuItems.map((item, index) => (
+                      {/* Tabs */}
+                      <div className="flex p-2 gap-1 border-b border-gray-100 bg-gray-50/50">
+                        {profileTabs.map((tab) => (
                           <button
-                            key={index}
-                            onClick={() => handleNavigation(item.path)}
-                            className="w-full flex items-center justify-between px-4 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors text-left group"
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all duration-200 border ${
+                              activeTab === tab.id
+                                ? 'bg-white text-amber-600 shadow-sm border-gray-100'
+                                : 'border-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                            }`}
                           >
-                            <div className="flex items-center space-x-3">
-                              <div className="p-1.5 rounded-lg bg-gray-50 text-gray-500 group-hover:bg-white group-hover:text-amber-600 group-hover:shadow-sm transition-all duration-200">
-                                <item.icon size={18} />
-                              </div>
-                              <span className="font-medium text-sm">{item.name}</span>
-                            </div>
-                            {item.badge && item.badge > 0 && (
-                              <span className="bg-red-50 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
-                                {item.badge}
-                              </span>
-                            )}
+                            <tab.icon size={18} className="mb-px" />
+                            <span className="text-[10px] font-semibold uppercase tracking-wide">{tab.label}</span>
                           </button>
                         ))}
+                      </div>
+
+                      {/* Content Area */}
+                      <div className="p-2 min-h-[200px]">
+                        <div className="space-y-1">
+                           {profileContent[activeTab]?.map((item, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleNavigation(item.path)}
+                              className="w-full flex items-center justify-between px-4 py-3 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors text-left group"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className={`p-2 rounded-lg ${activeTab === 'profile' ? 'bg-indigo-50 text-indigo-500' : activeTab === 'activity' ? 'bg-orange-50 text-orange-500' : activeTab === 'posts' ? 'bg-pink-50 text-pink-500' : 'bg-emerald-50 text-emerald-500'} group-hover:bg-white group-hover:shadow-sm transition-all duration-200`}>
+                                  <item.icon size={18} />
+                                </div>
+                                <span className="font-medium text-sm">{item.name}</span>
+                              </div>
+                              {item.badge && item.badge > 0 && (
+                                <span className="bg-red-50 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="p-2 border-t border-gray-50 bg-gray-50/50">
@@ -509,21 +544,25 @@ function NavBar() {
                     <span>Create Activity</span>
                   </button>
 
-                  <div className="pt-4 border-t border-gray-100 space-y-1">
-                    <p className="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Account</p>
-                    {profileMenuItems.map((item, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          handleNavigation(item.path);
-                          setIsMenuOpen(false);
-                        }}
-                        className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl w-full text-left font-medium"
-                      >
-                        <item.icon size={20} className="text-gray-400" />
-                        <span>{item.name}</span>
-                      </button>
-                    ))}
+                  <div className="pt-4 border-t border-gray-100 space-y-4">
+                     {profileTabs.map((tab) => (
+                       <div key={tab.id} className="space-y-1">
+                          <p className="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{tab.label}</p>
+                          {profileContent[tab.id].map((item, index) => (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                handleNavigation(item.path);
+                                setIsMenuOpen(false);
+                              }}
+                              className="flex items-center space-x-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-xl w-full text-left font-medium"
+                            >
+                              <item.icon size={18} className="text-gray-400" />
+                              <span>{item.name}</span>
+                            </button>
+                          ))}
+                       </div>
+                     ))}
                     <button
                       onClick={() => {
                         handleLogout();
