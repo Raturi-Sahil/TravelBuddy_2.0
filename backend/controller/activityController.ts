@@ -13,6 +13,7 @@ import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
 import asyncHandler from "../utils/asyncHandler";
 import { activityZodSchema } from "../validation/activityValidation";
+import { sendNotification } from "../utils/notificationUtil";
 
 export const createActivity = asyncHandler(
   async (req: Request & { user?: any }, res: Response) => {
@@ -141,6 +142,30 @@ export const createActivity = asyncHandler(
         },
         {upsert: true, new: true},
       );
+
+      // 1. Notify Creator (Self-Confirmation)
+      await sendNotification({
+          recipient: userId,
+          sender: userId,
+          type: "ACTIVITY_CREATED_SELF",
+          message: `You successfully created a new activity: ${activity.title}`,
+          link: `/activity/${activity._id}`,
+          relatedId: activity._id,
+      });
+
+      // 2. Notify Friends
+      if (user.friends && user.friends.length > 0) {
+        for (const friendId of user.friends) {
+          await sendNotification({
+            recipient: friendId,
+            sender: userId,
+            type: "ACTIVITY_CREATED",
+            message: `${user.name} created a new activity: ${activity.title}`,
+            link: `/activity/${activity._id}`,
+            relatedId: activity._id,
+          });
+        }
+      }
 
       return res
         .status(201)
@@ -1174,6 +1199,31 @@ export const cancelActivity = asyncHandler(
     // TODO: Send notification/email to all participants about cancellation
     // You can implement email sending here using nodemailer or any email service
     console.log(`Activity ${id} cancelled. Participants to notify:`, participantsToNotify);
+
+    // Notify Creator (Self-Confirmation)
+    await sendNotification({
+      recipient: userId,
+      sender: userId,
+      type: "ACTIVITY_CANCELLED_SELF",
+      message: `You successfully cancelled the activity: ${activity.title}`,
+      link: `/activity/${id}`,
+      relatedId: id,
+    });
+
+    // Notify Participants
+    for (const participantId of participantsToNotify) {
+      if (participantId.toString() !== userId.toString()) {
+        await sendNotification({
+          recipient: participantId,
+          sender: userId,
+          type: "ACTIVITY_CANCELLED",
+          message: `${req.user.name} cancelled the activity: ${activity.title}`,
+          link: `/activity/${id}`,
+          relatedId: id,
+        });
+      }
+    }
+
 
     // Response
     return res.status(200).json(

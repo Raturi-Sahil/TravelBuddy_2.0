@@ -204,7 +204,11 @@ export default function CreateActivity() {
 
       toast.success("Activity created successfully!");
       navigate("/activities"); // Redirect after success?
-    } catch (err) { toast.error(err.response?.data?.message || err.message || "Failed to create"); }
+    } catch (err) {
+      console.error(err);
+      const errorMessage = err.response?.data?.message || err.message || "Failed to create activity";
+      toast.error(errorMessage);
+    }
     finally { setIsLoading(false); }
   };
 

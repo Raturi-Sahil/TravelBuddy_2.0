@@ -49,7 +49,7 @@ export const createOrder = async (req: Request, res: Response) => {
         customer_name: "TravelBuddy User"
       },
       order_meta: {
-        return_url: `${process.env.FRONTEND_URL}/payment-status?order_id=${orderId}`
+        return_url: `${process.env.FRONTEND_URL}payment-status?order_id=${orderId}`
       },
       order_tags: {
         planType: planType

@@ -8,6 +8,7 @@ import guideReducer from './slices/guideSlice';
 import postReducer from './slices/postSlice';
 import userActivityReducer from './slices/userActivitySlice';
 import userReducer from './slices/userSlice';
+import notificationReducer from './slices/notificationSlice';
 
 const store = configureStore({
   reducer: {
@@ -19,6 +20,7 @@ const store = configureStore({
     article: articleReducer,
     chat: chatReducer,
     guide: guideReducer,
+    notifications: notificationReducer,
   },
 });
 
