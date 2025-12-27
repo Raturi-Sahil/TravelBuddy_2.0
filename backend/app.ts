@@ -58,6 +58,10 @@ app.use("/articles", articleRoutes);
 app.use("/guides", guideRoutes);
 app.use("/notifications", notificationRoutes);
 
+app.get("/", (req, res) => {
+  res.send("API IS RUNNING ");
+});
+
 // Global Error Handler
 app.use(errorMiddleware);
 
