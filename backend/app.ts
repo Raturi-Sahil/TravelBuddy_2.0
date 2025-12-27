@@ -16,6 +16,7 @@ import placesRoutes from "./routes/placesRoute";
 import postRoutes from "./routes/postRoutes";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
 import userRoutes from "./routes/userRoute";
+import notificationRoutes from "./routes/notificationsRoutes";
 
 
 const app: Application = express();
@@ -55,6 +56,7 @@ app.use("/places", placesRoutes);
 app.use("/posts", postRoutes);
 app.use("/articles", articleRoutes);
 app.use("/guides", guideRoutes);
+app.use("/notifications", notificationRoutes);
 
 // Global Error Handler
 app.use(errorMiddleware);
