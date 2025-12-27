@@ -729,6 +729,33 @@ export const groupChatService = {
   },
 };
 
+// Notification Service functions
+export const notificationService = {
+  // Get all notifications
+  getNotifications: async (authApi) => {
+    const response = await authApi.get('/notifications');
+    return response.data;
+  },
+
+  // Mark a notification as read
+  markAsRead: async (authApi, id) => {
+    const response = await authApi.put(`/notifications/${id}/read`);
+    return response.data;
+  },
+
+  // Mark all notifications as read
+  markAllAsRead: async (authApi) => {
+    const response = await authApi.put('/notifications/read-all');
+    return response.data;
+  },
+
+  // Delete all notifications
+  deleteAll: async (authApi) => {
+    const response = await authApi.delete('/notifications');
+    return response.data;
+  },
+};
+
 export default api;
 
 

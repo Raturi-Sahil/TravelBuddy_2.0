@@ -43,6 +43,8 @@ const allowedMimeTypes: string[] = [
   "image/jpeg",
   "image/jpg",
   "image/png",
+  "image/webp", // Support WebP
+  "application/octet-stream", // Sometimes images come as this
 ];
 
 // -----------------------------

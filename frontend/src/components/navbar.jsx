@@ -40,12 +40,18 @@ import { useSocketContext } from '../context/socketContext';
 import ReverseGeocode from '../helpers/reverseGeoCode';
 import { fetchMyGuideProfile } from '../redux/slices/guideSlice';
 import { fetchProfile } from '../redux/slices/userSlice';
+import { fetchNotifications, addNotification } from '../redux/slices/notificationSlice';
+import NotificationDropdown from './notifications/NotificationDropdown';
 
 
 
 function NavBar() {
+  const { socket } = useSocketContext();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const profileMenuRef = useRef(null);
 
@@ -55,21 +61,84 @@ function NavBar() {
   const dispatch = useDispatch();
   const { profile: userProfile } = useSelector((state) => state.user);
   const { myGuideProfile } = useSelector((state) => state.guide);
+  const { unreadCount } = useSelector((state) => state.notifications);
 
   useEffect(() => {
     if (isSignedIn) {
       dispatch(fetchProfile({ getToken }));
       dispatch(fetchMyGuideProfile({ getToken }));
+      dispatch(fetchNotifications(getToken));
     }
   }, [isSignedIn, dispatch, getToken]);
 
+  // Listen for real-time notifications
+  useEffect(() => {
+    if (socket && isSignedIn) {
+      socket.on("newNotification", (notification) => {
+        dispatch(addNotification(notification));
 
-  const navigate = useNavigate();
-  const location = useLocation();
+        // Play notification sound
+        try {
+          const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+          audio.volume = 0.5;
+          audio.play().catch(e => console.log("Audio play failed (user interaction required):", e));
+        } catch (error) {
+          console.log("Audio error", error);
+        }
+
+        // Don't show toast for self-actions as they usually have their own success feedback
+        if (notification.type === 'ACTIVITY_CREATED_SELF' || notification.type === 'ACTIVITY_CANCELLED_SELF' || notification.type === 'ACTIVITY_DELETED_SELF') return;
+
+        toast.custom((t) => (
+          <div
+            className={`${
+              t.visible ? 'animate-enter' : 'animate-leave'
+            } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+            onClick={() => navigate('/notifications')}
+          >
+            <div className="flex-1 w-0 p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 pt-0.5">
+                  <img
+                    className="h-10 w-10 rounded-full"
+                    src={notification.sender?.profileImage || "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"}
+                    alt=""
+                  />
+                </div>
+                <div className="ml-3 flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    New Notification
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {notification.message}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex border-l border-gray-200">
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ));
+      });
+
+      return () => {
+        socket.off("newNotification");
+      };
+    }
+  }, [socket, isSignedIn, dispatch, navigate]);
+
+
+
   const { signOut } = useClerk();
 
 
-  const notificationCount = 3;
+
 
   // Derive user display values - prefer data from backend profile, fallback to Clerk
   const userImage = userProfile?.profileImage || user?.imageUrl;
@@ -77,7 +146,7 @@ function NavBar() {
   const userEmail = userProfile?.email || user?.primaryEmailAddress?.emailAddress || '';
 
 
-  const { socket } = useSocketContext();
+
   const [currentLocationName, setCurrentLocationName] = useState('Locating...');
 
 
@@ -221,7 +290,6 @@ function NavBar() {
     profile: [
       { name: 'My Profile', path: '/profile', icon: User },
       { name: 'Connections', path: '/connections', icon: Link },
-      { name: 'Notifications', path: '/notifications', icon: Bell, badge: notificationCount },
       ...(myGuideProfile
         ? [{ name: 'Guide Dashboard', path: '/guide-dashboard', icon: Compass }]
         : [{ name: 'Become a Guide', path: '/guide-setup', icon: Compass }]
@@ -329,7 +397,7 @@ function NavBar() {
           {/* Right Actions: AI Planner, Create Activity, Profile */}
           <div className="hidden md:flex items-center space-x-2 lg:space-x-3 xl:space-x-4 flex-shrink-0">
              {/* Ai Buddy Button - Placed here next to Create Activity */}
-             <button
+              <button
                 onClick={() => handleNavigation('/ai-buddy')}
                 className="flex items-center space-x-1.5 lg:space-x-2 bg-gradient-to-r from-purple-500 to-violet-600 text-white px-3 lg:px-4 xl:px-5 py-2 lg:py-2.5 rounded-lg lg:rounded-xl hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-xs lg:text-sm group"
               >
@@ -339,6 +407,24 @@ function NavBar() {
 
             {isSignedIn ? (
               <div className="flex items-center space-x-2 lg:space-x-3 xl:space-x-4">
+
+                 {/* Notification Bell */}
+                 <div className="relative">
+                    <button
+                      className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors relative"
+                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                    >
+                      <Bell size={20} />
+                      {unreadCount > 0 && (
+                        <span className="absolute top-1.5 right-2 h-2 w-2 bg-red-500 rounded-full"></span>
+                      )}
+                    </button>
+                    <NotificationDropdown
+                      isOpen={isNotificationOpen}
+                      onClose={() => setIsNotificationOpen(false)}
+                    />
+                 </div>
+
                  <button
                   onClick={() => handleCreateActivity()}
                   className="flex items-center space-x-1.5 lg:space-x-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-3 lg:px-4 xl:px-5 py-2 lg:py-2.5 rounded-lg lg:rounded-xl hover:shadow-lg hover:shadow-amber-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-xs lg:text-sm group"

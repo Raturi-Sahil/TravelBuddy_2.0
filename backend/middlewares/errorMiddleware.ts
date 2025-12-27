@@ -24,9 +24,10 @@ const errorMiddleware = (
 
   // Handle Zod Validation Errors
   if (err instanceof ZodError) {
+     const errorMessages = err.issues.map(e => e.message).join(", ");
      return res.status(400).json({
          success: false,
-         message: "Validation Error",
+         message: errorMessages || "Validation Error",
          errors: err.issues.map(e => e.message),
          stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
      });
