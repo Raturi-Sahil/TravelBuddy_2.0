@@ -87,7 +87,7 @@ function NavBar() {
         }
 
         // Don't show toast for self-actions as they usually have their own success feedback
-        if (notification.type === 'ACTIVITY_CREATED_SELF' || notification.type === 'ACTIVITY_CANCELLED_SELF') return;
+        if (notification.type === 'ACTIVITY_CREATED_SELF' || notification.type === 'ACTIVITY_CANCELLED_SELF' || notification.type === 'ACTIVITY_DELETED_SELF') return;
 
         toast.custom((t) => (
           <div

@@ -712,6 +712,34 @@ export const deleteActivity = asyncHandler(
     }
 
 
+
+    // Capture participants to notify
+    const participantsToNotify = activity.participants || [];
+
+    // Notify Creator (Self-Confirmation)
+    await sendNotification({
+      recipient: userId,
+      sender: userId,
+      type: "ACTIVITY_DELETED_SELF",
+      message: `You successfully deleted the activity: ${activity.title}`,
+      link: `/activities`, // Redirect to list as detail page is gone
+      relatedId: null, // ID is gone
+    });
+
+    // Notify Participants
+    for (const participantId of participantsToNotify) {
+       if (participantId.toString() !== userId.toString()) {
+        await sendNotification({
+          recipient: participantId,
+          sender: userId,
+          type: "ACTIVITY_DELETED",
+          message: `${req.user.name} deleted the activity: ${activity.title}`,
+          link: `/activities`,
+          relatedId: null,
+        });
+      }
+    }
+
     //delete the activity
     await Activity.findByIdAndDelete(id);
 

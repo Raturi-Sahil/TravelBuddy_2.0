@@ -97,9 +97,28 @@ const notificationSlice = createSlice({
       .addCase(markAllNotificationsAsRead.fulfilled, (state) => {
         state.notifications = state.notifications.map((n) => ({ ...n, isRead: true }));
         state.unreadCount = 0;
+      })
+      .addCase(clearAllNotifications.fulfilled, (state) => {
+        state.notifications = [];
+        state.unreadCount = 0;
       });
   },
 });
+
+export const clearAllNotifications = createAsyncThunk(
+  "notifications/clearAll",
+  async (getToken, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      await notificationService.deleteAll(authApi);
+      return true;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to clear notifications"
+      );
+    }
+  }
+);
 
 export const { addNotification, clearNotifications } = notificationSlice.actions;
 export default notificationSlice.reducer;

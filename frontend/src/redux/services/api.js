@@ -727,6 +727,12 @@ export const notificationService = {
     const response = await authApi.put('/notifications/read-all');
     return response.data;
   },
+
+  // Delete all notifications
+  deleteAll: async (authApi) => {
+    const response = await authApi.delete('/notifications');
+    return response.data;
+  },
 };
 
 export default api;

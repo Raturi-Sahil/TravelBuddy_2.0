@@ -206,7 +206,9 @@ export default function CreateActivity() {
       navigate("/activities"); // Redirect after success?
     } catch (err) {
       console.error(err);
-      const errorMessage = err.response?.data?.message || err.message || "Failed to create activity";
+      const errorMessage = typeof err === 'string'
+        ? err
+        : (err.response?.data?.message || err.message || "Failed to create activity");
       toast.error(errorMessage);
     }
     finally { setIsLoading(false); }

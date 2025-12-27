@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../../redux/slices/notificationSlice';
+import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearAllNotifications } from '../../redux/slices/notificationSlice';
 import { useAuth } from '@clerk/clerk-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -67,13 +67,23 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
             </span>
           )}
         </h3>
-        {unreadCount > 0 && (
-          <button
-            onClick={handleMarkAllRead}
-            className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
-          >
-            Mark all as read
-          </button>
+        {notifications.length > 0 && (
+          <div className="flex gap-2">
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                Mark read
+              </button>
+            )}
+            <button
+                onClick={() => dispatch(clearAllNotifications(getToken))}
+                className="text-xs text-red-400 hover:text-red-300 transition-colors"
+            >
+              Clear all
+            </button>
+          </div>
         )}
       </div>
 
