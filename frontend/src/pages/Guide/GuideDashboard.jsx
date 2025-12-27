@@ -30,32 +30,21 @@ const BookingTimeStatus = ({ booking }) => {
   useEffect(() => {
     const calculateTimeInfo = () => {
       const now = new Date();
-      const bookingDate = new Date(booking.date);
+      const startDate = new Date(booking.startDate);
+      const endDate = new Date(booking.endDate);
       
-      // Parse start and end times
-      const [startHour, startMin] = booking.startTime.split(':').map(Number);
-      const [endHour, endMin] = booking.endTime.split(':').map(Number);
+      // Set end of day for endDate
+      endDate.setHours(23, 59, 59, 999);
       
-      const startDateTime = new Date(bookingDate);
-      startDateTime.setHours(startHour, startMin, 0, 0);
-      
-      const endDateTime = new Date(bookingDate);
-      endDateTime.setHours(endHour, endMin, 0, 0);
-      
-      // If end time is before start time, assume it's next day
-      if (endDateTime <= startDateTime) {
-        endDateTime.setDate(endDateTime.getDate() + 1);
-      }
-      
-      const canComplete = now >= endDateTime;
-      const isOngoing = now >= startDateTime && now < endDateTime;
-      const isUpcoming = now < startDateTime;
+      const isUpcoming = now < startDate;
+      const isOngoing = now >= startDate && now <= endDate;
+      const canComplete = now > endDate;
       
       let countdown = '';
       let status = '';
       
       if (isUpcoming) {
-        const diff = startDateTime - now;
+        const diff = startDate - now;
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -69,10 +58,10 @@ const BookingTimeStatus = ({ booking }) => {
         }
         status = 'upcoming';
       } else if (isOngoing) {
-        const diff = endDateTime - now;
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        countdown = hours > 0 ? `${hours}h ${minutes}m left` : `${minutes}m left`;
+        const diff = endDate - now;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        countdown = days > 0 ? `${days}d ${hours}h left` : `${hours}h left`;
         status = 'ongoing';
       } else {
         status = 'ended';
@@ -98,7 +87,7 @@ const BookingTimeStatus = ({ booking }) => {
       {timeInfo.status === 'ongoing' && (
         <span className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 text-xs font-medium rounded-full animate-pulse">
           <Timer size={12} />
-          🔴 Live - {timeInfo.countdown}
+          🔴 In progress - {timeInfo.countdown}
         </span>
       )}
       {timeInfo.status === 'ended' && (
@@ -113,19 +102,9 @@ const BookingTimeStatus = ({ booking }) => {
 // Helper function to check if booking can be completed
 const canCompleteBooking = (booking) => {
   const now = new Date();
-  const bookingDate = new Date(booking.date);
-  const [endHour, endMin] = booking.endTime.split(':').map(Number);
-  
-  const endDateTime = new Date(bookingDate);
-  endDateTime.setHours(endHour, endMin, 0, 0);
-  
-  // Handle overnight bookings
-  const [startHour] = booking.startTime.split(':').map(Number);
-  if (endHour < startHour) {
-    endDateTime.setDate(endDateTime.getDate() + 1);
-  }
-  
-  return now >= endDateTime;
+  const endDate = new Date(booking.endDate);
+  endDate.setHours(23, 59, 59, 999);
+  return now > endDate;
 };
 
 
@@ -396,15 +375,14 @@ const GuideDashboard = () => {
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
                       <div className="flex items-center gap-1">
                         <Calendar size={14} />
-                        {formatDate(booking.date)}
+                        {formatDate(booking.startDate)}
+                        {booking.startDate !== booking.endDate && (
+                          <> - {formatDate(booking.endDate)}</>
+                        )}
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock size={14} />
-                        {booking.startTime} - {booking.endTime}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock size={14} />
-                        {booking.duration}h
+                        {booking.numberOfDays} day{booking.numberOfDays !== 1 ? 's' : ''}
                       </div>
                       <div className="flex items-center gap-1 font-semibold text-orange-600">
                         <DollarSign size={14} />

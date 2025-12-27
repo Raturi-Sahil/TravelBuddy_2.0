@@ -329,7 +329,7 @@ const BrowseGuides = () => {
                         </div>
                         <div className="flex items-center gap-1 text-lg font-bold text-orange-600">
                           <DollarSign size={16} />
-                          ₹{guide.pricePerHour}/hr
+                          ₹{guide.pricePerDay}/day
                         </div>
                       </div>
                     </div>

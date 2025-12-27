@@ -164,10 +164,10 @@ const GuideDetail = () => {
               </div>
 
               <div className="text-center md:text-right">
-                <p className="text-sm text-gray-500 mb-1">Price per hour</p>
+                <p className="text-sm text-gray-500 mb-1">Price per day</p>
                 <p className="text-3xl font-bold text-orange-600">
-                  ₹{selectedGuide.pricePerHour}
-                  <span className="text-base font-normal text-gray-400">/hr</span>
+                  ₹{selectedGuide.pricePerDay}
+                  <span className="text-base font-normal text-gray-400">/day</span>
                 </p>
               </div>
             </div>

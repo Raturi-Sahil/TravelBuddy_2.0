@@ -7,8 +7,6 @@ import { IGuide, IGuideBooking, IGuideReview } from "../interfaces/guideInterfac
 const availabilitySchema = new Schema(
   {
     dayOfWeek: { type: Number, min: 0, max: 6, required: true },
-    startTime: { type: String, required: true },
-    endTime: { type: String, required: true },
   },
   { _id: false }
 );
@@ -38,7 +36,7 @@ const guideSchema = new Schema<IGuide>(
       },
     ],
     
-    pricePerHour: { type: Number, required: true, min: 0 },
+    pricePerDay: { type: Number, required: true, min: 0 },
     experience: { type: Number, default: 0, min: 0 },
     
     bio: { type: String, default: "" },
@@ -73,10 +71,9 @@ const guideBookingSchema = new Schema<IGuideBooking>(
       required: true,
     },
     
-    date: { type: Date, required: true },
-    startTime: { type: String, required: true },
-    endTime: { type: String, required: true },
-    duration: { type: Number, required: true, min: 1 },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    numberOfDays: { type: Number, required: true, min: 1 },
     
     totalPrice: { type: Number, required: true, min: 0 },
     paymentStatus: {
@@ -98,7 +95,7 @@ const guideBookingSchema = new Schema<IGuideBooking>(
   { timestamps: true }
 );
 
-guideBookingSchema.index({ guide: 1, date: 1 });
+guideBookingSchema.index({ guide: 1, startDate: 1 });
 guideBookingSchema.index({ traveler: 1, status: 1 });
 
 export const GuideBooking = mongoose.model<IGuideBooking>("GuideBooking", guideBookingSchema);

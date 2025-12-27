@@ -32,7 +32,7 @@ export const createGuideProfile = asyncHandler(
       lng,
       specialties,
       languages,
-      pricePerHour,
+      pricePerDay,
       experience,
       bio,
       availability,
@@ -75,7 +75,7 @@ export const createGuideProfile = asyncHandler(
       },
       specialties: parsedSpecialties || [],
       languages: parsedLanguages || [],
-      pricePerHour: Number(pricePerHour),
+      pricePerDay: Number(pricePerDay),
       experience: Number(experience) || 0,
       bio: bio || "",
       coverImages: uploadedImageUrls,
@@ -116,7 +116,7 @@ export const updateGuideProfile = asyncHandler(
       lng,
       specialties,
       languages,
-      pricePerHour,
+      pricePerDay,
       experience,
       bio,
       availability,
@@ -184,7 +184,7 @@ export const updateGuideProfile = asyncHandler(
     }
     if (parsedSpecialties) updateData.specialties = parsedSpecialties;
     if (parsedLanguages) updateData.languages = parsedLanguages;
-    if (pricePerHour !== undefined) updateData.pricePerHour = Number(pricePerHour);
+    if (pricePerDay !== undefined) updateData.pricePerDay = Number(pricePerDay);
     if (experience !== undefined) updateData.experience = Number(experience);
     if (bio !== undefined) updateData.bio = bio;
     if (parsedAvailability) updateData.availability = parsedAvailability;
@@ -306,9 +306,9 @@ export const getGuides = asyncHandler(
     }
 
     if (minPrice || maxPrice) {
-      query.pricePerHour = {};
-      if (minPrice) query.pricePerHour.$gte = Number(minPrice);
-      if (maxPrice) query.pricePerHour.$lte = Number(maxPrice);
+      query.pricePerDay = {};
+      if (minPrice) query.pricePerDay.$gte = Number(minPrice);
+      if (maxPrice) query.pricePerDay.$lte = Number(maxPrice);
     }
 
     if (minRating) {
@@ -317,8 +317,8 @@ export const getGuides = asyncHandler(
 
     // Build sort
     let sortOption: any = { averageRating: -1 }; // Default: top-rated first
-    if (sortBy === "price_low") sortOption = { pricePerHour: 1 };
-    if (sortBy === "price_high") sortOption = { pricePerHour: -1 };
+    if (sortBy === "price_low") sortOption = { pricePerDay: 1 };
+    if (sortBy === "price_high") sortOption = { pricePerDay: -1 };
     if (sortBy === "experience") sortOption = { experience: -1 };
     if (sortBy === "reviews") sortOption = { totalReviews: -1 };
 
@@ -404,7 +404,7 @@ export const createBooking = asyncHandler(
     }
 
     const travelerId = req.user._id;
-    const { guideId, date, startTime, endTime, duration, notes } = req.body;
+    const { guideId, startDate, endDate, numberOfDays, notes } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(guideId)) {
       throw new ApiError(400, "Invalid guide ID");
@@ -424,35 +424,35 @@ export const createBooking = asyncHandler(
       throw new ApiError(400, "You cannot book yourself as a guide");
     }
 
-    // Check for overlapping bookings
-    const bookingDate = new Date(date);
+    // Check for overlapping bookings (date range overlap)
+    const bookingStartDate = new Date(startDate);
+    const bookingEndDate = new Date(endDate);
+    
     const existingBooking = await GuideBooking.findOne({
       guide: guideId,
-      date: {
-        $gte: new Date(bookingDate.setHours(0, 0, 0, 0)),
-        $lt: new Date(bookingDate.setHours(23, 59, 59, 999)),
-      },
-      status: { $in: ["pending", "confirmed"] },
+      status: { $in: ["pending", "accepted", "confirmed"] },
       $or: [
-        { startTime: { $lte: startTime }, endTime: { $gt: startTime } },
-        { startTime: { $lt: endTime }, endTime: { $gte: endTime } },
-        { startTime: { $gte: startTime }, endTime: { $lte: endTime } },
+        // New booking starts during existing booking
+        { startDate: { $lte: bookingStartDate }, endDate: { $gte: bookingStartDate } },
+        // New booking ends during existing booking
+        { startDate: { $lte: bookingEndDate }, endDate: { $gte: bookingEndDate } },
+        // New booking completely contains existing booking
+        { startDate: { $gte: bookingStartDate }, endDate: { $lte: bookingEndDate } },
       ],
     });
 
     if (existingBooking) {
-      throw new ApiError(400, "This time slot is already booked");
+      throw new ApiError(400, "These dates overlap with an existing booking");
     }
 
-    const totalPrice = guide.pricePerHour * Number(duration);
+    const totalPrice = guide.pricePerDay * Number(numberOfDays);
 
     const booking = await GuideBooking.create({
       guide: guideId,
       traveler: travelerId,
-      date: new Date(date),
-      startTime,
-      endTime,
-      duration: Number(duration),
+      startDate: bookingStartDate,
+      endDate: bookingEndDate,
+      numberOfDays: Number(numberOfDays),
       totalPrice,
       notes,
     });

@@ -33,7 +33,7 @@ const GuideProfileSetup = () => {
     lng: myGuideProfile?.cityCoordinates?.coordinates?.[0] || '',
     specialties: myGuideProfile?.specialties || [],
     languages: myGuideProfile?.languages || [{ name: '', level: 'Intermediate' }],
-    pricePerHour: myGuideProfile?.pricePerHour || '',
+    pricePerDay: myGuideProfile?.pricePerDay || '',
     experience: myGuideProfile?.experience || '',
     bio: myGuideProfile?.bio || '',
     availability: myGuideProfile?.availability || [],
@@ -101,20 +101,13 @@ const GuideProfileSetup = () => {
         ...prev,
         availability: [
           ...prev.availability,
-          { dayOfWeek: dayIndex, startTime: '09:00', endTime: '18:00' },
+          { dayOfWeek: dayIndex },
         ],
       };
     });
   };
 
-  const handleAvailabilityTimeChange = (dayIndex, field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      availability: prev.availability.map((a) =>
-        a.dayOfWeek === dayIndex ? { ...a, [field]: value } : a
-      ),
-    }));
-  };
+
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -163,8 +156,28 @@ const GuideProfileSetup = () => {
       return;
     }
 
-    if (!formData.pricePerHour || formData.pricePerHour <= 0) {
-      toast.error('Please enter a valid price per hour');
+    if (!formData.pricePerDay || formData.pricePerDay <= 0) {
+      toast.error('Please enter a valid price per day');
+      return;
+    }
+
+    if (!formData.experience || formData.experience <= 0) {
+      toast.error('Please enter your years of experience');
+      return;
+    }
+
+    if (!formData.bio || formData.bio.trim().length < 10) {
+      toast.error('Please write a bio (at least 10 characters)');
+      return;
+    }
+
+    if (existingImages.length + coverImages.length === 0) {
+      toast.error('Please upload at least one cover image');
+      return;
+    }
+
+    if (formData.availability.length === 0) {
+      toast.error('Please select at least one available day');
       return;
     }
 
@@ -319,13 +332,13 @@ const GuideProfileSetup = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Price per Hour (₹)
+                  Price per Day (₹)
                 </label>
                 <input
                   type="number"
-                  value={formData.pricePerHour}
-                  onChange={(e) => setFormData({ ...formData, pricePerHour: e.target.value })}
-                  placeholder="e.g., 500"
+                  value={formData.pricePerDay}
+                  onChange={(e) => setFormData({ ...formData, pricePerDay: e.target.value })}
+                  placeholder="e.g., 2000"
                   min="0"
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none"
                 />
@@ -408,40 +421,24 @@ const GuideProfileSetup = () => {
             {/* Availability */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Availability
+                Available Days
               </label>
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {DAYS_OF_WEEK.map((day, index) => {
-                  const dayAvail = formData.availability.find((a) => a.dayOfWeek === index);
+                  const isSelected = formData.availability.some((a) => a.dayOfWeek === index);
                   return (
-                    <div key={day} className="flex items-center gap-3">
-                      <label
-                        className={`flex items-center gap-2 w-32 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                          dayAvail ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'
-                        }`}
-                        onClick={() => handleAvailabilityToggle(index)}
-                      >
-                        <input type="checkbox" checked={!!dayAvail} readOnly className="sr-only" />
-                        <span className="text-sm font-medium">{day}</span>
-                      </label>
-                      {dayAvail && (
-                        <>
-                          <input
-                            type="time"
-                            value={dayAvail.startTime}
-                            onChange={(e) => handleAvailabilityTimeChange(index, 'startTime', e.target.value)}
-                            className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
-                          />
-                          <span className="text-gray-400">to</span>
-                          <input
-                            type="time"
-                            value={dayAvail.endTime}
-                            onChange={(e) => handleAvailabilityTimeChange(index, 'endTime', e.target.value)}
-                            className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
-                          />
-                        </>
-                      )}
-                    </div>
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => handleAvailabilityToggle(index)}
+                      className={`px-4 py-3 rounded-xl font-medium transition-all ${
+                        isSelected
+                          ? 'bg-orange-500 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {day}
+                    </button>
                   );
                 })}
               </div>

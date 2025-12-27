@@ -4,8 +4,6 @@ import { IGeoPoint,ILanguage } from "./userInterface";
 
 export interface IAvailability {
   dayOfWeek: number; // 0-6 (Sunday-Saturday)
-  startTime: string; // "09:00"
-  endTime: string;   // "18:00"
 }
 
 export interface IGuide extends Document {
@@ -19,7 +17,7 @@ export interface IGuide extends Document {
   specialties: string[];
   languages: ILanguage[];
   
-  pricePerHour: number;
+  pricePerDay: number;
   experience: number; // years
   
   bio: string;
@@ -39,10 +37,9 @@ export interface IGuideBooking extends Document {
   guide: Types.ObjectId;
   traveler: Types.ObjectId;
   
-  date: Date;
-  startTime: string;
-  endTime: string;
-  duration: number; // hours
+  startDate: Date;
+  endDate: Date;
+  numberOfDays: number;
   
   totalPrice: number;
   paymentStatus: "pending" | "paid" | "refunded";

@@ -8,6 +8,7 @@ import {
   MapPin,
   MessageCircle,
   Star,
+  Timer,
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -21,6 +22,47 @@ import {
   createReview,
   fetchMyBookingsAsTraveler,
 } from '../../redux/slices/guideSlice';
+
+// Countdown Timer Component
+const CountdownTimer = ({ startDate }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const start = new Date(startDate);
+      const diff = start - now;
+
+      if (diff <= 0) {
+        setTimeLeft('Starting now!');
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+      let parts = [];
+      if (days > 0) parts.push(`${days}d`);
+      if (hours > 0) parts.push(`${hours}h`);
+      if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+
+      setTimeLeft(`Starts in ${parts.join(' ')}`);
+    };
+
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [startDate]);
+
+  return (
+    <div className="flex items-center gap-1 text-green-600 font-medium">
+      <Timer size={14} />
+      {timeLeft}
+    </div>
+  );
+};
 
 const MyGuideBookings = () => {
   const { getToken } = useAuth();
@@ -209,20 +251,23 @@ const MyGuideBookings = () => {
                 <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
                   <div className="flex items-center gap-1">
                     <Calendar size={14} />
-                    {formatDate(booking.date)}
+                    {formatDate(booking.startDate)}
+                    {booking.startDate !== booking.endDate && (
+                      <> - {formatDate(booking.endDate)}</>
+                    )}
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock size={14} />
-                    {booking.startTime} - {booking.endTime}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock size={14} />
-                    {booking.duration} hour{booking.duration !== 1 ? 's' : ''}
+                    {booking.numberOfDays} day{booking.numberOfDays !== 1 ? 's' : ''}
                   </div>
                   <div className="flex items-center gap-1 font-semibold text-orange-600">
                     <DollarSign size={14} />
                     ₹{booking.totalPrice}
                   </div>
+                  {/* Countdown Timer */}
+                  {booking.status === 'confirmed' && new Date(booking.startDate) > new Date() && (
+                    <CountdownTimer startDate={booking.startDate} />
+                  )}
                 </div>
 
                 {booking.notes && (
