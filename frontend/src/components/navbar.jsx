@@ -52,6 +52,7 @@ function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [expandedMobileMenu, setExpandedMobileMenu] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
   const profileMenuRef = useRef(null);
 
@@ -313,47 +314,40 @@ function NavBar() {
   return (
     <div className={`fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-500 ease-in-out ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
     <nav className="w-full pointer-events-auto bg-white/80 backdrop-blur-xl shadow-lg border border-gray-100/50 rounded-2xl transition-all duration-300">
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8">
-        <div className="flex items-center h-16 sm:h-20 justify-between gap-2 sm:gap-4">
+      <div className="px-2 sm:px-3 md:px-4 lg:px-6">
+        <div className="flex items-center h-16 sm:h-20 justify-between gap-1 sm:gap-2 md:gap-3">
 
           {/* Left Section: Logo + Location */}
-          <div className="flex items-center gap-2 sm:gap-4 md:gap-6 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4 flex-shrink-0 min-w-0">
             <button
               onClick={() => handleNavigation('/')}
-              className="flex items-center space-x-2 sm:space-x-3 group flex-shrink-0"
+              className="flex items-center space-x-1.5 sm:space-x-2 group flex-shrink-0"
             >
-              <div className="bg-gradient-to-tr from-amber-500 to-orange-600 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">
-                <Globe className="text-white" size={20} strokeWidth={2.5} />
+              <div className="bg-gradient-to-tr from-amber-500 to-orange-600 p-1.5 sm:p-2 rounded-lg shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">
+                <Globe className="text-white" size={18} strokeWidth={2.5} />
               </div>
               <div className="flex flex-col items-start">
-                <span className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight">
+                <span className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight whitespace-nowrap">
                   TravelBuddy
                 </span>
-                <span className="hidden sm:block text-[10px] font-medium text-amber-600 tracking-wider uppercase ml-0.5">Find your companion</span>
+                <span className="hidden lg:block text-[9px] xl:text-[10px] font-medium text-amber-600 tracking-wider uppercase ml-0.5">Find your companion</span>
               </div>
             </button>
-
-             {isSignedIn && (
-              <div className="hidden lg:flex items-center space-x-2 text-xs lg:text-sm text-gray-600 bg-gray-50/80 px-3 lg:px-4 py-2 rounded-full border border-gray-100 hover:bg-white hover:shadow-md transition-all duration-300 group cursor-default">
-                <MapPin size={14} className="text-amber-500 group-hover:animate-bounce flex-shrink-0" />
-                <span className="truncate max-w-[120px] xl:max-w-[200px] font-medium">{currentLocationName}</span>
-              </div>
-            )}
           </div>
 
           {/* Center Section: Navigation Links (Excluding AI Buddy) */}
-          <div className="hidden md:flex items-center justify-center space-x-3 lg:space-x-6 xl:space-x-8 flex-1 max-w-4xl mx-auto">
+          <div className="hidden md:flex items-center justify-center space-x-1 lg:space-x-2 xl:space-x-4 2xl:space-x-6 flex-1 min-w-0 overflow-hidden">
             {navLinks.filter(link => link.name !== 'Ai Buddy').map((link) => (
               link.children ? (
-                <div key={link.name} className="relative group z-50">
-                  <button className={`flex items-center space-x-1.5 py-2 text-sm font-medium transition-colors duration-200 ${
+                <div key={link.name} className="relative group z-50 flex-shrink-0">
+                  <button className={`flex items-center space-x-1 py-2 text-xs lg:text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
                     link.children.some(child => location.pathname === child.path)
                       ? 'text-amber-600'
                       : 'text-gray-600 hover:text-amber-600'
                   }`}>
-                    <link.icon size={18} strokeWidth={2} />
-                    <span>{link.name}</span>
-                    <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-200" />
+                    <link.icon size={16} strokeWidth={2} className="flex-shrink-0" />
+                    <span className="hidden lg:inline">{link.name}</span>
+                    <ChevronDown size={12} className="group-hover:rotate-180 transition-transform duration-200 flex-shrink-0" />
                   </button>
                   <div className="absolute left-1/2 -translate-x-1/2 pt-4 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 w-60">
                     <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden p-2">
@@ -376,14 +370,14 @@ function NavBar() {
                 <button
                   key={link.name}
                   onClick={() => handleNavigation(link.path)}
-                  className={`relative flex items-center space-x-1.5 text-sm font-medium transition-colors duration-200 ${
+                  className={`relative flex items-center space-x-1 text-xs lg:text-sm font-medium transition-colors duration-200 whitespace-nowrap flex-shrink-0 ${
                     location.pathname === link.path
                       ? 'text-amber-600'
                       : 'text-gray-600 hover:text-amber-600'
                   }`}
                 >
-                  <link.icon size={18} strokeWidth={2} />
-                  <span>{link.name}</span>
+                  <link.icon size={16} strokeWidth={2} className="flex-shrink-0" />
+                  <span className="hidden lg:inline">{link.name}</span>
                   {link.badge && link.badge > 0 && (
                     <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
                       {link.badge}
@@ -395,28 +389,28 @@ function NavBar() {
           </div>
 
           {/* Right Actions: AI Planner, Create Activity, Profile */}
-          <div className="hidden md:flex items-center space-x-2 lg:space-x-3 xl:space-x-4 flex-shrink-0">
+          <div className="hidden md:flex items-center space-x-1 lg:space-x-2 xl:space-x-3 flex-shrink-0">
              {/* Ai Buddy Button - Placed here next to Create Activity */}
               <button
                 onClick={() => handleNavigation('/ai-buddy')}
-                className="flex items-center space-x-1.5 lg:space-x-2 bg-gradient-to-r from-purple-500 to-violet-600 text-white px-3 lg:px-4 xl:px-5 py-2 lg:py-2.5 rounded-lg lg:rounded-xl hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-xs lg:text-sm group"
+                className="flex items-center space-x-1 lg:space-x-1.5 bg-gradient-to-r from-purple-500 to-violet-600 text-white px-2 lg:px-3 xl:px-4 py-1.5 lg:py-2 rounded-lg hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-xs group"
               >
-                <Bot size={16} className="group-hover:rotate-12 transition-transform duration-300 flex-shrink-0" />
+                <Bot size={14} className="group-hover:rotate-12 transition-transform duration-300 flex-shrink-0" />
                 <span className="hidden xl:inline whitespace-nowrap">Ai Buddy</span>
               </button>
 
             {isSignedIn ? (
-              <div className="flex items-center space-x-2 lg:space-x-3 xl:space-x-4">
+              <div className="flex items-center space-x-1 lg:space-x-2 xl:space-x-3">
 
                  {/* Notification Bell */}
-                 <div className="relative">
+                 <div className="relative flex-shrink-0">
                     <button
-                      className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors relative"
+                      className="p-1.5 lg:p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors relative"
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                     >
-                      <Bell size={20} />
+                      <Bell size={18} />
                       {unreadCount > 0 && (
-                        <span className="absolute top-1.5 right-2 h-2 w-2 bg-red-500 rounded-full"></span>
+                        <span className="absolute top-1 right-1.5 h-2 w-2 bg-red-500 rounded-full"></span>
                       )}
                     </button>
                     <NotificationDropdown
@@ -427,25 +421,25 @@ function NavBar() {
 
                  <button
                   onClick={() => handleCreateActivity()}
-                  className="flex items-center space-x-1.5 lg:space-x-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-3 lg:px-4 xl:px-5 py-2 lg:py-2.5 rounded-lg lg:rounded-xl hover:shadow-lg hover:shadow-amber-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-xs lg:text-sm group"
+                  className="flex items-center space-x-1 lg:space-x-1.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-2 lg:px-3 xl:px-4 py-1.5 lg:py-2 rounded-lg hover:shadow-lg hover:shadow-amber-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-xs group"
                 >
-                  <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300 flex-shrink-0" />
+                  <Plus size={14} className="group-hover:rotate-90 transition-transform duration-300 flex-shrink-0" />
                   <span className="hidden lg:inline whitespace-nowrap">Create Activity</span>
                 </button>
 
                 {/* Profile Dropdown Menu */}
-                <div className="relative" ref={profileMenuRef}>
+                <div className="relative flex-shrink-0" ref={profileMenuRef}>
                   <button
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                    className="flex items-center space-x-2 p-1 rounded-full border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-all duration-200"
+                    className="flex items-center space-x-1 p-0.5 lg:p-1 rounded-full border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-all duration-200"
                   >
                     <div className="relative">
                       <img
                         src={userImage || 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png'}
                         alt={userDisplayName}
-                        className="w-8 h-8 lg:w-9 lg:h-9 xl:w-10 xl:h-10 rounded-full object-cover border-2 border-white shadow-md ring-1 ring-gray-100"
+                        className="w-7 h-7 lg:w-8 lg:h-8 xl:w-9 xl:h-9 rounded-full object-cover border-2 border-white shadow-md ring-1 ring-gray-100"
                       />
-                      <div className="absolute bottom-0 right-0 w-2.5 h-2.5 lg:w-3 lg:h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                      <div className="absolute bottom-0 right-0 w-2 h-2 lg:w-2.5 lg:h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
                     </div>
                     <ChevronDown className={`w-3 h-3 lg:w-4 lg:h-4 text-gray-500 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
@@ -464,6 +458,14 @@ function NavBar() {
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-gray-900 text-base truncate">{userDisplayName}</p>
                             <p className="text-xs text-gray-500 truncate mt-0.5">{userEmail}</p>
+                          </div>
+                        </div>
+                        {/* Current Location */}
+                        <div className="flex items-center space-x-2 mt-3 px-3 py-2 bg-amber-50/50 rounded-lg border border-amber-100">
+                          <MapPin size={14} className="text-amber-500 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] text-amber-600 font-semibold uppercase tracking-wide">Current Location</p>
+                            <p className="text-sm text-gray-700 font-medium truncate">{currentLocationName}</p>
                           </div>
                         </div>
                       </div>
@@ -542,12 +544,44 @@ function NavBar() {
             )}
           </div>
 
+          {/* Mobile Right Actions: AI Buddy, Notification, Menu Toggle */}
+          <div className="md:hidden flex items-center space-x-1 sm:space-x-2">
+            {/* AI Buddy Button - Mobile */}
             <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-1.5 sm:p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex-shrink-0"
-          >
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+              onClick={() => handleNavigation('/ai-buddy')}
+              className="flex items-center space-x-1.5 bg-gradient-to-r from-purple-500 to-violet-600 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 font-medium text-xs group"
+            >
+              <Bot size={16} className="group-hover:rotate-12 transition-transform duration-300" />
+              <span>Ai Buddy</span>
+            </button>
+
+            {/* Notification Bell - Mobile */}
+            {isSignedIn && (
+              <div className="relative">
+                <button
+                  className="p-1.5 sm:p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors relative"
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0.5 right-0.5 h-2 w-2 bg-red-500 rounded-full"></span>
+                  )}
+                </button>
+                <NotificationDropdown
+                  isOpen={isNotificationOpen}
+                  onClose={() => setIsNotificationOpen(false)}
+                />
+              </div>
+            )}
+
+            {/* Hamburger Menu */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-1.5 sm:p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex-shrink-0"
+            >
+              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
@@ -572,25 +606,37 @@ function NavBar() {
                   <div key={link.name}>
                     {link.children ? (
                       <div className="space-y-1">
-                        <div className="flex items-center space-x-3 px-4 py-3 text-gray-900 font-semibold bg-gray-50/50 rounded-xl">
-                          <link.icon size={20} className="text-gray-500" />
-                          <span>{link.name}</span>
-                        </div>
-                        <div className="pl-4 ml-4 border-l-2 border-gray-100 space-y-1">
-                          {link.children.map((child) => (
-                            <button
-                                key={child.name}
-                                onClick={() => {
-                                  handleNavigation(child.path);
-                                  setIsMenuOpen(false);
-                                }}
-                                className="flex items-center space-x-3 px-4 py-2.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg w-full text-left transition-colors"
-                              >
-                                <child.icon size={18} />
-                                <span className="text-sm font-medium">{child.name}</span>
-                              </button>
-                          ))}
-                        </div>
+                        <button
+                          onClick={() => setExpandedMobileMenu(expandedMobileMenu === link.name ? null : link.name)}
+                          className="flex items-center justify-between w-full px-4 py-3 text-gray-900 font-semibold bg-gray-50/50 rounded-xl hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <link.icon size={20} className="text-gray-500" />
+                            <span>{link.name}</span>
+                          </div>
+                          <ChevronDown
+                            size={18}
+                            className={`text-gray-400 transition-transform duration-200 ${expandedMobileMenu === link.name ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+                        {expandedMobileMenu === link.name && (
+                          <div className="pl-4 ml-4 border-l-2 border-gray-100 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                            {link.children.map((child) => (
+                              <button
+                                  key={child.name}
+                                  onClick={() => {
+                                    handleNavigation(child.path);
+                                    setIsMenuOpen(false);
+                                    setExpandedMobileMenu(null);
+                                  }}
+                                  className="flex items-center space-x-3 px-4 py-2.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg w-full text-left transition-colors"
+                                >
+                                  <child.icon size={18} />
+                                  <span className="text-sm font-medium">{child.name}</span>
+                                </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <button
@@ -630,23 +676,40 @@ function NavBar() {
                     <span>Create Activity</span>
                   </button>
 
-                  <div className="pt-4 border-t border-gray-100 space-y-4">
+                  <div className="pt-4 border-t border-gray-100 space-y-2">
                      {profileTabs.map((tab) => (
                        <div key={tab.id} className="space-y-1">
-                          <p className="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{tab.label}</p>
-                          {profileContent[tab.id].map((item, index) => (
-                            <button
-                              key={index}
-                              onClick={() => {
-                                handleNavigation(item.path);
-                                setIsMenuOpen(false);
-                              }}
-                              className="flex items-center space-x-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-xl w-full text-left font-medium"
-                            >
-                              <item.icon size={18} className="text-gray-400" />
-                              <span>{item.name}</span>
-                            </button>
-                          ))}
+                          <button
+                            onClick={() => setExpandedMobileMenu(expandedMobileMenu === tab.id ? null : tab.id)}
+                            className="flex items-center justify-between w-full px-4 py-3 text-gray-900 font-semibold bg-gray-50/50 rounded-xl hover:bg-gray-100 transition-colors"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <tab.icon size={20} className="text-gray-500" />
+                              <span>{tab.label}</span>
+                            </div>
+                            <ChevronDown
+                              size={18}
+                              className={`text-gray-400 transition-transform duration-200 ${expandedMobileMenu === tab.id ? 'rotate-180' : ''}`}
+                            />
+                          </button>
+                          {expandedMobileMenu === tab.id && (
+                            <div className="pl-4 ml-4 border-l-2 border-gray-100 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                              {profileContent[tab.id].map((item, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => {
+                                    handleNavigation(item.path);
+                                    setIsMenuOpen(false);
+                                    setExpandedMobileMenu(null);
+                                  }}
+                                  className="flex items-center space-x-3 px-4 py-2.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg w-full text-left font-medium transition-colors"
+                                >
+                                  <item.icon size={18} className="text-gray-400" />
+                                  <span className="text-sm">{item.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                        </div>
                      ))}
                     <button
