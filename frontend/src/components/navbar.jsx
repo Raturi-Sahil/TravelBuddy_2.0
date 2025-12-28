@@ -54,7 +54,9 @@ function NavBar() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [expandedMobileMenu, setExpandedMobileMenu] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
+  const [isMapDropdownOpen, setIsMapDropdownOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const mapDropdownRef = useRef(null);
 
   const { user, isSignedIn } = useUser();
   const { getToken } = useAuth();
@@ -175,6 +177,9 @@ function NavBar() {
     const handleClickOutside = (event) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
         setIsProfileMenuOpen(false);
+      }
+      if (mapDropdownRef.current && !mapDropdownRef.current.contains(event.target)) {
+        setIsMapDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -312,10 +317,10 @@ function NavBar() {
   };
 
   return (
-    <div className={`fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-500 ease-in-out ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
-    <nav className="w-full pointer-events-auto bg-white/80 backdrop-blur-xl shadow-lg border border-gray-100/50 rounded-2xl transition-all duration-300">
-      <div className="px-2 sm:px-3 md:px-4 lg:px-6">
-        <div className="flex items-center h-16 sm:h-20 justify-between gap-1 sm:gap-2 md:gap-3">
+    <div className={`fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-500 ease-in-out overflow-visible ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
+    <nav className="w-full pointer-events-auto bg-white/80 backdrop-blur-xl shadow-lg border border-gray-100/50 rounded-2xl transition-all duration-300 overflow-visible">
+      <div className="px-2 sm:px-3 md:px-4 lg:px-6 overflow-visible">
+        <div className="flex items-center h-16 sm:h-20 justify-between gap-1 sm:gap-2 md:gap-3 overflow-visible">
 
           {/* Left Section: Logo + Location */}
           <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4 flex-shrink-0 min-w-0">
@@ -336,35 +341,42 @@ function NavBar() {
           </div>
 
           {/* Center Section: Navigation Links (Excluding AI Buddy) */}
-          <div className="hidden md:flex items-center justify-center space-x-1 lg:space-x-2 xl:space-x-4 2xl:space-x-6 flex-1 min-w-0 overflow-hidden">
+          <div className="hidden md:flex items-center justify-center space-x-1 lg:space-x-2 xl:space-x-4 2xl:space-x-6 flex-1 min-w-0 overflow-visible">
             {navLinks.filter(link => link.name !== 'Ai Buddy').map((link) => (
               link.children ? (
-                <div key={link.name} className="relative group z-50 flex-shrink-0">
-                  <button className={`flex items-center space-x-1 py-2 text-xs lg:text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                <div key={link.name} className="relative z-50 flex-shrink-0" ref={mapDropdownRef}>
+                  <button
+                    onClick={() => setIsMapDropdownOpen(!isMapDropdownOpen)}
+                    className={`flex items-center space-x-1 py-2 text-xs lg:text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
                     link.children.some(child => location.pathname === child.path)
                       ? 'text-amber-600'
                       : 'text-gray-600 hover:text-amber-600'
                   }`}>
                     <link.icon size={16} strokeWidth={2} className="flex-shrink-0" />
                     <span className="hidden lg:inline">{link.name}</span>
-                    <ChevronDown size={12} className="group-hover:rotate-180 transition-transform duration-200 flex-shrink-0" />
+                    <ChevronDown size={12} className={`transition-transform duration-200 flex-shrink-0 ${isMapDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
-                  <div className="absolute left-1/2 -translate-x-1/2 pt-4 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 w-60">
-                    <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden p-2">
-                       {link.children.map((child) => (
-                        <button
-                          key={child.name}
-                          onClick={() => handleNavigation(child.path)}
-                          className="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50/50 rounded-xl transition-all duration-200 text-left group/item"
-                        >
-                          <div className="p-1.5 bg-gray-100 group-hover/item:bg-amber-100 rounded-lg transition-colors">
-                            <child.icon size={16} className="text-gray-500 group-hover/item:text-amber-600" />
-                          </div>
-                          <span className="text-sm font-medium">{child.name}</span>
-                        </button>
-                      ))}
+                  {isMapDropdownOpen && (
+                    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-[9999] w-60">
+                      <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-2">
+                         {link.children.map((child) => (
+                          <button
+                            key={child.name}
+                            onClick={() => {
+                              handleNavigation(child.path);
+                              setIsMapDropdownOpen(false);
+                            }}
+                            className="w-full flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50/50 rounded-xl transition-all duration-200 text-left group/item"
+                          >
+                            <div className="p-1.5 bg-gray-100 group-hover/item:bg-amber-100 rounded-lg transition-colors">
+                              <child.icon size={16} className="text-gray-500 group-hover/item:text-amber-600" />
+                            </div>
+                            <span className="text-sm font-medium">{child.name}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ) : (
                 <button
