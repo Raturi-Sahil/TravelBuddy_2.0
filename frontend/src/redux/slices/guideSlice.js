@@ -18,10 +18,21 @@ export const fetchGuides = createAsyncThunk(
 
 export const fetchNearbyGuides = createAsyncThunk(
   'guide/fetchNearbyGuides',
-  async ({ getToken, lat, lng, radius, specialty }, { rejectWithValue }) => {
+  async ({ getToken, lat, lng, radius, filters = {} }, { rejectWithValue }) => {
     try {
       const authApi = createAuthenticatedApi(getToken);
-      const response = await guideService.getNearbyGuides(authApi, { lat, lng, radius, specialty });
+      const response = await guideService.getNearbyGuides(authApi, { 
+        lat, 
+        lng, 
+        radius, 
+        specialty: filters.specialty,
+        minRating: filters.minRating,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
+        sortBy: filters.sortBy,
+        page: filters.page,
+        limit: filters.limit,
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch nearby guides');
@@ -295,6 +306,7 @@ const guideSlice = createSlice({
       .addCase(fetchNearbyGuides.fulfilled, (state, action) => {
         state.guidesLoading = false;
         state.guides = action.payload.guides;
+        state.pagination = action.payload.pagination || null;
       })
       .addCase(fetchNearbyGuides.rejected, (state, action) => {
         state.guidesLoading = false;

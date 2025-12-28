@@ -325,6 +325,20 @@ export const activityService = {
   cancelActivity: async (authApi, activityId, reason) => {
     const response = await authApi.post(`/activities/${activityId}/cancel`, { reason });
     return response.data;
+  },
+
+  // Get nearby activities
+  getNearbyActivities: async (authApi, { lat, lng, radius, search, page, limit }) => {
+    const params = new URLSearchParams();
+    if (lat) params.append('lat', lat);
+    if (lng) params.append('lng', lng);
+    if (radius) params.append('radius', radius);
+    if (search) params.append('search', search);
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
+
+    const response = await authApi.get(`/activities/nearby?${params.toString()}`);
+    return response.data;
   }
 };
 
@@ -626,12 +640,18 @@ export const guideService = {
   },
 
   // Get nearby guides
-  getNearbyGuides: async (authApi, { lat, lng, radius, specialty }) => {
+  getNearbyGuides: async (authApi, { lat, lng, radius, specialty, minRating, minPrice, maxPrice, sortBy, page, limit }) => {
     const params = new URLSearchParams();
     params.append('lat', lat);
     params.append('lng', lng);
     if (radius) params.append('radius', radius);
     if (specialty) params.append('specialty', specialty);
+    if (minRating) params.append('minRating', minRating);
+    if (minPrice) params.append('minPrice', minPrice);
+    if (maxPrice) params.append('maxPrice', maxPrice);
+    if (sortBy) params.append('sortBy', sortBy);
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
 
     const response = await authApi.get(`/guides/nearby?${params.toString()}`);
     return response.data;

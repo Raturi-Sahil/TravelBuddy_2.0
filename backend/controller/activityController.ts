@@ -12,8 +12,8 @@ import { User } from "../models/userModel";
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
 import asyncHandler from "../utils/asyncHandler";
-import { activityZodSchema } from "../validation/activityValidation";
 import { sendNotification } from "../utils/notificationUtil";
+import { activityZodSchema } from "../validation/activityValidation";
 
 export const createActivity = asyncHandler(
   async (req: Request & { user?: any }, res: Response) => {
@@ -297,14 +297,18 @@ export const getNearbyActivities = asyncHandler(
       const latitude = parseFloat(lat as string);
       const longitude = parseFloat(lng as string);
       const radiusMeters = parseFloat(radius as string) || 50000;
+      
+      // Convert radius from meters to radians for $centerSphere
+      // Earth's radius is approximately 6378100 meters
+      const radiusInRadians = radiusMeters / 6378100;
 
+      // Use $geoWithin with $centerSphere instead of $nearSphere to allow custom sorting
       query.location = {
-        $nearSphere: {
-          $geometry: {
-            type: "Point",
-            coordinates: [longitude, latitude]
-          },
-          $maxDistance: radiusMeters
+        $geoWithin: {
+          $centerSphere: [
+            [longitude, latitude],
+            radiusInRadians
+          ]
         }
       };
     }
@@ -324,18 +328,12 @@ export const getNearbyActivities = asyncHandler(
     const totalPages = Math.ceil(totalCount / limitNum);
 
     // Fetch activities with pagination
-    let activitiesQuery = Activity.find(query)
+    const activities = await Activity.find(query)
+      .sort({ date: 1, startTime: 1 }) // Now we can sort since using $geoWithin instead of $nearSphere
       .skip(skip)
       .limit(limitNum)
       .populate("createdBy", "name email mobile profileImage")
       .lean();
-
-    // If no geo query, sort by date
-    if (!lat || !lng) {
-      activitiesQuery = activitiesQuery.sort({ date: 1, startTime: 1 });
-    }
-
-    const activities = await activitiesQuery;
 
     // Calculate distance for each activity if user location provided
     const activitiesWithDistance = activities.map((activity: any) => {

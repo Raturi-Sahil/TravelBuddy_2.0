@@ -12,11 +12,11 @@ import chatRoutes from "./routes/chatRoute";
 import friendRoutes from "./routes/friendRoute";
 import groupChatRoutes from "./routes/groupChatRoutes";
 import guideRoutes from "./routes/guideRoute";
+import notificationRoutes from "./routes/notificationsRoutes";
 import placesRoutes from "./routes/placesRoute";
 import postRoutes from "./routes/postRoutes";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
 import userRoutes from "./routes/userRoute";
-import notificationRoutes from "./routes/notificationsRoutes";
 
 
 const app: Application = express();

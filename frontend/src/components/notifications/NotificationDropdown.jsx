@@ -1,9 +1,10 @@
+import { useAuth } from '@clerk/clerk-react';
+import { formatDistanceToNow } from 'date-fns';
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearAllNotifications } from '../../redux/slices/notificationSlice';
-import { useAuth } from '@clerk/clerk-react';
-import { formatDistanceToNow } from 'date-fns';
+
+import { clearAllNotifications,fetchNotifications, markAllNotificationsAsRead, markNotificationAsRead } from '../../redux/slices/notificationSlice';
 
 const NotificationDropdown = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();

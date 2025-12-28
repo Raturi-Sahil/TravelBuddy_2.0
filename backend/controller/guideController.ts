@@ -354,7 +354,18 @@ export const getGuides = asyncHandler(
 // Get nearby guides
 export const getNearbyGuides = asyncHandler(
   async (req: Request, res: Response) => {
-    const { lat, lng, radius = 50000, specialty, page = 1, limit = 20 } = req.query;
+    const { 
+      lat, 
+      lng, 
+      radius = 50000, 
+      specialty, 
+      minRating,
+      minPrice,
+      maxPrice,
+      sortBy = "rating",
+      page = 1, 
+      limit = 20 
+    } = req.query;
 
     if (!lat || !lng) {
       throw new ApiError(400, "Latitude and longitude are required");
@@ -364,17 +375,21 @@ export const getNearbyGuides = asyncHandler(
     const limitNum = Math.min(50, Math.max(1, parseInt(limit as string) || 20));
     const skip = (pageNum - 1) * limitNum;
 
+    // Convert radius from meters to radians (for $centerSphere)
+    // Earth's radius is approximately 6378100 meters
+    const radiusInRadians = Number(radius) / 6378100;
+
+    // Use $geoWithin with $centerSphere instead of $near to allow custom sorting
     const query: any = {
       isActive: true,
       isVerified: true,
       cityCoordinates: {
-        $near: {
-          $geometry: {
-            type: "Point",
-            coordinates: [Number(lng), Number(lat)],
-          },
-          $maxDistance: Number(radius),
-        },
+        $geoWithin: {
+          $centerSphere: [
+            [Number(lng), Number(lat)],
+            radiusInRadians
+          ]
+        }
       },
     };
 
@@ -382,14 +397,48 @@ export const getNearbyGuides = asyncHandler(
       query.specialties = { $in: [specialty] };
     }
 
+    if (minRating) {
+      query.averageRating = { $gte: Number(minRating) };
+    }
+
+    if (minPrice || maxPrice) {
+      query.pricePerDay = {};
+      if (minPrice) query.pricePerDay.$gte = Number(minPrice);
+      if (maxPrice) query.pricePerDay.$lte = Number(maxPrice);
+    }
+
+    // Build sort option
+    let sortOption: any = { averageRating: -1 }; // Default: top-rated first
+    if (sortBy === "price_low") sortOption = { pricePerDay: 1 };
+    if (sortBy === "price_high") sortOption = { pricePerDay: -1 };
+    if (sortBy === "experience") sortOption = { experience: -1 };
+    if (sortBy === "reviews") sortOption = { totalReviews: -1 };
+
+    const totalCount = await Guide.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / limitNum);
+
     const guides = await Guide.find(query)
+      .sort(sortOption)
       .skip(skip)
       .limit(limitNum)
       .populate("user", "name email profileImage nationality")
       .lean();
 
     return res.status(200).json(
-      new ApiResponse(200, { guides }, "Nearby guides fetched successfully")
+      new ApiResponse(
+        200, 
+        { 
+          guides,
+          pagination: {
+            page: pageNum,
+            limit: limitNum,
+            totalCount,
+            totalPages,
+            hasMore: pageNum < totalPages,
+          },
+        }, 
+        "Nearby guides fetched successfully"
+      )
     );
   }
 );

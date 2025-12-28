@@ -1,21 +1,23 @@
 import { useAuth } from '@clerk/clerk-react';
+import { Autocomplete } from '@react-google-maps/api';
 import {
   Calendar,
   DollarSign,
   Filter,
   Globe,
   MapPin,
+  Navigation,
   Search,
   Star,
   Users,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { GUIDE_SPECIALTIES } from '../../data/enums';
-import { fetchGuides } from '../../redux/slices/guideSlice';
+import { fetchGuides, fetchNearbyGuides } from '../../redux/slices/guideSlice';
 
 const BrowseGuides = () => {
   const { getToken } = useAuth();
@@ -27,24 +29,92 @@ const BrowseGuides = () => {
     specialty: '',
     minRating: '',
     sortBy: 'rating',
+    radius: '15', // Default 15km
   });
   const [showFilters, setShowFilters] = useState(false);
   const [searchCity, setSearchCity] = useState('');
+  
+  // Location-based search state
+  const [selectedLocation, setSelectedLocation] = useState(null); // { lat, lng, name }
+  const autocompleteRef = useRef(null);
 
-  const loadGuides = (customFilters = filters) => {
-    dispatch(fetchGuides({ getToken, filters: customFilters }));
+  const loadGuides = (customFilters = filters, location = selectedLocation) => {
+    if (location) {
+      // Use geospatial search with user-selected radius (convert km to meters)
+      const radiusInMeters = (parseInt(customFilters.radius) || 15) * 1000;
+      dispatch(fetchNearbyGuides({ 
+        getToken, 
+        lat: location.lat, 
+        lng: location.lng, 
+        radius: radiusInMeters,
+        filters: customFilters, // Pass all filters for backend filtering
+      }));
+    } else {
+      // Fall back to text-based search
+      dispatch(fetchGuides({ getToken, filters: customFilters }));
+    }
   };
 
   useEffect(() => {
-    dispatch(fetchGuides({ getToken, filters }));
+    if (selectedLocation) {
+      loadGuides(filters, selectedLocation);
+    } else {
+      dispatch(fetchGuides({ getToken, filters }));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, getToken]);
 
+  // Autocomplete handlers
+  const onAutocompleteLoad = (autocomplete) => {
+    autocompleteRef.current = autocomplete;
+  };
+
+  const onPlaceChanged = async () => {
+    const place = autocompleteRef.current?.getPlace();
+    if (place?.geometry?.location) {
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
+      
+      // Get English location name via reverse geocoding
+      let locationName = place.formatted_address || place.name || 'Selected Location';
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`
+        );
+        const data = await response.json();
+        if (data?.display_name) {
+          locationName = data.display_name;
+        }
+      } catch (error) {
+        console.error('Reverse geocoding error:', error);
+      }
+      
+      const location = {
+        lat,
+        lng,
+        name: locationName,
+      };
+      setSelectedLocation(location);
+      setSearchCity(locationName);
+      loadGuides(filters, location);
+    }
+  };
+
+  const clearLocation = () => {
+    setSelectedLocation(null);
+    setSearchCity('');
+    loadGuides(filters, null);
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
+    if (selectedLocation) {
+      // Already handled by onPlaceChanged
+      return;
+    }
     const newFilters = { ...filters, city: searchCity };
     setFilters(newFilters);
-    loadGuides(newFilters);
+    loadGuides(newFilters, null);
   };
 
   const handleFilterChange = (key, value) => {
@@ -63,10 +133,12 @@ const BrowseGuides = () => {
       specialty: '',
       minRating: '',
       sortBy: 'rating',
+      radius: '15',
     };
     setFilters(clearedFilters);
     setSearchCity('');
-    loadGuides(clearedFilters);
+    setSelectedLocation(null);
+    loadGuides(clearedFilters, null);
   };
 
   const renderStars = (rating) => {
@@ -92,17 +164,38 @@ const BrowseGuides = () => {
           </p>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Bar with Google Places Autocomplete */}
         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto mb-6">
           <div className="flex-1 relative">
-            <MapPin size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by city..."
-              value={searchCity}
-              onChange={(e) => setSearchCity(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-            />
+            <Navigation size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+            <Autocomplete
+              onLoad={onAutocompleteLoad}
+              onPlaceChanged={onPlaceChanged}
+            >
+              <input
+                type="text"
+                placeholder="Search location on Google Maps..."
+                value={searchCity}
+                onChange={(e) => {
+                  setSearchCity(e.target.value);
+                  // If user clears the input manually, reset location
+                  if (!e.target.value) {
+                    setSelectedLocation(null);
+                  }
+                }}
+                className="w-full pl-12 pr-10 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+              />
+            </Autocomplete>
+            {selectedLocation && (
+              <button
+                type="button"
+                onClick={clearLocation}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
+                title="Clear location"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
           <button
             type="submit"
@@ -121,6 +214,25 @@ const BrowseGuides = () => {
           </button>
         </form>
 
+        {/* Location Search Info */}
+        {selectedLocation && (
+          <div className="max-w-3xl mx-auto mb-4">
+            <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl">
+              <Navigation size={18} className="text-orange-600" />
+              <span className="text-sm text-gray-700">
+                Showing guides within <strong className="text-orange-600">{filters.radius}km</strong> of{' '}
+                <strong className="text-gray-900">{selectedLocation.name}</strong>
+              </span>
+              <button
+                onClick={clearLocation}
+                className="ml-auto text-gray-400 hover:text-gray-600 p-1 hover:bg-white/50 rounded-full transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Filters Panel */}
         {showFilters && (
           <div className="max-w-3xl mx-auto mb-6 bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
@@ -131,7 +243,7 @@ const BrowseGuides = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
                 <select
@@ -145,6 +257,22 @@ const BrowseGuides = () => {
                       {specialty}
                     </option>
                   ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Search Radius</label>
+                <select
+                  value={filters.radius}
+                  onChange={(e) => handleFilterChange('radius', e.target.value)}
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                >
+                  <option value="5">5 km</option>
+                  <option value="10">10 km</option>
+                  <option value="15">15 km</option>
+                  <option value="25">25 km</option>
+                  <option value="50">50 km</option>
+                  <option value="100">100 km</option>
                 </select>
               </div>
 
