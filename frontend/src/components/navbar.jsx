@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Plane,
   Plus,
+  Receipt,
   Settings,
   ShieldAlert,
   ShoppingBag,
@@ -296,6 +297,7 @@ function NavBar() {
     profile: [
       { name: 'My Profile', path: '/profile', icon: User },
       { name: 'Connections', path: '/connections', icon: Link },
+      { name: 'Split Group Expenses', path: '/split-expenses', icon: Receipt },
       ...(myGuideProfile
         ? [{ name: 'Guide Dashboard', path: '/guide-dashboard', icon: Compass }]
         : [{ name: 'Become a Guide', path: '/guide-setup', icon: Compass }]

@@ -44,6 +44,7 @@ import PaymentStatus from "./pages/paymentStatus";
 import CompleteRegistration from "./pages/User/completeRegistration";
 import Connections from "./pages/User/Connections";
 import ProfilePage from "./pages/User/profile";
+import SplitExpenses from "./components/Expenses/SplitExpenses";
 import SignUpPage from "./pages/User/signUp";
 import SignInPage from "./pages/User/singIn";
 import TravelerProfile from "./pages/User/TravelerProfile";
@@ -74,6 +75,7 @@ function App() {
           </AuthGuard>
         } />
         <Route path="connections" element={<AuthGuard><Connections /></AuthGuard>} />
+        <Route path="split-expenses" element={<AuthGuard><SplitExpenses /></AuthGuard>} />
         <Route path="chat/:userId" element={<AuthGuard><ChatPage /></AuthGuard>} />
         <Route path="complete-registration" element={<CompleteRegistration />} />
         <Route path="about-us" element={<AboutUs />} />
