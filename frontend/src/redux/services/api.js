@@ -626,12 +626,18 @@ export const guideService = {
   },
 
   // Get nearby guides
-  getNearbyGuides: async (authApi, { lat, lng, radius, specialty }) => {
+  getNearbyGuides: async (authApi, { lat, lng, radius, specialty, minRating, minPrice, maxPrice, sortBy, page, limit }) => {
     const params = new URLSearchParams();
     params.append('lat', lat);
     params.append('lng', lng);
     if (radius) params.append('radius', radius);
     if (specialty) params.append('specialty', specialty);
+    if (minRating) params.append('minRating', minRating);
+    if (minPrice) params.append('minPrice', minPrice);
+    if (maxPrice) params.append('maxPrice', maxPrice);
+    if (sortBy) params.append('sortBy', sortBy);
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
 
     const response = await authApi.get(`/guides/nearby?${params.toString()}`);
     return response.data;

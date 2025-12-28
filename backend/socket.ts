@@ -12,7 +12,7 @@ const userSocketMap: UserSocketMap = {}; // userId -> socketId
 export const initializeSocket = (server: HttpServer) => {
     io = new Server(server, {
         cors: {
-            origin: ["http://localhost:5173", process.env.FRONTEND_URL as string],
+            origin: [process.env.FRONTEND_URL as string],
             methods: ["GET", "POST"],
         },
     });

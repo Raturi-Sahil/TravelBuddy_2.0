@@ -5,10 +5,10 @@ import aiReducer from './slices/aiSlice';
 import articleReducer from './slices/articleSlice';
 import chatReducer from './slices/chatSlice';
 import guideReducer from './slices/guideSlice';
+import notificationReducer from './slices/notificationSlice';
 import postReducer from './slices/postSlice';
 import userActivityReducer from './slices/userActivitySlice';
 import userReducer from './slices/userSlice';
-import notificationReducer from './slices/notificationSlice';
 
 const store = configureStore({
   reducer: {

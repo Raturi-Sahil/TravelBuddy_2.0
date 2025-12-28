@@ -12,11 +12,11 @@ import chatRoutes from "./routes/chatRoute";
 import friendRoutes from "./routes/friendRoute";
 import groupChatRoutes from "./routes/groupChatRoutes";
 import guideRoutes from "./routes/guideRoute";
+import notificationRoutes from "./routes/notificationsRoutes";
 import placesRoutes from "./routes/placesRoute";
 import postRoutes from "./routes/postRoutes";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
 import userRoutes from "./routes/userRoute";
-import notificationRoutes from "./routes/notificationsRoutes";
 
 
 const app: Application = express();
@@ -27,7 +27,7 @@ connectToDB();
 // CORS
 app.use(
   cors({
-    origin: ["http://localhost:5173", process.env.FRONTEND_URL as string],
+    origin: [ process.env.FRONTEND_URL as string],
     credentials: true,
   })
 );
