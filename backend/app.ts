@@ -27,7 +27,23 @@ connectToDB();
 // CORS
 app.use(
   cors({
-    origin: ["http://localhost:5173", process.env.FRONTEND_URL as string],
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "http://localhost:5173",
+        process.env.FRONTEND_URL,
+      ].filter(Boolean) as string[];
+
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") // Allow Vercel deployments automatically
+      ) {
+        callback(null, true);
+      } else {
+        console.log("Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );

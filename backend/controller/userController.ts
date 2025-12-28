@@ -8,6 +8,7 @@ import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
 import asyncHandler from "../utils/asyncHandler";
 import { registerUserSchema, updateProfileSchema } from "../validation/userValidation";
+import { sendNotification } from "../utils/notificationUtil";
 
 export const registerUser = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -179,6 +180,22 @@ export const updateProfile = asyncHandler(
 
       // Update user's cover image URL
       user.coverImage = uploadResult.secure_url;
+
+      //  Notify friends about cover image update
+      if (user.friends && user.friends.length > 0) {
+        await Promise.all(
+          user.friends.map(async (friendId: any) => {
+            await sendNotification({
+              recipient: friendId,
+              sender: user._id,
+              type: "PROFILE_UPDATE",
+              message: `${user.name} updated their cover photo`,
+              link: `/profile/${user._id}`,
+              relatedId: user._id,
+            });
+          })
+        );
+      }
     }
 
     // Handle profile image upload
@@ -226,7 +243,7 @@ export const updateProfile = asyncHandler(
 // Get travelers - can filter by location (optional) and/or search by name
 export const getNearbyTravelers = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    
+
     const { lat, lng, radius, search, page, limit } = req.query;
 
     // Parse optional location parameters
@@ -234,14 +251,14 @@ export const getNearbyTravelers = asyncHandler(
     const longitude = lng ? parseFloat(lng as string) : null;
     const searchRadius = parseInt(radius as string) || 20000; // Default 20km in meters
     const searchQuery = (search as string)?.trim() || '';
-    
+
     // Pagination parameters
     const pageNum = Math.max(1, parseInt(page as string) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 50)); // Default 50, max 100
 
     // Get current user ID to exclude from results
     const currentUserId = req.user?._id;
-    
+
     // Get current user's location for distance calculation
     const currentUser = await User.findById(currentUserId).select("currentLocation").lean();
     const userLat = currentUser?.currentLocation?.coordinates?.[1] || latitude;
@@ -256,7 +273,7 @@ export const getNearbyTravelers = asyncHandler(
       // Add location filter if coordinates provided (for radius-based search)
       if (latitude !== null && longitude !== null && !isNaN(latitude) && !isNaN(longitude)) {
         const radiusInRadians = searchRadius / 6378100;
-        
+
         filter["currentLocation.type"] = "Point";
         filter.$and = [
           { "currentLocation.coordinates": { $ne: [0, 0] } },
@@ -268,7 +285,7 @@ export const getNearbyTravelers = asyncHandler(
             }
           }
         ];
-        
+
         console.log("Searching with location:", { latitude, longitude, searchRadius, radiusInRadians });
       }
 
@@ -291,7 +308,7 @@ export const getNearbyTravelers = asyncHandler(
         // Calculate distance if we have user's current location
         let distanceKm: number | null = null;
         let distanceMeters: number | null = null;
-        
+
         if (userLat && userLng) {
           const targetLng = user.currentLocation?.coordinates?.[0] || 0;
           const targetLat = user.currentLocation?.coordinates?.[1] || 0;
@@ -322,7 +339,7 @@ export const getNearbyTravelers = asyncHandler(
       // Filter by name search if provided
       if (searchQuery) {
         const lowerSearch = searchQuery.toLowerCase();
-        usersWithData = usersWithData.filter((user: any) => 
+        usersWithData = usersWithData.filter((user: any) =>
           user.fullName.toLowerCase().includes(lowerSearch)
         );
         console.log(`Filtered by name "${searchQuery}":`, usersWithData.length);
@@ -347,7 +364,7 @@ export const getNearbyTravelers = asyncHandler(
       const paginatedUsers = usersWithData.slice(startIndex, startIndex + limitNum);
 
       console.log(`Users found: ${totalCount}, Page: ${pageNum}/${totalPages}, Showing: ${paginatedUsers.length}`);
-      
+
       return res
         .status(200)
         .json(
@@ -368,7 +385,7 @@ export const getNearbyTravelers = asyncHandler(
         );
     } catch (error: any) {
       console.error("Error in getNearbyTravelers:", error);
-      
+
       // If it's a geospatial index error, return empty array instead of failing
       if (error.code === 2 || error.message?.includes("geo")) {
         console.log("No users with valid location data found");
@@ -378,7 +395,7 @@ export const getNearbyTravelers = asyncHandler(
             new ApiResponse(200, [], "No travelers nearby")
           );
       }
-      
+
       throw new ApiError(500, `Failed to find nearby travelers: ${error.message}`);
     }
   }
