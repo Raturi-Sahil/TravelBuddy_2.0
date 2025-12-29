@@ -1,10 +1,27 @@
 import { useAuth } from '@clerk/clerk-react';
-import { ArrowLeft, Loader2, MessageCircle, Send } from 'lucide-react';
+import EmojiPicker from 'emoji-picker-react';
+import {
+  ArrowLeft,
+  Camera,
+  Gift,
+  Image as ImageIcon,
+  Loader2,
+  MapPin,
+  MessageCircle,
+  Mic,
+  Paperclip,
+  Send,
+  Smile,
+  Sticker,
+  X,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import ChatListItem from '../../components/Chat/ChatListItem';
+import AudioMessage from '../../components/chat/AudioMessage';
+import ChatListItem from '../../components/chat/ChatListItem';
 import { useSocket } from '../../hooks/useSocket';
 import { createAuthenticatedApi, userService } from '../../redux/services/api';
 import {
@@ -15,6 +32,27 @@ import {
   sendMessage,
   setCurrentChat,
 } from '../../redux/slices/chatSlice';
+
+const MAX_RECORDING_SECONDS = 30;
+
+const stickers = [
+  "https://cdn-icons-png.flaticon.com/512/569/569501.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569509.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569528.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569562.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569512.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569577.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569532.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569518.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569513.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569567.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569504.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569561.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569542.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569472.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569595.png",
+  "https://cdn-icons-png.flaticon.com/512/569/569544.png",
+];
 
 export default function ChatPage() {
   const { userId } = useParams();
@@ -40,6 +78,23 @@ export default function ChatPage() {
   const inputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
+  // Rich media state
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [activeMediaTab, setActiveMediaTab] = useState('emoji');
+  const [showAttachments, setShowAttachments] = useState(false);
+  
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingRemaining, setRecordingRemaining] = useState(MAX_RECORDING_SECONDS);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingTimerRef = useRef(null);
+  const recordingIntervalRef = useRef(null);
+
+  // File inputs
+  const imageInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+
   // Initialize socket connection
   useSocket();
 
@@ -53,12 +108,10 @@ export default function ChatPage() {
     if (userId) {
       dispatch(setCurrentChat(userId));
       
-      // Check if user exists in conversations
       const existingConv = conversations.find(c => c.user._id === userId);
       if (existingConv) {
         setCurrentUser(existingConv.user);
       } else {
-        // Fetch user details if not in conversations
         const loadUser = async () => {
           setLoadingUser(true);
           try {
@@ -115,8 +168,8 @@ export default function ChatPage() {
     
     const message = messageInput.trim();
     setMessageInput('');
+    setShowEmojiPicker(false);
     
-    // Clear typing indicator
     sendTypingIndicator(currentChatUserId, false);
     
     await dispatch(sendMessage({
@@ -131,11 +184,9 @@ export default function ChatPage() {
   const handleInputChange = (e) => {
     setMessageInput(e.target.value);
     
-    // Send typing indicator
     if (currentChatUserId) {
       sendTypingIndicator(currentChatUserId, true);
       
-      // Clear typing after 2 seconds of no input
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
@@ -149,6 +200,174 @@ export default function ChatPage() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  // Emoji picker
+  const handleEmojiClick = (emojiData) => {
+    setMessageInput(prev => prev + emojiData.emoji);
+    inputRef.current?.focus();
+  };
+
+  // Sticker send
+  const handleStickerSend = async (stickerUrl) => {
+    if (!currentChatUserId || sendingMessage) return;
+    
+    setShowEmojiPicker(false);
+    
+    const formData = new FormData();
+    formData.append("attachmentUrl", stickerUrl);
+    formData.append("type", "IMAGE");
+    
+    await dispatch(sendMessage({
+      getToken,
+      receiverId: currentChatUserId,
+      message: formData,
+    }));
+  };
+
+  // File upload
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentChatUserId || sendingMessage) return;
+
+    setShowAttachments(false);
+    
+    const formData = new FormData();
+    formData.append("attachment", file);
+    
+    const toastId = toast.loading("Sending attachment...");
+    
+    try {
+      await dispatch(sendMessage({
+        getToken,
+        receiverId: currentChatUserId,
+        message: formData,
+      }));
+      toast.dismiss(toastId);
+      toast.success("Attachment sent!");
+    } catch {
+      toast.dismiss(toastId);
+      toast.error("Failed to send attachment");
+    } finally {
+      e.target.value = null;
+    }
+  };
+
+  // Location sharing
+  const handleLocation = async () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setShowAttachments(false);
+    const toastId = toast.loading("Fetching location...");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const mapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        
+        await dispatch(sendMessage({
+          getToken,
+          receiverId: currentChatUserId,
+          message: `📍 My Location: ${mapLink}`,
+        }));
+        
+        toast.dismiss(toastId);
+        toast.success("Location shared!");
+      },
+      (error) => {
+        console.error(error);
+        toast.error("Unable to retrieve your location");
+        toast.dismiss(toastId);
+      }
+    );
+  };
+
+  // Voice recording
+  const startRecording = async () => {
+    if (isRecording) return;
+    
+    clearInterval(recordingIntervalRef.current);
+    setRecordingRemaining(MAX_RECORDING_SECONDS);
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = async () => {
+        clearInterval(recordingIntervalRef.current);
+        clearTimeout(recordingTimerRef.current);
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        audioChunksRef.current = [];
+
+        if (audioBlob.size === 0) {
+          toast.error("Recording was too short");
+          return;
+        }
+
+        const audioFile = new File([audioBlob], "voice_message.webm", {
+          type: "audio/webm",
+        });
+
+        const formData = new FormData();
+        formData.append("attachment", audioFile);
+        formData.append("type", "AUDIO");
+
+        const toastId = toast.loading("Sending voice message...");
+        
+        try {
+          await dispatch(sendMessage({
+            getToken,
+            receiverId: currentChatUserId,
+            message: formData,
+          }));
+          toast.dismiss(toastId);
+          toast.success("Voice message sent!");
+        } catch {
+          toast.dismiss(toastId);
+          toast.error("Failed to send voice message");
+        } finally {
+          setRecordingRemaining(MAX_RECORDING_SECONDS);
+        }
+
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingRemaining((prev) => {
+          if (prev <= 1) {
+            stopRecording();
+            toast("Max voice message length reached");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch {
+      toast.error("Microphone access denied");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      clearInterval(recordingIntervalRef.current);
+      clearTimeout(recordingTimerRef.current);
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
     }
   };
 
@@ -169,8 +388,73 @@ export default function ChatPage() {
 
   const currentMessages = messages[currentChatUserId] || [];
 
+  // Attachment menu item component
+  const AttachmentItem = ({ icon: Icon, label, color, onClick }) => (
+    <div className="flex flex-col items-center gap-2 cursor-pointer hover:scale-105 transition-transform" onClick={onClick}>
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg ${color}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <span className="text-xs text-gray-500 font-medium">{label}</span>
+    </div>
+  );
+
+  // Render message with media support
+  const renderMessage = (msg, isSent) => {
+    const isImage = msg.type === "IMAGE" || (msg.attachmentUrl && msg.attachmentUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i));
+    const isAudio = msg.type === "AUDIO" || (msg.attachmentUrl && msg.attachmentUrl.match(/\.(webm|mp3|wav|ogg)$/i));
+
+    return (
+      <div className={`max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${
+        isSent
+          ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-br-md'
+          : 'bg-white text-gray-800 rounded-bl-md'
+      }`}>
+        {isImage && msg.attachmentUrl && (
+          <div className="mb-2 rounded-lg overflow-hidden">
+            <img src={msg.attachmentUrl} alt="Attachment" className="max-w-full max-h-[300px] object-cover rounded-lg" />
+          </div>
+        )}
+        
+        {isAudio && msg.attachmentUrl && (
+          <div className="mb-2">
+            <AudioMessage
+              src={msg.attachmentUrl}
+              isOwn={isSent}
+              senderProfileImage={currentUser?.profileImage}
+            />
+          </div>
+        )}
+        
+        {msg.message && (
+          <p className="text-sm leading-relaxed break-words">{msg.message}</p>
+        )}
+        
+        <p className={`text-xs mt-1.5 ${isSent ? 'text-orange-100' : 'text-gray-400'}`}>
+          {formatTime(msg.createdAt)}
+        </p>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 pt-20">
+      {/* Hidden file inputs */}
+      <input
+        type="file"
+        ref={imageInputRef}
+        onChange={handleFileSelect}
+        accept="image/*"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={cameraInputRef}
+        onChange={handleFileSelect}
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -219,7 +503,7 @@ export default function ChatPage() {
             </div>
 
             {/* Chat Window - Right Panel */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col relative">
               {loadingUser ? (
                 <div className="flex-1 flex items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
@@ -280,18 +564,7 @@ export default function ChatPage() {
                               </div>
                             )}
                             <div className={`flex ${isSent ? 'justify-end' : 'justify-start'}`}>
-                              <div
-                                className={`max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${
-                                  isSent
-                                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-br-md'
-                                    : 'bg-white text-gray-800 rounded-bl-md'
-                                }`}
-                              >
-                                <p className="text-sm leading-relaxed break-words">{msg.message}</p>
-                                <p className={`text-xs mt-1.5 ${isSent ? 'text-orange-100' : 'text-gray-400'}`}>
-                                  {formatTime(msg.createdAt)}
-                                </p>
-                              </div>
+                              {renderMessage(msg, isSent)}
                             </div>
                           </div>
                         );
@@ -300,27 +573,165 @@ export default function ChatPage() {
                     <div ref={messagesEndRef} />
                   </div>
 
+                  {/* Emoji/Sticker Picker Overlay */}
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-20 left-4 bg-white rounded-2xl shadow-2xl border border-gray-200 z-20 overflow-hidden" style={{ width: '320px', height: '400px' }}>
+                      {/* Tabs */}
+                      <div className="flex items-center bg-gray-50 border-b border-gray-200">
+                        <button
+                          onClick={() => setActiveMediaTab("emoji")}
+                          className={`flex-1 py-3 text-center transition-colors ${activeMediaTab === "emoji" ? "bg-white text-orange-500 border-b-2 border-orange-500" : "text-gray-400 hover:bg-gray-100"}`}
+                        >
+                          <Smile className="w-5 h-5 mx-auto" />
+                        </button>
+                        <button
+                          onClick={() => setActiveMediaTab("sticker")}
+                          className={`flex-1 py-3 text-center transition-colors ${activeMediaTab === "sticker" ? "bg-white text-orange-500 border-b-2 border-orange-500" : "text-gray-400 hover:bg-gray-100"}`}
+                        >
+                          <Sticker className="w-5 h-5 mx-auto" />
+                        </button>
+                        <button
+                          onClick={() => setActiveMediaTab("gif")}
+                          className={`flex-1 py-3 text-center transition-colors ${activeMediaTab === "gif" ? "bg-white text-orange-500 border-b-2 border-orange-500" : "text-gray-400 hover:bg-gray-100"}`}
+                        >
+                          <Gift className="w-5 h-5 mx-auto" />
+                        </button>
+                        <button
+                          onClick={() => setShowEmojiPicker(false)}
+                          className="p-3 text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      {/* Content */}
+                      <div className="h-[calc(100%-48px)] overflow-y-auto">
+                        {activeMediaTab === "emoji" && (
+                          <EmojiPicker
+                            theme="light"
+                            width="100%"
+                            height="100%"
+                            onEmojiClick={handleEmojiClick}
+                            lazyLoadEmojis={true}
+                            searchDisabled={false}
+                            previewConfig={{ showPreview: false }}
+                          />
+                        )}
+
+                        {activeMediaTab === "sticker" && (
+                          <div className="p-4 grid grid-cols-4 gap-3">
+                            {stickers.map((url, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleStickerSend(url)}
+                                className="hover:scale-110 transition-transform p-2 rounded-lg hover:bg-orange-50"
+                              >
+                                <img src={url} alt="Sticker" className="w-12 h-12 object-contain" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {activeMediaTab === "gif" && (
+                          <div className="p-4 text-center text-gray-500">
+                            <p className="mb-4 text-sm">GIF integration coming soon</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="aspect-video bg-gray-100 rounded animate-pulse" />
+                              <div className="aspect-video bg-gray-100 rounded animate-pulse" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Attachment Menu Overlay */}
+                  {showAttachments && (
+                    <div className="absolute bottom-20 left-4 bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 z-20" style={{ width: '280px' }}>
+                      <div className="grid grid-cols-3 gap-4">
+                        <AttachmentItem
+                          icon={ImageIcon}
+                          label="Photos"
+                          color="bg-gradient-to-br from-orange-400 to-orange-600"
+                          onClick={() => imageInputRef.current?.click()}
+                        />
+                        <AttachmentItem
+                          icon={Camera}
+                          label="Camera"
+                          color="bg-gray-600"
+                          onClick={() => cameraInputRef.current?.click()}
+                        />
+                        <AttachmentItem
+                          icon={MapPin}
+                          label="Location"
+                          color="bg-green-600"
+                          onClick={handleLocation}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Message Input */}
                   <div className="p-4 border-t border-gray-100 bg-white">
-                    <div className="flex items-center gap-3">
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        value={messageInput}
-                        onChange={handleInputChange}
-                        onKeyDown={handleKeyPress}
-                        placeholder="Type a message..."
-                        className="flex-1 px-5 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
-                      />
+                    <div className="flex items-center gap-2">
+                      {/* Attachment Button */}
                       <button
-                        onClick={handleSendMessage}
-                        disabled={!messageInput.trim() || sendingMessage}
-                        className="p-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full hover:shadow-lg hover:shadow-orange-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                        onClick={() => {
+                          setShowAttachments(!showAttachments);
+                          setShowEmojiPicker(false);
+                        }}
+                        className={`p-2.5 rounded-full transition-colors ${showAttachments ? 'bg-orange-100 text-orange-500' : 'text-gray-400 hover:bg-gray-100'}`}
+                      >
+                        <Paperclip className="w-5 h-5" />
+                      </button>
+
+                      {/* Emoji Button */}
+                      <button
+                        onClick={() => {
+                          setShowEmojiPicker(!showEmojiPicker);
+                          setShowAttachments(false);
+                        }}
+                        className={`p-2.5 rounded-full transition-colors ${showEmojiPicker ? 'bg-orange-100 text-orange-500' : 'text-gray-400 hover:bg-gray-100'}`}
+                      >
+                        <Smile className="w-5 h-5" />
+                      </button>
+
+                      {/* Input / Recording indicator */}
+                      {isRecording ? (
+                        <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-red-50 rounded-full border border-red-200">
+                          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                          <span className="text-red-600 font-medium">Recording... {recordingRemaining}s</span>
+                        </div>
+                      ) : (
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          value={messageInput}
+                          onChange={handleInputChange}
+                          onKeyDown={handleKeyPress}
+                          placeholder="Type a message..."
+                          className="flex-1 px-5 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
+                        />
+                      )}
+
+                      {/* Send / Mic Button */}
+                      <button
+                        onClick={messageInput.trim() ? handleSendMessage : (isRecording ? stopRecording : startRecording)}
+                        disabled={sendingMessage}
+                        className={`p-3 rounded-full transition-all shadow-lg disabled:opacity-50 ${
+                          isRecording 
+                            ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+                            : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:shadow-orange-500/30'
+                        }`}
                       >
                         {sendingMessage ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <Loader2 className="w-5 h-5 animate-spin text-white" />
+                        ) : messageInput.trim() ? (
+                          <Send className="w-5 h-5 text-white" />
+                        ) : isRecording ? (
+                          <Send className="w-5 h-5 text-white" />
                         ) : (
-                          <Send className="w-5 h-5" />
+                          <Mic className="w-5 h-5 text-white" />
                         )}
                       </button>
                     </div>

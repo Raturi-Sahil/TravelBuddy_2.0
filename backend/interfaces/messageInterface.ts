@@ -1,9 +1,13 @@
 import { Document, Types } from "mongoose";
 
+export type MessageType = "TEXT" | "IMAGE" | "AUDIO" | "LOCATION" | "DOCUMENT";
+
 export interface IMessage extends Document {
   senderId: Types.ObjectId;
   receiverId: Types.ObjectId;
-  message: string;
+  message?: string;
+  type: MessageType;
+  attachmentUrl?: string;
   read: boolean;
   createdAt: Date;
   updatedAt: Date;
