@@ -16,8 +16,17 @@ const messageSchema = new Schema<IMessage>(
     },
     message: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
+    },
+    type: {
+      type: String,
+      enum: ["TEXT", "IMAGE", "AUDIO", "LOCATION", "DOCUMENT"],
+      default: "TEXT",
+    },
+    attachmentUrl: {
+      type: String,
+      default: "",
     },
     read: {
       type: Boolean,

@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 
+import uploadOnCloudinary from "../middlewares/cloudinary";
 import { Message } from "../models/messageModel";
 import { User } from "../models/userModel";
 import { getIO, getReceiverSocketId } from "../socket";
@@ -162,15 +163,16 @@ export const getMessages = asyncHandler(
   }
 );
 
-// Send a message
+// Send a message (text or media)
 export const sendMessage = asyncHandler(
   async (req: Request | any, res: Response, next: NextFunction) => {
     const userId = req.user._id;
     const { receiverId } = req.params;
-    const { message } = req.body;
+    const { message, type, attachmentUrl: bodyAttachmentUrl } = req.body;
 
-    if (!message || !message.trim()) {
-      throw new ApiError(400, "Message cannot be empty");
+    // Validate that we have either a message, file, or attachmentUrl
+    if (!req.file && !bodyAttachmentUrl && (!message || !message.trim())) {
+      throw new ApiError(400, "Message content or attachment is required");
     }
 
     // Verify receiver exists
@@ -185,11 +187,38 @@ export const sendMessage = asyncHandler(
       throw new ApiError(403, "You can only message friends");
     }
 
+    // Handle file upload
+    let attachmentUrl = bodyAttachmentUrl || "";
+    let messageType = type || "TEXT";
+
+    if (req.file) {
+      const uploadedFile = await uploadOnCloudinary(req.file.path);
+      if (uploadedFile) {
+        attachmentUrl = uploadedFile.secure_url;
+        // Determine type based on file if not provided
+        if (!type) {
+          if (req.file.mimetype.startsWith("image/")) {
+            messageType = "IMAGE";
+          } else if (req.file.mimetype.startsWith("audio/")) {
+            messageType = "AUDIO";
+          } else {
+            messageType = "DOCUMENT";
+          }
+        }
+      } else {
+        throw new ApiError(500, "Failed to upload attachment");
+      }
+    }
+
+    const cleanMessage = message ? message.trim() : "";
+
     // Create message
     const newMessage = await Message.create({
       senderId: userId,
       receiverId,
-      message: message.trim(),
+      message: cleanMessage,
+      type: messageType,
+      attachmentUrl,
     });
 
     // Send real-time notification
@@ -200,6 +229,8 @@ export const sendMessage = asyncHandler(
         senderId: userId,
         receiverId,
         message: newMessage.message,
+        type: newMessage.type,
+        attachmentUrl: newMessage.attachmentUrl,
         read: false,
         createdAt: newMessage.createdAt,
         sender: {

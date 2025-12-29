@@ -519,9 +519,21 @@ export const chatService = {
     return response.data;
   },
 
-  // Send a message to a user
-  sendMessage: async (authApi, receiverId, message) => {
-    const response = await authApi.post(`/chat/send/${receiverId}`, { message });
+  // Send a message to a user (supports text or attachments via FormData)
+  sendMessage: async (authApi, receiverId, data) => {
+    let payload = data;
+    let headers = {};
+
+    // If data is just a string, wrap it in JSON
+    if (typeof data === "string") {
+      payload = { message: data };
+    }
+    // If FormData, let axios handle headers
+    else if (data instanceof FormData) {
+      headers = { 'Content-Type': 'multipart/form-data' };
+    }
+
+    const response = await authApi.post(`/chat/send/${receiverId}`, payload, { headers });
     return response.data;
   },
 
