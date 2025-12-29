@@ -22,23 +22,41 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
+import {
+  createExpense,
+  createExpenseGroup,
+  deleteExpenseGroup,
+  leaveExpenseGroup,
+  fetchMyExpenseGroups,
+  fetchMyExpenses,
+  fetchGroupBalances,
+  settleUp,
+} from '../../redux/slices/expenseSlice';
+import AddExpenseModal from './AddExpenseModal';
 import CalculatorModal from './CalculatorModal';
+import CreateGroupModal from './CreateGroupModal';
+import GroupCard from './GroupCard';
 
 export default function SplitExpenses() {
   const { getToken } = useAuth();
+  const dispatch = useDispatch();
   const { profile: userProfile } = useSelector((state) => state.user);
+  const {
+    groups,
+    expenses,
+    balances: reduxBalances,
+    isLoading,
+    isCreating,
+  } = useSelector((state) => state.expense);
 
-  // State management
-  const [groups, setGroups] = useState([]);
-  const [expenses, setExpenses] = useState([]);
+  // Local state
   const [activeTab, setActiveTab] = useState('expenses');
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   // Form states
   const [newGroup, setNewGroup] = useState({ name: '', members: [] });
@@ -52,111 +70,45 @@ export default function SplitExpenses() {
     category: 'food'
   });
 
-  // Mock data for demo
+  // Fetch data on mount
   useEffect(() => {
-    // Simulated groups
-    setGroups([
-      {
-        _id: '1',
-        name: 'Goa Trip 2024',
-        members: [
-          { _id: 'u1', name: 'You', profileImage: userProfile?.profileImage },
-          { _id: 'u2', name: 'Rahul', profileImage: null },
-          { _id: 'u3', name: 'Priya', profileImage: null },
-        ],
-        totalExpenses: 15000,
-        createdAt: new Date()
-      },
-      {
-        _id: '2',
-        name: 'Kerala Backwaters',
-        members: [
-          { _id: 'u1', name: 'You', profileImage: userProfile?.profileImage },
-          { _id: 'u4', name: 'Amit', profileImage: null },
-        ],
-        totalExpenses: 8500,
-        createdAt: new Date()
-      }
-    ]);
+    if (getToken) {
+      dispatch(fetchMyExpenseGroups(getToken));
+      dispatch(fetchMyExpenses(getToken));
+    }
+  }, [dispatch, getToken]);
 
-    // Simulated expenses
-    setExpenses([
-      {
-        _id: 'e1',
-        description: 'Beach Shack Dinner',
-        amount: 2400,
-        paidBy: { _id: 'u1', name: 'You' },
-        splitBetween: [
-          { _id: 'u1', name: 'You', amount: 800 },
-          { _id: 'u2', name: 'Rahul', amount: 800 },
-          { _id: 'u3', name: 'Priya', amount: 800 },
-        ],
-        groupId: '1',
-        groupName: 'Goa Trip 2024',
-        category: 'food',
-        createdAt: new Date()
-      },
-      {
-        _id: 'e2',
-        description: 'Hotel Stay - 2 Nights',
-        amount: 6000,
-        paidBy: { _id: 'u2', name: 'Rahul' },
-        splitBetween: [
-          { _id: 'u1', name: 'You', amount: 2000 },
-          { _id: 'u2', name: 'Rahul', amount: 2000 },
-          { _id: 'u3', name: 'Priya', amount: 2000 },
-        ],
-        groupId: '1',
-        groupName: 'Goa Trip 2024',
-        category: 'accommodation',
-        createdAt: new Date()
-      },
-      {
-        _id: 'e3',
-        description: 'Scuba Diving',
-        amount: 4500,
-        paidBy: { _id: 'u3', name: 'Priya' },
-        splitBetween: [
-          { _id: 'u1', name: 'You', amount: 1500 },
-          { _id: 'u2', name: 'Rahul', amount: 1500 },
-          { _id: 'u3', name: 'Priya', amount: 1500 },
-        ],
-        groupId: '1',
-        groupName: 'Goa Trip 2024',
-        category: 'activity',
-        createdAt: new Date()
-      }
-    ]);
-  }, [userProfile]);
-
-  // Calculate balances
+  // Calculate balances locally for display
   const calculateBalances = () => {
-    const balances = {};
+    const balanceMap = {};
 
     expenses.forEach(expense => {
-      expense.splitBetween.forEach(member => {
-        if (!balances[member._id]) {
-          balances[member._id] = { name: member.name, owes: 0, owed: 0 };
+      expense.splitBetween?.forEach(member => {
+        const memberId = member.userId || member._id;
+        if (!balanceMap[memberId]) {
+          balanceMap[memberId] = { name: member.name, owes: 0, owed: 0 };
         }
 
-        if (expense.paidBy._id === member._id) {
+        const payerId = expense.paidBy?._id || expense.paidBy;
+        if (payerId === memberId) {
           // This person paid, so others owe them
-          balances[member._id].owed += expense.amount - member.amount;
+          balanceMap[memberId].owed += expense.amount - member.amount;
         } else {
           // This person owes the payer
-          balances[member._id].owes += member.amount;
+          balanceMap[memberId].owes += member.amount;
         }
       });
     });
 
-    return balances;
+    return balanceMap;
   };
 
   const balances = calculateBalances();
 
   // Get your total balance
-  const yourBalance = balances['u1']
-    ? balances['u1'].owed - balances['u1'].owes
+  const userId = userProfile?._id;
+  const yourBalance = userId && balances[userId]
+    ? balances[userId].owed - balances[userId].owes
     : 0;
 
   const categories = [
@@ -168,62 +120,81 @@ export default function SplitExpenses() {
     { id: 'other', label: 'Other', emoji: '📦' },
   ];
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
     if (!newGroup.name.trim()) {
       toast.error('Please enter a group name');
       return;
     }
 
-    const group = {
-      _id: Date.now().toString(),
-      name: newGroup.name,
-      members: [
-        { _id: 'u1', name: 'You', profileImage: userProfile?.profileImage },
-        ...newGroup.members
-      ],
-      totalExpenses: 0,
-      createdAt: new Date()
-    };
+    try {
+      const result = await dispatch(
+        createExpenseGroup({
+          getToken,
+          groupData: {
+            name: newGroup.name,
+            members: newGroup.members,
+          },
+        })
+      ).unwrap();
 
-    setGroups([group, ...groups]);
-    setNewGroup({ name: '', members: [] });
-    setIsCreateGroupOpen(false);
-    toast.success('Group created successfully!');
+      setNewGroup({ name: '', members: [] });
+      setIsCreateGroupOpen(false);
+      toast.success('Group created successfully!');
+    } catch (error) {
+      toast.error(error || 'Failed to create group');
+    }
   };
 
-  const handleAddExpense = () => {
+  const handleAddExpense = async () => {
     if (!newExpense.description.trim() || !newExpense.amount || !newExpense.groupId) {
       toast.error('Please fill all required fields');
       return;
     }
 
-    const group = groups.find(g => g._id === newExpense.groupId);
-    const expense = {
-      _id: Date.now().toString(),
-      description: newExpense.description,
-      amount: parseFloat(newExpense.amount),
-      paidBy: { _id: 'u1', name: 'You' },
-      splitBetween: group.members.map(m => ({
-        ...m,
-        amount: parseFloat(newExpense.amount) / group.members.length
-      })),
-      groupId: newExpense.groupId,
-      groupName: group.name,
-      category: newExpense.category,
-      createdAt: new Date()
-    };
+    try {
+      const result = await dispatch(
+        createExpense({
+          getToken,
+          expenseData: {
+            description: newExpense.description,
+            amount: parseFloat(newExpense.amount),
+            groupId: newExpense.groupId,
+            category: newExpense.category,
+          },
+        })
+      ).unwrap();
 
-    setExpenses([expense, ...expenses]);
-    setNewExpense({
-      description: '',
-      amount: '',
-      paidBy: '',
-      splitBetween: [],
-      groupId: '',
-      category: 'food'
-    });
-    setIsAddExpenseOpen(false);
-    toast.success('Expense added successfully!');
+      setNewExpense({
+        description: '',
+        amount: '',
+        paidBy: '',
+        splitBetween: [],
+        groupId: '',
+        category: 'food'
+      });
+      setIsAddExpenseOpen(false);
+      toast.success('Expense added successfully!');
+    } catch (error) {
+      toast.error(error || 'Failed to add expense');
+    }
+  };
+
+  const handleDeleteGroup = async (groupId) => {
+    try {
+      await dispatch(deleteExpenseGroup({ getToken, groupId })).unwrap();
+      toast.success('Group deleted successfully!');
+    } catch (error) {
+      toast.error(error || 'Failed to delete group');
+    }
+  };
+
+  const handleLeaveGroup = async (groupId) => {
+    try {
+      await dispatch(leaveExpenseGroup({ getToken, groupId })).unwrap();
+      toast.success('You have left the group');
+    } catch (error) {
+      toast.error(error || 'Failed to leave group');
+    }
   };
 
   const tabs = [
@@ -233,13 +204,13 @@ export default function SplitExpenses() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 pt-28 pb-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 pt-28 pb-12 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg shadow-emerald-500/30">
+              <div className="p-3 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl shadow-lg shadow-violet-500/30">
                 <Split className="w-7 h-7 text-white" />
               </div>
               <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
@@ -252,12 +223,12 @@ export default function SplitExpenses() {
           {/* Balance Summary Card */}
           <div className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100 min-w-[280px]">
             <div className="flex items-center gap-3 mb-3">
-              <div className={`p-2 rounded-xl ${yourBalance >= 0 ? 'bg-emerald-100' : 'bg-red-100'}`}>
-                <CircleDollarSign className={`w-5 h-5 ${yourBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`} />
+              <div className={`p-2 rounded-xl ${yourBalance >= 0 ? 'bg-violet-100' : 'bg-red-100'}`}>
+                <CircleDollarSign className={`w-5 h-5 ${yourBalance >= 0 ? 'text-violet-600' : 'text-red-600'}`} />
               </div>
               <span className="text-sm font-medium text-gray-500">Your Balance</span>
             </div>
-            <div className={`text-3xl font-bold ${yourBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+            <div className={`text-3xl font-bold ${yourBalance >= 0 ? 'text-violet-600' : 'text-red-600'}`}>
               {yourBalance >= 0 ? '+' : '-'}₹{Math.abs(yourBalance).toLocaleString()}
             </div>
             <p className="text-xs text-gray-400 mt-1">
@@ -270,7 +241,7 @@ export default function SplitExpenses() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <button
             onClick={() => setIsAddExpenseOpen(true)}
-            className="group flex items-center gap-3 p-4 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:-translate-y-1 transition-all duration-300"
+            className="group flex items-center gap-3 p-4 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-2xl shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 hover:-translate-y-1 transition-all duration-300"
           >
             <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
               <Plus className="w-5 h-5" />
@@ -280,9 +251,9 @@ export default function SplitExpenses() {
 
           <button
             onClick={() => setIsCreateGroupOpen(true)}
-            className="group flex items-center gap-3 p-4 bg-white border-2 border-gray-100 text-gray-700 rounded-2xl hover:border-emerald-200 hover:bg-emerald-50 hover:-translate-y-1 transition-all duration-300 shadow-sm"
+            className="group flex items-center gap-3 p-4 bg-white border-2 border-gray-100 text-gray-700 rounded-2xl hover:border-violet-200 hover:bg-violet-50 hover:-translate-y-1 transition-all duration-300 shadow-sm"
           >
-            <div className="p-2 bg-gray-100 rounded-xl group-hover:bg-emerald-100 transition-colors">
+            <div className="p-2 bg-gray-100 rounded-xl group-hover:bg-violet-100 transition-colors">
               <Users className="w-5 h-5" />
             </div>
             <span className="font-semibold">New Group</span>
@@ -314,7 +285,7 @@ export default function SplitExpenses() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-300 ${
                 activeTab === tab.id
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30'
+                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
                   : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -332,14 +303,14 @@ export default function SplitExpenses() {
               <>
                 {expenses.length === 0 ? (
                   <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
-                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Receipt className="w-10 h-10 text-emerald-500" />
+                    <div className="w-20 h-20 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Receipt className="w-10 h-10 text-violet-500" />
                     </div>
                     <h3 className="text-xl font-bold text-gray-800 mb-2">No expenses yet</h3>
                     <p className="text-gray-500 mb-6">Start adding expenses to split with your group</p>
                     <button
                       onClick={() => setIsAddExpenseOpen(true)}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/30 transition-all"
                     >
                       <Plus className="w-5 h-5" />
                       Add First Expense
@@ -359,7 +330,7 @@ export default function SplitExpenses() {
                           <div>
                             <h3 className="font-bold text-gray-800">{expense.description}</h3>
                             <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-xs font-medium">
+                              <span className="px-2 py-0.5 bg-violet-50 text-violet-600 rounded-full text-xs font-medium">
                                 {expense.groupName}
                               </span>
                               <span>•</span>
@@ -371,7 +342,7 @@ export default function SplitExpenses() {
                         <div className="text-right">
                           <p className="text-2xl font-bold text-gray-900">₹{expense.amount.toLocaleString()}</p>
                           <p className="text-sm text-gray-500">
-                            Paid by <span className="font-medium text-emerald-600">{expense.paidBy.name}</span>
+                            Paid by <span className="font-medium text-violet-600">{expense.paidBy.name}</span>
                           </p>
                         </div>
                       </div>
@@ -382,7 +353,7 @@ export default function SplitExpenses() {
                           {expense.splitBetween.slice(0, 4).map((member, idx) => (
                             <div
                               key={member._id}
-                              className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-sm"
+                              className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-sm"
                               title={`${member.name}: ₹${member.amount}`}
                             >
                               {member.name[0]}
@@ -408,14 +379,14 @@ export default function SplitExpenses() {
               <>
                 {groups.length === 0 ? (
                   <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
-                    <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Users className="w-10 h-10 text-teal-500" />
+                    <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-10 h-10 text-purple-500" />
                     </div>
                     <h3 className="text-xl font-bold text-gray-800 mb-2">No groups yet</h3>
                     <p className="text-gray-500 mb-6">Create a group to start splitting expenses</p>
                     <button
                       onClick={() => setIsCreateGroupOpen(true)}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/30 transition-all"
                     >
                       <Plus className="w-5 h-5" />
                       Create First Group
@@ -423,48 +394,14 @@ export default function SplitExpenses() {
                   </div>
                 ) : (
                   groups.map(group => (
-                    <div
+                    <GroupCard
                       key={group._id}
-                      className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                      group={group}
                       onClick={() => setSelectedGroup(group)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-emerald-500/30">
-                            {group.name[0]}
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-gray-800 text-lg">{group.name}</h3>
-                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                              <Users className="w-4 h-4" />
-                              <span>{group.members.length} members</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">Total Expenses</p>
-                          <p className="text-xl font-bold text-gray-900">₹{group.totalExpenses.toLocaleString()}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-                        <div className="flex -space-x-2">
-                          {group.members.slice(0, 5).map((member, idx) => (
-                            <div
-                              key={member._id}
-                              className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border-2 border-white flex items-center justify-center text-gray-600 text-xs font-bold overflow-hidden"
-                            >
-                              {member.profileImage ? (
-                                <img src={member.profileImage} alt={member.name} className="w-full h-full object-cover" />
-                              ) : (
-                                member.name[0]
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        <ArrowRight className="w-5 h-5 text-gray-400 ml-auto group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
+                      onDelete={handleDeleteGroup}
+                      onLeave={handleLeaveGroup}
+                      isCreator={group.createdBy === userProfile?._id || group.createdBy?._id === userProfile?._id}
+                    />
                   ))
                 )}
               </>
@@ -493,9 +430,9 @@ export default function SplitExpenses() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-100">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-100">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-bold">
                         P
                       </div>
                       <div>
@@ -504,8 +441,8 @@ export default function SplitExpenses() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xl font-bold text-emerald-600">₹800</span>
-                      <button className="px-4 py-2 bg-emerald-500 text-white rounded-lg font-medium hover:bg-emerald-600 transition-colors text-sm">
+                      <span className="text-xl font-bold text-violet-600">₹800</span>
+                      <button className="px-4 py-2 bg-violet-500 text-white rounded-lg font-medium hover:bg-violet-600 transition-colors text-sm">
                         Remind
                       </button>
                     </div>
@@ -531,21 +468,21 @@ export default function SplitExpenses() {
             {/* Group Overview */}
             <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
               <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5 text-emerald-500" />
+                <Users className="w-5 h-5 text-violet-500" />
                 Your Groups
               </h3>
               <div className="space-y-3">
                 {groups.map(group => (
                   <div
                     key={group._id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-emerald-50 transition-colors cursor-pointer"
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-violet-50 transition-colors cursor-pointer"
                     onClick={() => {
                       setSelectedGroup(group);
                       setActiveTab('groups');
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center text-white font-bold">
+                      <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold">
                         {group.name[0]}
                       </div>
                       <div>
@@ -582,12 +519,12 @@ export default function SplitExpenses() {
             </div>
 
             {/* Tips */}
-            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white">
+            <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-5 text-white">
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="w-5 h-5" />
                 <h3 className="font-bold">Pro Tip</h3>
               </div>
-              <p className="text-sm text-emerald-100">
+              <p className="text-sm text-violet-100">
                 Add expenses as you go! It's easier to track shared costs during your trip rather than calculating everything at the end.
               </p>
             </div>
@@ -619,7 +556,7 @@ export default function SplitExpenses() {
                   value={newGroup.name}
                   onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
                   placeholder="e.g., Goa Trip 2024"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
                 />
               </div>
 
@@ -632,7 +569,7 @@ export default function SplitExpenses() {
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
                     placeholder="Search friends to add..."
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">You can add members from your connections</p>
@@ -648,7 +585,7 @@ export default function SplitExpenses() {
               </button>
               <button
                 onClick={handleCreateGroup}
-                className="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+                className="flex-1 py-3 px-4 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/30 transition-all"
               >
                 Create Group
               </button>
@@ -681,7 +618,7 @@ export default function SplitExpenses() {
                   value={newExpense.description}
                   onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
                   placeholder="What was this expense for?"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
                 />
               </div>
 
@@ -694,7 +631,7 @@ export default function SplitExpenses() {
                     value={newExpense.amount}
                     onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
                     placeholder="0.00"
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-lg font-semibold"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all text-lg font-semibold"
                   />
                 </div>
               </div>
@@ -704,7 +641,7 @@ export default function SplitExpenses() {
                 <select
                   value={newExpense.groupId}
                   onChange={(e) => setNewExpense({ ...newExpense, groupId: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
                 >
                   <option value="">Choose a group</option>
                   {groups.map(group => (
@@ -722,7 +659,7 @@ export default function SplitExpenses() {
                       onClick={() => setNewExpense({ ...newExpense, category: cat.id })}
                       className={`p-3 rounded-xl border-2 text-center transition-all ${
                         newExpense.category === cat.id
-                          ? 'border-emerald-500 bg-emerald-50'
+                          ? 'border-violet-500 bg-violet-50'
                           : 'border-gray-100 hover:border-gray-200'
                       }`}
                     >
@@ -743,7 +680,7 @@ export default function SplitExpenses() {
               </button>
               <button
                 onClick={handleAddExpense}
-                className="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+                className="flex-1 py-3 px-4 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/30 transition-all"
               >
                 Add Expense
               </button>
@@ -756,6 +693,18 @@ export default function SplitExpenses() {
       <CalculatorModal
         isOpen={isCalculatorOpen}
         onClose={() => setIsCalculatorOpen(false)}
+      />
+
+      {/* Create Group Modal */}
+      <CreateGroupModal
+        isOpen={isCreateGroupOpen}
+        onClose={() => setIsCreateGroupOpen(false)}
+        newGroup={newGroup}
+        setNewGroup={setNewGroup}
+        memberSearch={memberSearch}
+        setMemberSearch={setMemberSearch}
+        onSubmit={handleCreateGroup}
+        isCreating={isCreating}
       />
     </div>
   );

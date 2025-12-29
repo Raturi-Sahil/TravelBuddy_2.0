@@ -801,6 +801,77 @@ export const notificationService = {
   },
 };
 
+// Expense Service functions
+export const expenseService = {
+  // ==================== EXPENSE GROUPS ====================
+  createExpenseGroup: async (authApi, groupData) => {
+    const response = await authApi.post('/expenses/groups', groupData);
+    return response.data;
+  },
+
+  getMyExpenseGroups: async (authApi) => {
+    const response = await authApi.get('/expenses/groups');
+    return response.data;
+  },
+
+  getExpenseGroupById: async (authApi, id) => {
+    const response = await authApi.get(`/expenses/groups/${id}`);
+    return response.data;
+  },
+
+  addMembersToGroup: async (authApi, id, members) => {
+    const response = await authApi.post(`/expenses/groups/${id}/members`, { members });
+    return response.data;
+  },
+
+  deleteExpenseGroup: async (authApi, id) => {
+    const response = await authApi.delete(`/expenses/groups/${id}`);
+    return response.data;
+  },
+
+  leaveExpenseGroup: async (authApi, id) => {
+    const response = await authApi.post(`/expenses/groups/${id}/leave`);
+    return response.data;
+  },
+
+
+  createExpense: async (authApi, expenseData) => {
+    const response = await authApi.post('/expenses', expenseData);
+    return response.data;
+  },
+
+  getMyExpenses: async (authApi) => {
+    const response = await authApi.get('/expenses');
+    return response.data;
+  },
+
+  getExpensesByGroup: async (authApi, groupId) => {
+    const response = await authApi.get(`/expenses/group/${groupId}`);
+    return response.data;
+  },
+
+  deleteExpense: async (authApi, id) => {
+    const response = await authApi.delete(`/expenses/${id}`);
+    return response.data;
+  },
+
+
+  getGroupBalances: async (authApi, groupId) => {
+    const response = await authApi.get(`/expenses/groups/${groupId}/balances`);
+    return response.data;
+  },
+
+  settleUp: async (authApi, settlementData) => {
+    const response = await authApi.post('/expenses/settle', settlementData);
+    return response.data;
+  },
+
+  getSettlementHistory: async (authApi, groupId) => {
+    const response = await authApi.get(`/expenses/groups/${groupId}/settlements`);
+    return response.data;
+  },
+};
+
 export default api;
 
 

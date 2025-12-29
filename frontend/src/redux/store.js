@@ -4,6 +4,7 @@ import activityReducer from './slices/ActivitySlice';
 import aiReducer from './slices/aiSlice';
 import articleReducer from './slices/articleSlice';
 import chatReducer from './slices/chatSlice';
+import expenseReducer from './slices/expenseSlice';
 import guideReducer from './slices/guideSlice';
 import notificationReducer from './slices/notificationSlice';
 import postReducer from './slices/postSlice';
@@ -21,6 +22,7 @@ const store = configureStore({
     chat: chatReducer,
     guide: guideReducer,
     notifications: notificationReducer,
+    expense: expenseReducer,
   },
 });
 

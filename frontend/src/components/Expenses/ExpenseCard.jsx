@@ -15,7 +15,7 @@ export default function ExpenseCard({ expense, categories }) {
           <div>
             <h3 className="font-bold text-gray-800">{expense.description}</h3>
             <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-xs font-medium">
+              <span className="px-2 py-0.5 bg-violet-50 text-violet-600 rounded-full text-xs font-medium">
                 {expense.groupName}
               </span>
               <span>•</span>
@@ -27,7 +27,7 @@ export default function ExpenseCard({ expense, categories }) {
         <div className="text-right">
           <p className="text-2xl font-bold text-gray-900">₹{expense.amount.toLocaleString()}</p>
           <p className="text-sm text-gray-500">
-            Paid by <span className="font-medium text-emerald-600">{expense.paidBy.name}</span>
+            Paid by <span className="font-medium text-violet-600">{expense.paidBy.name}</span>
           </p>
         </div>
       </div>
@@ -38,7 +38,7 @@ export default function ExpenseCard({ expense, categories }) {
           {expense.splitBetween.slice(0, 4).map((member) => (
             <div
               key={member._id}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-sm"
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-sm"
               title={`${member.name}: ₹${member.amount}`}
             >
               {member.name[0]}

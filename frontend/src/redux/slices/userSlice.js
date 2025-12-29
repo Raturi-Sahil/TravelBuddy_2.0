@@ -5,9 +5,11 @@ import { createAuthenticatedApi,userService } from '../services/api';
 // Initial state
 const initialState = {
   profile: null,
+  friends: [],
   isLoading: false,
   isRegistering: false,
   isUpdating: false,
+  isFetchingFriends: false,
   error: null,
   errorStatus: null, // HTTP status code for redirect logic
   isRegistered: false,
@@ -23,7 +25,7 @@ export const registerUser = createAsyncThunk(
       const name = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Anonymous';
       const email = clerkUser.primaryEmailAddress?.emailAddress || clerkUser.emailAddresses?.[0]?.emailAddress;
       const profileImageUrl = clerkUser.imageUrl || '';
-      
+
       const userData = {
         clerk_id: clerkUser.id,
         name,
@@ -97,6 +99,21 @@ export const verifySubscription = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
          error.response?.data || { message: error.message || 'Failed to verify subscription' }
+      );
+    }
+  }
+);
+
+export const fetchFriends = createAsyncThunk(
+  'user/fetchFriends',
+  async (getToken, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await userService.getFriends(authApi);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to fetch friends'
       );
     }
   }
@@ -193,6 +210,18 @@ const userSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload?.message || action.payload || 'Failed to verify subscription';
         state.errorStatus = action.payload?.status || null;
+      })
+      // Fetch Friends
+      .addCase(fetchFriends.pending, (state) => {
+        state.isFetchingFriends = true;
+      })
+      .addCase(fetchFriends.fulfilled, (state, action) => {
+        state.isFetchingFriends = false;
+        state.friends = action.payload.data || [];
+      })
+      .addCase(fetchFriends.rejected, (state, action) => {
+        state.isFetchingFriends = false;
+        state.friends = [];
       })
   },
 });

@@ -34,7 +34,7 @@ export default function AddExpenseModal({
               value={newExpense.description}
               onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
               placeholder="What was this expense for?"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
             />
           </div>
 
@@ -47,7 +47,7 @@ export default function AddExpenseModal({
                 value={newExpense.amount}
                 onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
                 placeholder="0.00"
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-lg font-semibold"
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all text-lg font-semibold"
               />
             </div>
           </div>
@@ -57,7 +57,7 @@ export default function AddExpenseModal({
             <select
               value={newExpense.groupId}
               onChange={(e) => setNewExpense({ ...newExpense, groupId: e.target.value })}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all"
             >
               <option value="">Choose a group</option>
               {groups.map(group => (
@@ -76,7 +76,7 @@ export default function AddExpenseModal({
                   onClick={() => setNewExpense({ ...newExpense, category: cat.id })}
                   className={`p-3 rounded-xl border-2 text-center transition-all ${
                     newExpense.category === cat.id
-                      ? 'border-emerald-500 bg-emerald-50'
+                      ? 'border-violet-500 bg-violet-50'
                       : 'border-gray-100 hover:border-gray-200'
                   }`}
                 >
@@ -97,7 +97,7 @@ export default function AddExpenseModal({
           </button>
           <button
             onClick={onSubmit}
-            className="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+            className="flex-1 py-3 px-4 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-violet-500/30 transition-all"
           >
             Add Expense
           </button>
