@@ -27,17 +27,17 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   createExpense,
   createExpenseGroup,
-  deleteExpenseGroup,
-  leaveExpenseGroup,
   fetchMyExpenseGroups,
   fetchMyExpenses,
   fetchGroupBalances,
+  sendPaymentReminder,
   settleUp,
 } from '../../redux/slices/expenseSlice';
 import AddExpenseModal from './AddExpenseModal';
 import CalculatorModal from './CalculatorModal';
 import CreateGroupModal from './CreateGroupModal';
 import GroupCard from './GroupCard';
+import GroupDetailsModal from './GroupDetailsModal';
 
 export default function SplitExpenses() {
   const { getToken } = useAuth();
@@ -111,6 +111,73 @@ export default function SplitExpenses() {
     ? balances[userId].owed - balances[userId].owes
     : 0;
 
+  // Calculate settlements - who owes whom
+  const calculateSettlements = () => {
+    const settlements = [];
+
+    // Process each expense to find what you owe or are owed
+    expenses.forEach(expense => {
+      const payerId = expense.paidBy?._id || expense.paidBy;
+      const payerName = expense.paidBy?.name || 'Unknown';
+      const groupName = groups.find(g => g._id === expense.groupId)?.name || 'Unknown Group';
+
+      expense.splitBetween?.forEach(member => {
+        const memberId = member.userId?._id || member.userId;
+
+        // Skip if same person
+        if (payerId === memberId) return;
+
+        // You owe someone
+        if (memberId === userId && payerId !== userId) {
+          const existingSettlement = settlements.find(
+            s => s.type === 'owe' && s.personId === payerId
+          );
+          if (existingSettlement) {
+            existingSettlement.amount += member.amount;
+            if (!existingSettlement.groups.includes(groupName)) {
+              existingSettlement.groups.push(groupName);
+            }
+          } else {
+            settlements.push({
+              type: 'owe',
+              personId: payerId,
+              personName: payerName,
+              personImage: expense.paidBy?.profileImage,
+              amount: member.amount,
+              groups: [groupName],
+            });
+          }
+        }
+
+        // Someone owes you (you paid)
+        if (payerId === userId && memberId !== userId) {
+          const existingSettlement = settlements.find(
+            s => s.type === 'owed' && s.personId === memberId
+          );
+          if (existingSettlement) {
+            existingSettlement.amount += member.amount;
+            if (!existingSettlement.groups.includes(groupName)) {
+              existingSettlement.groups.push(groupName);
+            }
+          } else {
+            settlements.push({
+              type: 'owed',
+              personId: memberId,
+              personName: member.name,
+              personImage: member.profileImage,
+              amount: member.amount,
+              groups: [groupName],
+            });
+          }
+        }
+      });
+    });
+
+    return settlements;
+  };
+
+  const settlements = calculateSettlements();
+
   const categories = [
     { id: 'food', label: 'Food & Drinks', emoji: '🍕' },
     { id: 'accommodation', label: 'Accommodation', emoji: '🏨' },
@@ -179,21 +246,19 @@ export default function SplitExpenses() {
     }
   };
 
-  const handleDeleteGroup = async (groupId) => {
+  const handleSendReminder = async (settlement) => {
     try {
-      await dispatch(deleteExpenseGroup({ getToken, groupId })).unwrap();
-      toast.success('Group deleted successfully!');
+      await dispatch(
+        sendPaymentReminder({
+          getToken,
+          recipientId: settlement.personId,
+          amount: settlement.amount,
+          groupName: settlement.groups.join(', '),
+        })
+      ).unwrap();
+      toast.success(`Reminder sent to ${settlement.personName}!`);
     } catch (error) {
-      toast.error(error || 'Failed to delete group');
-    }
-  };
-
-  const handleLeaveGroup = async (groupId) => {
-    try {
-      await dispatch(leaveExpenseGroup({ getToken, groupId })).unwrap();
-      toast.success('You have left the group');
-    } catch (error) {
-      toast.error(error || 'Failed to leave group');
+      toast.error(error || 'Failed to send reminder');
     }
   };
 
@@ -398,8 +463,6 @@ export default function SplitExpenses() {
                       key={group._id}
                       group={group}
                       onClick={() => setSelectedGroup(group)}
-                      onDelete={handleDeleteGroup}
-                      onLeave={handleLeaveGroup}
                       isCreator={group.createdBy === userProfile?._id || group.createdBy?._id === userProfile?._id}
                     />
                   ))
@@ -411,54 +474,105 @@ export default function SplitExpenses() {
               <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                 <h3 className="text-lg font-bold text-gray-800 mb-4">Settlement Suggestions</h3>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border border-red-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-400 to-orange-500 flex items-center justify-center text-white font-bold">
-                        Y
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800">You owe Rahul</p>
-                        <p className="text-sm text-gray-500">For Goa Trip expenses</p>
-                      </div>
+                {settlements.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Check className="w-8 h-8 text-green-500" />
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl font-bold text-red-600">₹1,200</span>
-                      <button className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors text-sm">
-                        Settle
-                      </button>
-                    </div>
+                    <h4 className="font-semibold text-gray-800 mb-2">All Settled Up!</h4>
+                    <p className="text-sm text-gray-500">You don't have any pending settlements</p>
                   </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* You owe others */}
+                    {settlements.filter(s => s.type === 'owe').map((settlement, index) => (
+                      <div
+                        key={`owe-${index}`}
+                        className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border border-red-100"
+                      >
+                        <div className="flex items-center gap-3">
+                          {settlement.personImage ? (
+                            <img
+                              src={settlement.personImage}
+                              alt={settlement.personName}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-400 to-orange-500 flex items-center justify-center text-white font-bold">
+                              {settlement.personName?.[0] || '?'}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-gray-800">You owe {settlement.personName}</p>
+                            <p className="text-sm text-gray-500">For {settlement.groups.join(', ')}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl font-bold text-red-600">₹{settlement.amount.toLocaleString()}</span>
+                          <button className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors text-sm">
+                            Settle
+                          </button>
+                        </div>
+                      </div>
+                    ))}
 
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-bold">
-                        P
+                    {/* Others owe you */}
+                    {settlements.filter(s => s.type === 'owed').map((settlement, index) => (
+                      <div
+                        key={`owed-${index}`}
+                        className="flex items-center justify-between p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-100"
+                      >
+                        <div className="flex items-center gap-3">
+                          {settlement.personImage ? (
+                            <img
+                              src={settlement.personImage}
+                              alt={settlement.personName}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-bold">
+                              {settlement.personName?.[0] || '?'}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-gray-800">{settlement.personName} owes You</p>
+                            <p className="text-sm text-gray-500">For {settlement.groups.join(', ')}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl font-bold text-violet-600">₹{settlement.amount.toLocaleString()}</span>
+                          <button
+                            onClick={() => handleSendReminder(settlement)}
+                            className="px-4 py-2 bg-violet-500 text-white rounded-lg font-medium hover:bg-violet-600 transition-colors text-sm"
+                          >
+                            Remind
+                          </button>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-gray-800">Priya owes You</p>
-                        <p className="text-sm text-gray-500">For Goa Trip expenses</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl font-bold text-violet-600">₹800</span>
-                      <button className="px-4 py-2 bg-violet-500 text-white rounded-lg font-medium hover:bg-violet-600 transition-colors text-sm">
-                        Remind
-                      </button>
-                    </div>
+                    ))}
                   </div>
-                </div>
+                )}
 
-                <div className="mt-6 p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Sparkles className="w-5 h-5 text-purple-500" />
-                    <h4 className="font-semibold text-purple-800">AI Optimization</h4>
+                {settlements.length > 0 && (
+                  <div className="mt-6 p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Sparkles className="w-5 h-5 text-purple-500" />
+                      <h4 className="font-semibold text-purple-800">Summary</h4>
+                    </div>
+                    <div className="text-sm text-purple-600 space-y-1">
+                      <p>
+                        Total you owe: <strong className="text-red-600">
+                          ₹{settlements.filter(s => s.type === 'owe').reduce((sum, s) => sum + s.amount, 0).toLocaleString()}
+                        </strong>
+                      </p>
+                      <p>
+                        Total owed to you: <strong className="text-green-600">
+                          ₹{settlements.filter(s => s.type === 'owed').reduce((sum, s) => sum + s.amount, 0).toLocaleString()}
+                        </strong>
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-purple-600">
-                    Our AI suggests you can minimize transactions! Instead of 3 separate payments,
-                    you can settle with just 1 payment of ₹400 to Rahul.
-                  </p>
-                </div>
+                )}
               </div>
             )}
           </div>
@@ -705,6 +819,14 @@ export default function SplitExpenses() {
         setMemberSearch={setMemberSearch}
         onSubmit={handleCreateGroup}
         isCreating={isCreating}
+      />
+
+      {/* Group Details Modal */}
+      <GroupDetailsModal
+        isOpen={!!selectedGroup}
+        onClose={() => setSelectedGroup(null)}
+        group={selectedGroup}
+        onGroupUpdated={() => dispatch(fetchMyExpenseGroups(getToken))}
       />
     </div>
   );

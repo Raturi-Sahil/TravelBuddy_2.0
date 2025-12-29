@@ -42,7 +42,7 @@ export const createExpenseGroup = async (
       if (member.userId.toString() !== userId.toString()) {
         await sendNotification({
           recipient: member.userId,
-          type: "expense_group",
+          type: "expense_group_created",
           message: `You've been added to expense group "${name}"`,
           link: `/expenses`,
         });
@@ -142,6 +142,7 @@ export const addMembersToGroup = async (
     }
 
     // Add new members (avoiding duplicates)
+    const creatorName = req.user.name;
     for (const member of members) {
       const exists = group.members.some(
         (m) => m.userId.toString() === member.userId.toString()
@@ -149,12 +150,17 @@ export const addMembersToGroup = async (
       if (!exists) {
         group.members.push(member);
         // Notify the new member
-        await sendNotification({
-          recipient: member.userId,
-          type: "expense_group",
-          message: `You've been added to expense group "${group.name}"`,
-          link: `/expenses`,
-        });
+        try {
+          await sendNotification({
+            recipient: member.userId,
+            sender: userId,
+            type: "expense_member_added",
+            message: `${creatorName} added you to expense group "${group.name}"`,
+            link: `/split-expenses`,
+          });
+        } catch (notifError) {
+          console.error("Error sending add member notification:", notifError);
+        }
       }
     }
 
@@ -163,6 +169,68 @@ export const addMembersToGroup = async (
     res.status(200).json({
       success: true,
       message: "Members added successfully",
+      data: group,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Remove a member from a group
+export const removeMemberFromGroup = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id, memberId } = req.params;
+    const userId = req.user._id;
+
+    const group = await ExpenseGroup.findById(id);
+
+    if (!group) {
+      res.status(404).json({ success: false, message: "Group not found" });
+      return;
+    }
+
+    // Check if user is the creator
+    if (group.createdBy.toString() !== userId.toString()) {
+      res.status(403).json({ success: false, message: "Only the group creator can remove members" });
+      return;
+    }
+
+    // Cannot remove the creator
+    if (memberId === userId.toString()) {
+      res.status(400).json({ success: false, message: "Creator cannot be removed from the group" });
+      return;
+    }
+
+    // Find and remove the member
+    const memberIndex = group.members.findIndex(
+      (m) => m.userId.toString() === memberId
+    );
+
+    if (memberIndex === -1) {
+      res.status(404).json({ success: false, message: "Member not found in group" });
+      return;
+    }
+
+    const removedMember = group.members[memberIndex];
+    group.members.splice(memberIndex, 1);
+    await group.save();
+
+    // Notify the removed member
+    await sendNotification({
+      recipient: memberId,
+      sender: userId,
+      type: "expense_member_removed",
+      message: `You've been removed from expense group "${group.name}"`,
+      link: `/expenses`,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Member removed successfully",
       data: group,
     });
   } catch (error) {
@@ -179,6 +247,7 @@ export const deleteExpenseGroup = async (
   try {
     const { id } = req.params;
     const userId = req.user._id;
+    const userName = req.user.name;
 
     const group = await ExpenseGroup.findById(id);
 
@@ -191,6 +260,23 @@ export const deleteExpenseGroup = async (
     if (group.createdBy.toString() !== userId.toString()) {
       res.status(403).json({ success: false, message: "Only the group creator can delete the group" });
       return;
+    }
+
+    // Notify all members about group deletion (except the creator)
+    for (const member of group.members) {
+      if (member.userId.toString() !== userId.toString()) {
+        try {
+          await sendNotification({
+            recipient: member.userId,
+            sender: userId,
+            type: "expense_group_deleted",
+            message: `${userName} has deleted the expense group "${group.name}"`,
+            link: `/split-expenses`,
+          });
+        } catch (notifError) {
+          console.error("Error sending group deletion notification:", notifError);
+        }
+      }
     }
 
     // Delete all expenses and settlements in this group
@@ -216,6 +302,7 @@ export const leaveExpenseGroup = async (
   try {
     const { id } = req.params;
     const userId = req.user._id;
+    const userName = req.user.name;
 
     const group = await ExpenseGroup.findById(id);
 
@@ -246,6 +333,19 @@ export const leaveExpenseGroup = async (
     // Remove user from members
     group.members.splice(memberIndex, 1);
     await group.save();
+
+    // Notify the group creator
+    try {
+      await sendNotification({
+        recipient: group.createdBy,
+        sender: userId,
+        type: "expense_member_left",
+        message: `${userName} has left the expense group "${group.name}"`,
+        link: `/expenses`,
+      });
+    } catch (notifError) {
+      console.error("Error sending leave group notification:", notifError);
+    }
 
     res.status(200).json({
       success: true,
@@ -322,15 +422,24 @@ export const createExpense = async (
     );
 
     // Notify group members about the new expense
-    for (const member of group.members) {
-      if (member.userId.toString() !== userId.toString()) {
-        await sendNotification({
-          recipient: member.userId,
-          sender: userId,
-          type: "expense",
-          message: `New expense "${description}" (₹${amount}) added to "${group.name}"`,
-          link: `/expenses`,
-        });
+    const payerName = req.user.name;
+    for (const split of splits) {
+      try {
+        const memberId = split.userId?.toString() || split.userId;
+        if (memberId && memberId !== userId.toString()) {
+          const memberShare = split.amount;
+          await sendNotification({
+            recipient: split.userId,
+            sender: userId,
+            type: "expense_added",
+            message: `${payerName} added expense "${description}" (₹${amount}) in "${group.name}". Your share: ₹${memberShare.toFixed(0)}`,
+            link: `/split-expenses`,
+          });
+          console.log(`Notification sent to ${memberId} for expense`);
+        }
+      } catch (notifError) {
+        console.error("Error sending expense notification:", notifError);
+        // Don't fail the expense creation if notification fails
       }
     }
 
@@ -436,6 +545,7 @@ export const deleteExpense = async (
   try {
     const { id } = req.params;
     const userId = req.user._id;
+    const userName = req.user.name;
 
     const expense = await Expense.findById(id);
 
@@ -455,6 +565,23 @@ export const deleteExpense = async (
     if (group) {
       group.totalExpenses -= expense.amount;
       await group.save();
+
+      // Notify group members about expense deletion
+      for (const member of group.members) {
+        if (member.userId.toString() !== userId.toString()) {
+          try {
+            await sendNotification({
+              recipient: member.userId,
+              sender: userId,
+              type: "expense_deleted",
+              message: `${userName} deleted expense "${expense.description}" (₹${expense.amount}) from "${group.name}"`,
+              link: `/split-expenses`,
+            });
+          } catch (notifError) {
+            console.error("Error sending expense deletion notification:", notifError);
+          }
+        }
+      }
     }
 
     await Expense.findByIdAndDelete(id);
@@ -629,9 +756,9 @@ export const settleUp = async (
     await sendNotification({
       recipient: toUserId,
       sender: userId,
-      type: "settlement",
+      type: "settlement_completed",
       message: `${fromUserName} settled ₹${amount} with you in "${group.name}"`,
-      link: `/expenses`,
+      link: `/split-expenses`,
     });
 
     res.status(201).json({
@@ -679,6 +806,40 @@ export const getSettlementHistory = async (
     res.status(200).json({
       success: true,
       data: settlements,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Send payment reminder
+export const sendPaymentReminder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user._id;
+    const userName = req.user.name;
+    const { recipientId, amount, groupName } = req.body;
+
+    if (!recipientId || !amount) {
+      res.status(400).json({ success: false, message: "Recipient and amount are required" });
+      return;
+    }
+
+    // Send notification to the person who owes money
+    await sendNotification({
+      recipient: recipientId,
+      sender: userId,
+      type: "payment_reminder",
+      message: `${userName} is reminding you about a pending payment of ₹${amount.toLocaleString()}${groupName ? ` for ${groupName}` : ''}`,
+      link: `/split-expenses`,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Reminder sent successfully",
     });
   } catch (error) {
     next(error);

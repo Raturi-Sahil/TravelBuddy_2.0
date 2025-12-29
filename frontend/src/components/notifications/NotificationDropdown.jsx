@@ -57,6 +57,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
   return (
     <div
       ref={dropdownRef}
+      onMouseDown={(e) => e.stopPropagation()}
       className="absolute right-0 top-12 w-80 sm:w-96 bg-gray-900 border border-purple-500/30 rounded-xl shadow-2xl z-50 overflow-hidden backdrop-blur-md"
     >
       <div className="p-4 border-b border-white/10 flex justify-between items-center bg-gray-900/90">
@@ -72,14 +73,20 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
           <div className="flex gap-2">
             {unreadCount > 0 && (
               <button
-                onClick={handleMarkAllRead}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkAllRead();
+                }}
                 className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
               >
                 Mark read
               </button>
             )}
             <button
-                onClick={() => dispatch(clearAllNotifications(getToken))}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dispatch(clearAllNotifications(getToken));
+                }}
                 className="text-xs text-red-400 hover:text-red-300 transition-colors"
             >
               Clear all

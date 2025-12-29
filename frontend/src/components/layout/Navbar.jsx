@@ -83,11 +83,22 @@ function NavBar() {
 
         // Play notification sound
         try {
-          const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
-          audio.volume = 0.5;
-          audio.play().catch(e => console.log("Audio play failed (user interaction required):", e));
+          // Use local notification sound
+          const audio = new Audio("/mixkit-correct-answer-tone-2870.wav");
+          audio.volume = 0.6;
+
+          // Attempt to play
+          const playPromise = audio.play();
+
+          if (playPromise !== undefined) {
+            playPromise.catch(e => {
+              console.log("Audio play blocked by browser:", e);
+              // Browsers block audio if user hasn't interacted with the page yet.
+              // This is normal browser behavior to prevent annoyance.
+            });
+          }
         } catch (error) {
-          console.log("Audio error", error);
+          console.error("Audio system error", error);
         }
 
         // Don't show toast for self-actions as they usually have their own success feedback

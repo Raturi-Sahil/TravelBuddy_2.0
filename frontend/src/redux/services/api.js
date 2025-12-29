@@ -834,6 +834,11 @@ export const expenseService = {
     return response.data;
   },
 
+  removeMemberFromGroup: async (authApi, groupId, memberId) => {
+    const response = await authApi.delete(`/expenses/groups/${groupId}/members/${memberId}`);
+    return response.data;
+  },
+
 
   createExpense: async (authApi, expenseData) => {
     const response = await authApi.post('/expenses', expenseData);
@@ -870,7 +875,14 @@ export const expenseService = {
     const response = await authApi.get(`/expenses/groups/${groupId}/settlements`);
     return response.data;
   },
+
+  sendPaymentReminder: async (authApi, reminderData) => {
+    const response = await authApi.post('/expenses/remind', reminderData);
+    return response.data;
+  },
 };
+
+
 
 export default api;
 

@@ -110,6 +110,22 @@ export const leaveExpenseGroup = createAsyncThunk(
   }
 );
 
+// Remove member from group
+export const removeMemberFromGroup = createAsyncThunk(
+  'expense/removeMember',
+  async ({ getToken, groupId, memberId }, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await expenseService.removeMemberFromGroup(authApi, groupId, memberId);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to remove member'
+      );
+    }
+  }
+);
+
 
 
 // Create expense
@@ -225,6 +241,26 @@ export const fetchSettlementHistory = createAsyncThunk(
   }
 );
 
+// Send payment reminder
+export const sendPaymentReminder = createAsyncThunk(
+  'expense/sendReminder',
+  async ({ getToken, recipientId, amount, groupName }, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await expenseService.sendPaymentReminder(authApi, {
+        recipientId,
+        amount,
+        groupName,
+      });
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to send reminder'
+      );
+    }
+  }
+);
+
 const expenseSlice = createSlice({
   name: 'expense',
   initialState,
@@ -310,6 +346,18 @@ const expenseSlice = createSlice({
         state.groups = state.groups.filter(g => g._id !== action.payload);
         if (state.currentGroup?._id === action.payload) {
           state.currentGroup = null;
+        }
+      })
+
+      // Remove Member From Group
+      .addCase(removeMemberFromGroup.fulfilled, (state, action) => {
+        const updatedGroup = action.payload.data;
+        const index = state.groups.findIndex(g => g._id === updatedGroup._id);
+        if (index !== -1) {
+          state.groups[index] = updatedGroup;
+        }
+        if (state.currentGroup?._id === updatedGroup._id) {
+          state.currentGroup = updatedGroup;
         }
       })
 
