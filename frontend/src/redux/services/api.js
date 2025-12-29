@@ -882,27 +882,7 @@ export const expenseService = {
   },
 };
 
-export const notificationService = {
-  getNotifications: async (authApi) => {
-    const response = await authApi.get('/notifications');
-    return response.data;
-  },
 
-  markAsRead: async (authApi, id) => {
-    const response = await authApi.put(`/notifications/${id}/read`);
-    return response.data;
-  },
-
-  markAllAsRead: async (authApi) => {
-    const response = await authApi.put('/notifications/read-all');
-    return response.data;
-  },
-
-  deleteAll: async (authApi) => {
-    const response = await authApi.delete('/notifications');
-    return response.data;
-  },
-};
 
 export default api;
 

@@ -47,6 +47,21 @@ export const markAllNotificationsAsRead = createAsyncThunk(
   }
 );
 
+export const clearAllNotifications = createAsyncThunk(
+  "notifications/clearAll",
+  async (getToken, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      await notificationService.deleteAll(authApi);
+      return true;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to clear notifications"
+      );
+    }
+  }
+);
+
 const notificationSlice = createSlice({
   name: "notifications",
   initialState: {
@@ -105,20 +120,7 @@ const notificationSlice = createSlice({
   },
 });
 
-export const clearAllNotifications = createAsyncThunk(
-  "notifications/clearAll",
-  async (getToken, { rejectWithValue }) => {
-    try {
-      const authApi = createAuthenticatedApi(getToken);
-      await notificationService.deleteAll(authApi);
-      return true;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to clear notifications"
-      );
-    }
-  }
-);
+
 
 export const { addNotification, clearNotifications } = notificationSlice.actions;
 export default notificationSlice.reducer;

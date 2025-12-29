@@ -156,7 +156,7 @@ export const addMembersToGroup = async (
             sender: userId,
             type: "expense_member_added",
             message: `${creatorName} added you to expense group "${group.name}"`,
-            link: `/expenses`,
+            link: `/split-expenses`,
           });
         } catch (notifError) {
           console.error("Error sending add member notification:", notifError);
@@ -271,7 +271,7 @@ export const deleteExpenseGroup = async (
             sender: userId,
             type: "expense_group_deleted",
             message: `${userName} has deleted the expense group "${group.name}"`,
-            link: `/expenses`,
+            link: `/split-expenses`,
           });
         } catch (notifError) {
           console.error("Error sending group deletion notification:", notifError);
@@ -433,7 +433,7 @@ export const createExpense = async (
             sender: userId,
             type: "expense_added",
             message: `${payerName} added expense "${description}" (₹${amount}) in "${group.name}". Your share: ₹${memberShare.toFixed(0)}`,
-            link: `/expenses`,
+            link: `/split-expenses`,
           });
           console.log(`Notification sent to ${memberId} for expense`);
         }
@@ -575,7 +575,7 @@ export const deleteExpense = async (
               sender: userId,
               type: "expense_deleted",
               message: `${userName} deleted expense "${expense.description}" (₹${expense.amount}) from "${group.name}"`,
-              link: `/expenses`,
+              link: `/split-expenses`,
             });
           } catch (notifError) {
             console.error("Error sending expense deletion notification:", notifError);
@@ -758,7 +758,7 @@ export const settleUp = async (
       sender: userId,
       type: "settlement_completed",
       message: `${fromUserName} settled ₹${amount} with you in "${group.name}"`,
-      link: `/expenses`,
+      link: `/split-expenses`,
     });
 
     res.status(201).json({
@@ -834,7 +834,7 @@ export const sendPaymentReminder = async (
       sender: userId,
       type: "payment_reminder",
       message: `${userName} is reminding you about a pending payment of ₹${amount.toLocaleString()}${groupName ? ` for ${groupName}` : ''}`,
-      link: `/expenses`,
+      link: `/split-expenses`,
     });
 
     res.status(200).json({
