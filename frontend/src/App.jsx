@@ -75,9 +75,13 @@ import ProfilePage from "./pages/user/profile";
 import TravelerProfile from "./pages/user/TravelerProfile";
 
 
+import Preloader from "./components/common/Preloader";
+
 function App() {
   return (
-    <Routes >
+    <>
+      <Preloader />
+      <Routes >
       <Route path="/" element={<Layout />} >
         <Route index element={
           <AuthGuard>
@@ -158,6 +162,7 @@ function App() {
       </Route>
 
     </Routes>
+    </>
   );
 }
 

@@ -2,10 +2,12 @@
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { COUNTRIES, GENDERS, LANGUAGE_LEVELS, LANGUAGES } from '../../data/enums';
 import { useUserActions } from '../../redux/hooks/useUser';
+import { fetchNotifications } from '../../redux/slices/notificationSlice';
 
 // ... (helper functions remain)
 const isNetworkError = (err) => {
@@ -21,8 +23,9 @@ const isNetworkError = (err) => {
 
 export default function CompleteRegistration() {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
+  const { isSignedIn, isLoaded: isAuthLoaded, getToken } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   // Fixed unused error variable syntax
   const { registerUser, fetchProfile, isRegistering } = useUserActions();
   const hasChecked = useRef(false);
@@ -156,6 +159,15 @@ export default function CompleteRegistration() {
 
     try {
       await registerUser(formData);
+
+      // Fetch initial notifications (like the welcome one) since they won't be auto-fetched
+      // as the user was already "signed in" (via Clerk) but didn't have a profile yet.
+      try {
+        await dispatch(fetchNotifications(getToken));
+      } catch (e) {
+        console.error("Failed to fetch initial notifications", e);
+      }
+
       toast.success('Registration completed successfully!');
       navigate('/profile', { replace: true });
     } catch (err) {
