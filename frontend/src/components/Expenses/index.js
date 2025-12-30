@@ -1,6 +1,6 @@
-export { default as ExpenseCard } from './ExpenseCard';
-export { default as GroupCard } from './GroupCard';
-export { default as SettlementCard, AIOptimizationCard } from './SettlementCard';
-export { default as CreateGroupModal } from './CreateGroupModal';
-export { default as AddExpenseModal } from './AddExpenseModal';
-export { GroupsSidebar, RecentActivitySidebar, ProTipCard } from './ExpenseSidebar';
+export { default as ExpenseCard } from './ExpenseCard.jsx';
+export { default as GroupCard } from './GroupCard.jsx';
+export { default as SettlementCard, AIOptimizationCard } from './SettlementCard.jsx';
+export { default as CreateGroupModal } from './CreateGroupModal.jsx';
+export { default as AddExpenseModal } from './AddExpenseModal.jsx';
+export { GroupsSidebar, RecentActivitySidebar, ProTipCard } from './ExpenseSidebar.jsx';

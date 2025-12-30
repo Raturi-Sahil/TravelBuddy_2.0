@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 // Common components
 import AuthGuard from "./components/common/AuthGuard";
 // Expense components
-import SplitExpenses from "./components/expenses/SplitExpenses";
+import SplitExpenses from "./components/Expenses/SplitExpenses";
 // Explore components
 import EmergencyServices from "./components/explore/EmergencyServices";
 import FoodNightlife from "./components/explore/FoodNightlife";
