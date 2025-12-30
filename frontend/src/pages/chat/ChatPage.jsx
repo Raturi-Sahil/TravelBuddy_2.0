@@ -402,21 +402,34 @@ export default function ChatPage() {
   const renderMessage = (msg, isSent) => {
     const isImage = msg.type === "IMAGE" || (msg.attachmentUrl && msg.attachmentUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i));
     const isAudio = msg.type === "AUDIO" || (msg.attachmentUrl && msg.attachmentUrl.match(/\.(webm|mp3|wav|ogg)$/i));
+    
+    // Emoji detection: check if message is only emojis
+    const emojiRegex = /^[\p{Emoji_Presentation}\p{Extended_Pictographic}\s]+$/u;
+    const emojiCount = msg.message ? [...msg.message].filter(char => /\p{Emoji_Presentation}|\p{Extended_Pictographic}/u.test(char)).length : 0;
+    const isOnlyEmoji = !isImage && !isAudio && msg.message && emojiRegex.test(msg.message.trim());
+    const isSingleEmoji = isOnlyEmoji && emojiCount === 1;
+    const isFewEmojis = isOnlyEmoji && emojiCount >= 2 && emojiCount <= 4;
+    // Determine emoji text size class
+    const getEmojiSizeClass = () => {
+      if (isSingleEmoji) return 'text-6xl py-2';
+      if (isFewEmojis) return 'text-3xl py-1';
+      return 'text-[15px]';
+    };
 
     return (
-      <div className={`max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${
+      <div className={`max-w-[65%] px-3 pt-2 pb-1.5 rounded-xl shadow-sm relative ${
         isSent
-          ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-br-md'
-          : 'bg-white text-gray-800 rounded-bl-md'
+          ? 'bg-gradient-to-br from-orange-100 to-amber-50 text-gray-900 rounded-tr-sm border border-orange-200/50'
+          : 'bg-white text-gray-900 rounded-tl-sm border border-gray-100'
       }`}>
         {isImage && msg.attachmentUrl && (
-          <div className="mb-2 rounded-lg overflow-hidden">
-            <img src={msg.attachmentUrl} alt="Attachment" className="max-w-full max-h-[300px] object-cover rounded-lg" />
+          <div className="mb-1 rounded-lg overflow-hidden">
+            <img src={msg.attachmentUrl} alt="Attachment" className="max-w-full max-h-[300px] object-cover rounded-md" />
           </div>
         )}
         
         {isAudio && msg.attachmentUrl && (
-          <div className="mb-2">
+          <div className="mb-1">
             <AudioMessage
               src={msg.attachmentUrl}
               isOwn={isSent}
@@ -426,12 +439,13 @@ export default function ChatPage() {
         )}
         
         {msg.message && (
-          <p className="text-sm leading-relaxed break-words">{msg.message}</p>
+          <div className="relative">
+            <p className={`leading-relaxed break-words ${isOnlyEmoji ? '' : 'pr-14'} ${getEmojiSizeClass()}`}>{msg.message}</p>
+            <span className={`text-[10px] ${isOnlyEmoji ? 'block text-right mt-1' : 'absolute bottom-0 right-0'} ${isSent ? 'text-gray-500' : 'text-gray-400'}`}>
+              {formatTime(msg.createdAt)}
+            </span>
+          </div>
         )}
-        
-        <p className={`text-xs mt-1.5 ${isSent ? 'text-orange-100' : 'text-gray-400'}`}>
-          {formatTime(msg.createdAt)}
-        </p>
       </div>
     );
   };
@@ -460,7 +474,7 @@ export default function ChatPage() {
         <div className="flex items-center gap-4 mb-6">
           <button 
             onClick={() => navigate('/connections')} 
-            className="flex items-center gap-2 text-gray-500 hover:text-orange-600 transition-colors group"
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors group"
           >
             <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
             <span>Back to Connections</span>
@@ -468,14 +482,13 @@ export default function ChatPage() {
         </div>
 
         {/* Chat Container */}
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden h-[calc(100vh-180px)]">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden h-[calc(100vh-140px)] mx-auto max-w-6xl">
           <div className="flex h-full">
-            {/* Conversation List - Left Panel */}
-            <div className="w-80 border-r border-gray-100 flex flex-col">
-              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-orange-100">
+            <div className="w-96 border-r border-orange-100 flex flex-col bg-white">
+              <div className="p-4 border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50">
                 <div className="flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5 text-orange-500" />
-                  <h3 className="font-semibold text-gray-800">Messages</h3>
+                  <MessageCircle className="w-6 h-6 text-orange-500" />
+                  <h3 className="font-semibold text-gray-800 text-lg">Chats</h3>
                 </div>
               </div>
               
@@ -493,7 +506,7 @@ export default function ChatPage() {
                     <div
                       key={conv.user._id}
                       onClick={() => handleSelectChat(conv.user)}
-                      className={`cursor-pointer ${currentChatUserId === conv.user._id ? 'bg-orange-50 border-l-4 border-l-orange-500' : ''}`}
+                      className={`cursor-pointer transition-colors ${currentChatUserId === conv.user._id ? 'bg-[#f0f2f5]' : 'hover:bg-gray-50'}`}
                     >
                       <ChatListItem conversation={conv} isActive={currentChatUserId === conv.user._id} />
                     </div>
@@ -511,9 +524,9 @@ export default function ChatPage() {
               ) : currentUser ? (
                 <>
                   {/* Chat Header */}
-                  <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-white">
+                  <div className="p-3 border-b border-orange-100 flex items-center gap-4 bg-gradient-to-r from-orange-50 to-amber-50">
                     <div className="relative">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-lg overflow-hidden shadow-md">
+                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden shadow-md">
                         {currentUser.profileImage ? (
                           <img src={currentUser.profileImage} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -525,7 +538,7 @@ export default function ChatPage() {
                     <div>
                       <p className="font-semibold text-gray-900">{currentUser.name}</p>
                       {typingUsers[currentChatUserId] ? (
-                        <p className="text-sm text-orange-500 animate-pulse">typing...</p>
+                        <p className="text-sm text-orange-500 font-medium animate-pulse">typing...</p>
                       ) : currentUser.isOnline ? (
                         <p className="text-sm text-green-500">Online</p>
                       ) : (
@@ -535,7 +548,7 @@ export default function ChatPage() {
                   </div>
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23f97316" fill-opacity="0.03"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")', backgroundColor: '#fef7f0'}}>
                     {messagesLoading ? (
                       <div className="flex items-center justify-center h-full">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
@@ -624,7 +637,7 @@ export default function ChatPage() {
                               <button
                                 key={idx}
                                 onClick={() => handleStickerSend(url)}
-                                className="hover:scale-110 transition-transform p-2 rounded-lg hover:bg-orange-50"
+                                className="hover:scale-110 transition-transform p-2 rounded-lg hover:bg-gray-100"
                               >
                                 <img src={url} alt="Sticker" className="w-12 h-12 object-contain" />
                               </button>
@@ -652,7 +665,7 @@ export default function ChatPage() {
                         <AttachmentItem
                           icon={ImageIcon}
                           label="Photos"
-                          color="bg-gradient-to-br from-orange-400 to-orange-600"
+                          color="bg-purple-500"
                           onClick={() => imageInputRef.current?.click()}
                         />
                         <AttachmentItem
@@ -672,7 +685,7 @@ export default function ChatPage() {
                   )}
 
                   {/* Message Input */}
-                  <div className="p-4 border-t border-gray-100 bg-white">
+                  <div className="p-3 bg-gradient-to-r from-orange-50 to-amber-50 border-t border-orange-100">
                     <div className="flex items-center gap-2">
                       {/* Attachment Button */}
                       <button
@@ -680,9 +693,9 @@ export default function ChatPage() {
                           setShowAttachments(!showAttachments);
                           setShowEmojiPicker(false);
                         }}
-                        className={`p-2.5 rounded-full transition-colors ${showAttachments ? 'bg-orange-100 text-orange-500' : 'text-gray-400 hover:bg-gray-100'}`}
+                        className={`p-2 rounded-full transition-colors ${showAttachments ? 'bg-gray-200 text-gray-600' : 'text-gray-500 hover:bg-gray-200'}`}
                       >
-                        <Paperclip className="w-5 h-5" />
+                        <Paperclip className="w-6 h-6" />
                       </button>
 
                       {/* Emoji Button */}
@@ -691,14 +704,14 @@ export default function ChatPage() {
                           setShowEmojiPicker(!showEmojiPicker);
                           setShowAttachments(false);
                         }}
-                        className={`p-2.5 rounded-full transition-colors ${showEmojiPicker ? 'bg-orange-100 text-orange-500' : 'text-gray-400 hover:bg-gray-100'}`}
+                        className={`p-2 rounded-full transition-colors ${showEmojiPicker ? 'bg-gray-200 text-gray-600' : 'text-gray-500 hover:bg-gray-200'}`}
                       >
-                        <Smile className="w-5 h-5" />
+                        <Smile className="w-7 h-7" />
                       </button>
 
                       {/* Input / Recording indicator */}
                       {isRecording ? (
-                        <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-red-50 rounded-full border border-red-200">
+                        <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-red-50 rounded-lg border border-red-200">
                           <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                           <span className="text-red-600 font-medium">Recording... {recordingRemaining}s</span>
                         </div>
@@ -710,7 +723,7 @@ export default function ChatPage() {
                           onChange={handleInputChange}
                           onKeyDown={handleKeyPress}
                           placeholder="Type a message..."
-                          className="flex-1 px-5 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
+                          className="flex-1 px-4 py-3 bg-white rounded-lg text-base focus:outline-none placeholder-gray-400"
                         />
                       )}
 
@@ -718,20 +731,22 @@ export default function ChatPage() {
                       <button
                         onClick={messageInput.trim() ? handleSendMessage : (isRecording ? stopRecording : startRecording)}
                         disabled={sendingMessage}
-                        className={`p-3 rounded-full transition-all shadow-lg disabled:opacity-50 ${
+                        className={`p-3 rounded-full transition-all flex items-center justify-center shadow-md ${
                           isRecording 
-                            ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
-                            : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:shadow-orange-500/30'
+                            ? 'bg-red-500 hover:bg-red-600' 
+                            : messageInput.trim() 
+                              ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' 
+                              : 'text-gray-500 hover:bg-white/80 bg-white shadow-sm'
                         }`}
                       >
                         {sendingMessage ? (
-                          <Loader2 className="w-5 h-5 animate-spin text-white" />
+                          <Loader2 className="w-6 h-6 animate-spin text-white" />
                         ) : messageInput.trim() ? (
-                          <Send className="w-5 h-5 text-white" />
+                          <Send className="w-6 h-6 text-white" />
                         ) : isRecording ? (
-                          <Send className="w-5 h-5 text-white" />
+                          <Send className="w-6 h-6 text-white" />
                         ) : (
-                          <Mic className="w-5 h-5 text-white" />
+                          <Mic className="w-7 h-7" />
                         )}
                       </button>
                     </div>
