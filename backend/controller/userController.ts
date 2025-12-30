@@ -67,6 +67,15 @@ export const registerUser = asyncHandler(
       languages: languages as any,
     });
 
+    // Send Welcome Notification
+    await sendNotification({
+      recipient: user._id as any,
+      type: "WELCOME",
+      message: `Welcome to Travel Buddy, ${user.name}! We're excited to have you join our community of travelers.`,
+      link: `/`,
+      relatedId: user._id as any,
+    });
+
     return res.status(201).json(
       new ApiResponse(201, user, "User registered successfully")
     );

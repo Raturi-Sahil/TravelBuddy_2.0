@@ -1,23 +1,21 @@
 import {
   ArrowRight,
+  BookOpen,
+  Bot,
   Calendar,
+  Camera,
   Compass,
   Facebook,
-  FileText,
   Globe,
   Heart,
-  HelpCircle,
   Instagram,
   Mail,
   MapPin,
-  MessageCircle,
   Phone,
-  Plane,
   Shield,
-  Star,
   Twitter,
-  Users,
-  Youtube} from 'lucide-react';
+  Youtube
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,39 +23,37 @@ function Footer() {
   const [email, setEmail] = useState('');
   const navigate = useNavigate();
 
-  const handleNewsletterSubmit = () => {
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
     if (email.trim()) {
-      console.log('Newsletter signup:', email);
-      setEmail('');
       // Add newsletter signup logic here
+      setEmail('');
     }
   };
 
   const handleNavigation = (path) => {
     navigate(path);
+    window.scrollTo(0, 0);
   };
 
-  const quickLinks = [
-    { name: 'Discover', path: '/', icon: Compass },
-    { name: 'Map', path: '/map', icon: MapPin },
+  const exploreLinks = [
     { name: 'Activities', path: '/activities', icon: Calendar },
-    { name: 'Connections', path: '/connections', icon: Users },
-    { name: 'Messages', path: '/messages', icon: MessageCircle }
+    { name: 'Local Guides', path: '/guides', icon: Compass },
+    { name: 'Traveler Posts', path: '/user-posts', icon: Camera },
+    { name: 'Travel Articles', path: '/read-article', icon: BookOpen },
   ];
 
-  const supportLinks = [
-    { name: 'Help Center', path: '/help', icon: HelpCircle },
-    { name: 'Safety Tips', path: '/safety', icon: Shield },
-    { name: 'How it Works', path: '/how-it-works', icon: Star },
-    { name: 'Contact Us', path: '/contact', icon: Mail }
+  const featureLinks = [
+    { name: 'Interactive Map', path: '/map', icon: MapPin },
+    { name: 'AI Trip Buddy', path: '/ai-buddy', icon: Bot },
+    { name: 'Find Companions', path: '/', icon: Globe },
   ];
 
   const legalLinks = [
     { name: 'Privacy Policy', path: '/privacy' },
     { name: 'Terms of Service', path: '/terms' },
     { name: 'Cookie Policy', path: '/cookies' },
-    { name: 'Community Guidelines', path: '/guidelines' },
-    { name: 'Refund Policy', path: '/refund' }
+    { name: 'Safety Tips', path: '/safety' },
   ];
 
   const socialLinks = [
@@ -67,67 +63,57 @@ function Footer() {
     { name: 'YouTube', icon: Youtube, url: 'https://youtube.com' }
   ];
 
-  const popularDestinations = [
-    'Tokyo, Japan',
-    'Paris, France',
-    'Bali, Indonesia',
-    'New York, USA',
-    'London, UK',
-    'Barcelona, Spain'
-  ];
-
   return (
-    <footer className="bg-gray-50 border-t border-gray-200 mt-auto">
-      {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <footer className="bg-gray-900 text-white mt-auto border-t border-gray-800">
+      {/* Upper Footer - Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12">
 
-          {/* Brand Section */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="bg-amber-600 p-2 rounded-lg">
+          {/* Brand Column (4 columns) */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="flex items-center space-x-3">
+              <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2.5 rounded-xl shadow-lg shadow-amber-900/20">
                 <Globe className="text-white" size={24} />
               </div>
               <div>
-                <span className="text-xl font-bold text-amber-600">
+                <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                   TravelBuddy
                 </span>
-                <div className="text-xs text-gray-500 -mt-1">Find your travel buddy</div>
+                <div className="text-xs text-amber-500 uppercase tracking-wider font-semibold mt-0.5">Explore Together</div>
               </div>
             </div>
-            <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-              Connect with fellow travelers, discover amazing destinations, and create unforgettable memories together. Your next adventure is just a connection away.
+
+            <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
+              Your ultimate companion for discovering the world. Connect with travelers, find local guides, and create unforgettable adventures powered by AI.
             </p>
 
-            {/* Social Links */}
-            <div className="flex space-x-3">
+            <div className="flex space-x-4 pt-2">
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
                   href={social.url}
-                  className="bg-white p-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-gray-600 hover:text-amber-600 border border-gray-200 hover:border-amber-300"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-gray-800 p-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-amber-600 transition-all duration-300 group"
                   aria-label={social.name}
                 >
-                  <social.icon size={18} />
+                  <social.icon size={18} className="transform group-hover:scale-110 transition-transform" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-              <Compass size={16} className="mr-2 text-amber-600" />
-              Explore
-            </h3>
-            <ul className="space-y-3">
-              {quickLinks.map((link) => (
+          {/* Links Column 1 - Explore (2 columns) */}
+          <div className="lg:col-span-2">
+            <h3 className="font-bold text-lg text-white mb-6">Explore</h3>
+            <ul className="space-y-4">
+              {exploreLinks.map((link) => (
                 <li key={link.name}>
                   <button
                     onClick={() => handleNavigation(link.path)}
-                    className="flex items-center text-gray-600 hover:text-amber-600 transition-colors duration-200 text-sm group"
+                    className="flex items-center text-gray-400 hover:text-amber-500 transition-colors duration-200 text-sm group w-full text-left"
                   >
-                    <link.icon size={14} className="mr-2 opacity-60 group-hover:opacity-100" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                     {link.name}
                   </button>
                 </li>
@@ -135,110 +121,89 @@ function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-              <HelpCircle size={16} className="mr-2 text-amber-600" />
-              Support
-            </h3>
-            <ul className="space-y-3">
-              {supportLinks.map((link) => (
+          {/* Links Column 2 - Features (3 columns) */}
+          <div className="lg:col-span-3">
+            <h3 className="font-bold text-lg text-white mb-6">Features</h3>
+            <ul className="space-y-4">
+              {featureLinks.map((link) => (
                 <li key={link.name}>
                   <button
                     onClick={() => handleNavigation(link.path)}
-                    className="flex items-center text-gray-600 hover:text-amber-600 transition-colors duration-200 text-sm group"
+                    className="flex items-center text-gray-400 hover:text-amber-500 transition-colors duration-200 text-sm group w-full text-left"
                   >
-                    <link.icon size={14} className="mr-2 opacity-60 group-hover:opacity-100" />
+                    <link.icon size={16} className="mr-3 text-gray-600 group-hover:text-amber-500 transition-colors" />
                     {link.name}
                   </button>
                 </li>
               ))}
             </ul>
 
-            {/* Contact Info */}
-            <div className="mt-6 space-y-2">
-              <div className="flex items-center text-gray-600 text-sm">
-                <Mail size={14} className="mr-2 text-amber-600" />
-                hello@travelbuddy.com
-              </div>
-              <div className="flex items-center text-gray-600 text-sm">
-                <Phone size={14} className="mr-2 text-amber-600" />
-                +1 (555) 123-4567
-              </div>
+            <div className="mt-8">
+               <h3 className="font-bold text-lg text-white mb-4">Contact</h3>
+               <div className="space-y-3">
+                 <div className="flex items-center text-gray-400 text-sm group cursor-pointer hover:text-white transition-colors">
+                    <Mail size={16} className="mr-3 text-amber-600" />
+                    hello@travelbuddy.com
+                 </div>
+                 <div className="flex items-center text-gray-400 text-sm group cursor-pointer hover:text-white transition-colors">
+                    <Phone size={16} className="mr-3 text-amber-600" />
+                    +1 (555) 123-4567
+                 </div>
+               </div>
             </div>
           </div>
 
-          {/* Newsletter & Popular Destinations */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-              <Mail size={16} className="mr-2 text-amber-600" />
-              Stay Updated
-            </h3>
-
-            {/* Newsletter Signup */}
-            <div className="mb-6">
-              <p className="text-gray-600 text-sm mb-3">
-                Get travel tips and discover new destinations
-              </p>
-              <div className="flex">
+          {/* Newsletter Column (3 columns) */}
+          <div className="lg:col-span-3">
+            <h3 className="font-bold text-lg text-white mb-6">Stay Updated</h3>
+            <p className="text-gray-400 text-sm mb-4">
+              Subscribe to get the latest travel tips, destination guides, and exclusive offers.
+            </p>
+            <form onSubmit={handleNewsletterSubmit} className="space-y-3">
+              <div className="relative">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Your email"
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Enter your email"
+                  className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all placeholder-gray-500"
                 />
-                <button
-                  onClick={handleNewsletterSubmit}
-                  className="bg-amber-600 text-white px-4 py-2 rounded-r-lg hover:bg-amber-700 transition-all duration-200 flex items-center"
-                >
-                  <ArrowRight size={16} />
-                </button>
               </div>
-            </div>
-
-            {/* Popular Destinations */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3 flex items-center text-sm">
-                <Plane size={14} className="mr-2 text-amber-600" />
-                Popular Destinations
-              </h4>
-              <ul className="space-y-2">
-                {popularDestinations.map((destination) => (
-                  <li key={destination}>
-                    <button
-                      onClick={() => handleNavigation(`/destination/${destination.toLowerCase().replace(/[^a-z0-9]/g, '-')}`)}
-                      className="text-gray-600 hover:text-amber-600 transition-colors duration-200 text-xs block hover:underline"
-                    >
-                      {destination}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50 transition-all duration-300 flex items-center justify-center group"
+              >
+                <span>Subscribe</span>
+                <ArrowRight size={16} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
+              </button>
+            </form>
+            <div className="mt-6 flex items-center space-x-2 text-xs text-gray-500">
+              <Shield size={12} className="text-green-500" />
+              <span>Your data is secure. No spam.</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
+      {/* Bottom Footer - Copyright & Legal */}
+      <div className="border-t border-gray-800 bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
 
             {/* Copyright */}
-            <div className="flex items-center text-gray-600 text-sm">
-              <span>© 2025 TravelBuddy. Made with</span>
-              <Heart size={14} className="mx-1 text-red-500 fill-current" />
-              <span>for travelers worldwide</span>
+            <div className="flex items-center text-gray-500 text-sm">
+              <span>© {new Date().getFullYear()} TravelBuddy. Made with</span>
+              <Heart size={14} className="mx-1.5 text-red-500 fill-red-500 animate-pulse" />
+              <span>for travelers.</span>
             </div>
 
             {/* Legal Links */}
-            <div className="flex flex-wrap justify-center lg:justify-end space-x-6">
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-2">
               {legalLinks.map((link) => (
                 <button
                   key={link.name}
                   onClick={() => handleNavigation(link.path)}
-                  className="text-gray-600 hover:text-amber-600 transition-colors duration-200 text-sm"
+                  className="text-gray-500 hover:text-amber-500 transition-colors duration-200 text-sm font-medium"
                 >
                   {link.name}
                 </button>
