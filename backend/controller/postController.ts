@@ -8,6 +8,7 @@ import { User } from "../models/userModel";
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
 import asyncHandler from "../utils/asyncHandler";
+import { sendNotification } from "../utils/notificationUtil";
 
 // Create a new post
 export const createPost = asyncHandler(
@@ -106,6 +107,15 @@ export const createPost = asyncHandler(
       }
 
       console.log("createPost: Created post", post._id);
+
+      // Notify User
+      await sendNotification({
+        recipient: userId as any,
+        type: "POST_CREATED",
+        message: "Your post has been created successfully",
+        link: `/user-posts`,
+        relatedId: post._id as any,
+      });
 
       return res
         .status(201)
@@ -312,6 +322,15 @@ export const updatePost = asyncHandler(
       runValidators: true,
     }).lean();
 
+    // Notify User
+    await sendNotification({
+      recipient: userId as any,
+      type: "POST_UPDATED",
+      message: "Your post has been updated successfully",
+      link: `/user-posts`, // Or specific post link if you have one
+      relatedId: id as any,
+    });
+
     return res
       .status(200)
       .json(new ApiResponse(200, updatedPost, "Post updated successfully"));
@@ -353,6 +372,15 @@ export const deletePost = asyncHandler(
     }
 
     await Post.findByIdAndDelete(id);
+
+    // Notify User
+    await sendNotification({
+      recipient: userId as any,
+      type: "POST_DELETED",
+      message: "Your post has been deleted successfully",
+      link: `/user-posts`,
+      relatedId: id as any, // ID might not be useful if deleted, but keeping ref
+    });
 
     return res
       .status(200)
@@ -397,6 +425,18 @@ export const toggleLike = asyncHandler(
         { $addToSet: { likes: userId } },
         { new: true }
       ).lean();
+
+      // Notify Post Owner if liked by someone else
+      if (post.userId !== userId) {
+        await sendNotification({
+          recipient: post.userId as any, // Owner ID
+          sender: userId as any,         // Liker ID
+          type: "POST_LIKED",
+          message: `${req.user.name} liked your post`,
+          link: `/user-posts`, // Ideally anchor to specific post
+          relatedId: id as any,
+        });
+      }
     }
 
     return res
@@ -450,6 +490,18 @@ export const addComment = asyncHandler(
       { $push: { comments: comment } },
       { new: true }
     ).lean();
+
+    // Notify Post Owner if commented by someone else
+    if (post.userId !== userId) {
+      await sendNotification({
+        recipient: post.userId as any,
+        sender: userId as any,
+        type: "POST_COMMENTED",
+        message: `${user.name} commented on your post`,
+        link: `/user-posts`,
+        relatedId: id as any,
+      });
+    }
 
     return res
       .status(201)

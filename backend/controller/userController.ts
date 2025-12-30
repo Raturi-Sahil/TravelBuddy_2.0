@@ -243,6 +243,15 @@ export const updateProfile = asyncHandler(
 
     await user.save();
 
+    // Send Notification to user (Confirmation)
+    await sendNotification({
+      recipient: user._id as any,
+      type: "PROFILE_UPDATE",
+      message: "Your profile has been updated successfully",
+      link: `/profile`,
+      relatedId: user._id as any,
+    });
+
     return res
       .status(200)
       .json(new ApiResponse(200, user, "Profile updated successfully"));
