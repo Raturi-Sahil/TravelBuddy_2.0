@@ -25,7 +25,7 @@ import EmojiPicker from 'emoji-picker-react';
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useParams, useNavigate } from "react-router-dom";
-import AudioMessage from "../../components/Chat/AudioMessage";
+import AudioMessage from "../../components/chat/AudioMessage";
 
 
 import { createAuthenticatedApi, groupChatService, userService } from "../../redux/services/api";

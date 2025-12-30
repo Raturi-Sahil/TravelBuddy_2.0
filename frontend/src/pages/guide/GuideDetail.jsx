@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import BookGuideModal from '../../components/Guide/BookGuideModal';
+import BookGuideModal from '../../components/guide/BookGuideModal';
 import { fetchGuideById, fetchGuideReviews } from '../../redux/slices/guideSlice';
 
 const GuideDetail = () => {

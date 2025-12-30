@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import ChatListItem from '../../components/Chat/ChatListItem';
+import ChatListItem from '../../components/chat/ChatListItem';
 import { useSocket } from '../../hooks/useSocket';
 import { createAuthenticatedApi, userService } from '../../redux/services/api';
 import { fetchConversations } from '../../redux/slices/chatSlice';
