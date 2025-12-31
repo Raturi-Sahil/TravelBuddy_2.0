@@ -38,6 +38,8 @@ export const registerUserSchema = z.object({
     .string()
     .regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
 
+  countryCode: z.string().min(1, "Country code is required"),
+
   dob: z.string().refine((date) => {
     const d = new Date(date);
     return !isNaN(d.getTime()) && d <= new Date();
@@ -68,6 +70,8 @@ export const updateProfileSchema = z.object({
     .string()
     .regex(/^\d{10}$/, "Mobile number must be exactly 10 digits")
     .optional(),
+
+  countryCode: z.string().min(1, "Country code is required").optional(),
 
   dob: z
     .string()

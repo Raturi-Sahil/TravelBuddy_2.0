@@ -33,6 +33,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { COUNTRY_CODES, getCountryByDialCode } from '../../data/countryCodes';
 import {
     COUNTRIES,
     GENDERS,
@@ -92,6 +93,10 @@ export default function ProfilePage() {
     const [interestSearch, setInterestSearch] = useState('');
     const [showInterestDropdown, setShowInterestDropdown] = useState(false);
 
+    // Country code states
+    const [countryCodeSearch, setCountryCodeSearch] = useState('');
+    const [showCountryCodeDropdown, setShowCountryCodeDropdown] = useState(false);
+
     // Future Destination Input
     const [pendingDestination, setPendingDestination] = useState(null); // { name, coordinates }
     const destinationAutocompleteRef = useRef(null);
@@ -99,6 +104,7 @@ export default function ProfilePage() {
     const nationalityRef = useRef(null);
     const languageRef = useRef(null);
     const interestRef = useRef(null);
+    const countryCodeRef = useRef(null);
 
     // Google Maps
     const { isLoaded: isGoogleMapsLoaded } = useGoogleMaps();
@@ -130,6 +136,15 @@ export default function ProfilePage() {
         i.toLowerCase().includes(interestSearch.toLowerCase())
     );
 
+    // Filter country codes
+    const filteredCountryCodes = COUNTRY_CODES.filter(cc =>
+        cc.country.toLowerCase().includes(countryCodeSearch.toLowerCase()) ||
+        cc.dialCode.includes(countryCodeSearch)
+    );
+
+    // Get selected country code
+    const selectedCountryCode = getCountryByDialCode(isEditing ? editData.countryCode : profile?.countryCode) || COUNTRY_CODES.find(c => c.dialCode === '+91');
+
     // Close dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -139,6 +154,8 @@ export default function ProfilePage() {
                 setShowLanguageDropdown(false);
             if (interestRef.current && !interestRef.current.contains(event.target))
                 setShowInterestDropdown(false);
+            if (countryCodeRef.current && !countryCodeRef.current.contains(event.target))
+                setShowCountryCodeDropdown(false);
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -559,14 +576,70 @@ export default function ProfilePage() {
                                 <div>
                                     <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold mb-1">Mobile</p>
                                     {isEditing ? (
-                                        <input
-                                            type="tel"
-                                            value={editData.mobile || ''}
-                                            onChange={(e) => handleEditChange('mobile', e.target.value)}
-                                            className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg"
-                                        />
+                                        <div className="flex gap-2">
+                                            {/* Country Code Dropdown */}
+                                            <div ref={countryCodeRef} className="relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCountryCodeDropdown(!showCountryCodeDropdown)}
+                                                    className="flex items-center gap-1.5 px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all text-sm"
+                                                >
+                                                    <span className="text-base">{selectedCountryCode?.flag}</span>
+                                                    <span className="font-medium text-gray-700">{selectedCountryCode?.dialCode}</span>
+                                                    <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                                </button>
+                                                {showCountryCodeDropdown && (
+                                                    <div className="absolute z-30 w-64 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-64 overflow-hidden">
+                                                        <div className="p-2 border-b border-gray-100">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Search country..."
+                                                                value={countryCodeSearch}
+                                                                onChange={(e) => setCountryCodeSearch(e.target.value)}
+                                                                className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+                                                                autoComplete="off"
+                                                            />
+                                                        </div>
+                                                        <div className="max-h-48 overflow-y-auto">
+                                                            {filteredCountryCodes.length > 0 ? (
+                                                                filteredCountryCodes.map((cc) => (
+                                                                    <button
+                                                                        key={cc.code}
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            handleEditChange('countryCode', cc.dialCode);
+                                                                            setShowCountryCodeDropdown(false);
+                                                                            setCountryCodeSearch('');
+                                                                        }}
+                                                                        className={`w-full text-left px-3 py-2 hover:bg-orange-50 text-sm transition-colors flex items-center gap-2 ${editData.countryCode === cc.dialCode ? 'bg-orange-50' : ''}`}
+                                                                    >
+                                                                        <span className="text-base">{cc.flag}</span>
+                                                                        <span className="flex-1 text-gray-700 truncate">{cc.country}</span>
+                                                                        <span className="text-gray-500 font-medium text-xs">{cc.dialCode}</span>
+                                                                    </button>
+                                                                ))
+                                                            ) : (
+                                                                <div className="px-3 py-2 text-gray-500 text-sm">No countries found</div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* Mobile Input */}
+                                            <input
+                                                type="tel"
+                                                value={editData.mobile || ''}
+                                                onChange={(e) => handleEditChange('mobile', e.target.value)}
+                                                className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-lg"
+                                                placeholder="10-digit number"
+                                                maxLength={10}
+                                            />
+                                        </div>
                                     ) : (
-                                        <p className="font-medium text-gray-800">{profile?.mobile}</p>
+                                        <p className="font-medium text-gray-800 flex items-center gap-2">
+                                            <span className="text-base">{selectedCountryCode?.flag}</span>
+                                            <span>{selectedCountryCode?.dialCode} {profile?.mobile}</span>
+                                        </p>
                                     )}
                                 </div>
                                 <div>

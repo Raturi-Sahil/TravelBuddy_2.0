@@ -30,6 +30,7 @@ export interface IUser extends Document {
   email: string;
   profileImage?: string;
   mobile: string;
+  countryCode: string;
   dob: Date;
   gender: (typeof GENDERS)[number];
   profileVisibility?: "Public" | "Private";

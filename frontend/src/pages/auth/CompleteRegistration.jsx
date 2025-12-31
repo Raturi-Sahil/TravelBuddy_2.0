@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { COUNTRIES, GENDERS, LANGUAGE_LEVELS, LANGUAGES } from '../../data/enums';
+import { COUNTRY_CODES, getCountryByDialCode } from '../../data/countryCodes';
 import { useUserActions } from '../../redux/hooks/useUser';
 import { fetchNotifications } from '../../redux/slices/notificationSlice';
 
@@ -32,11 +33,17 @@ export default function CompleteRegistration() {
 
   const [formData, setFormData] = useState({
     mobile: '',
+    countryCode: '+91',
     dob: '',
     gender: '',
     nationality: '',
     languages: [],
   });
+
+  // Country code search and dropdown state
+  const [countryCodeSearch, setCountryCodeSearch] = useState('');
+  const [showCountryCodeDropdown, setShowCountryCodeDropdown] = useState(false);
+  const countryCodeRef = useRef(null);
 
   // New Language State
   const [newLanguage, setNewLanguage] = useState({ name: '', level: 'Beginner' });
@@ -77,11 +84,23 @@ export default function CompleteRegistration() {
       if (languageRef.current && !languageRef.current.contains(event.target)) {
         setShowLanguageDropdown(false);
       }
+      if (countryCodeRef.current && !countryCodeRef.current.contains(event.target)) {
+        setShowCountryCodeDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Filter country codes based on search
+  const filteredCountryCodes = COUNTRY_CODES.filter(cc =>
+    cc.country.toLowerCase().includes(countryCodeSearch.toLowerCase()) ||
+    cc.dialCode.includes(countryCodeSearch)
+  );
+
+  // Get currently selected country code data
+  const selectedCountryCode = getCountryByDialCode(formData.countryCode) || COUNTRY_CODES.find(c => c.dialCode === '+91');
 
   // Check if user already exists in backend
   const checkExistingUser = useCallback(async () => {
@@ -282,17 +301,68 @@ export default function CompleteRegistration() {
                   <label htmlFor="mobile" className="block text-sm font-semibold text-gray-700">
                     Mobile Number
                   </label>
-                  <input
-                    type="tel"
-                    id="mobile"
-                    name="mobile"
-                    value={formData.mobile}
-                    onChange={handleChange}
-                    placeholder="10-digit number"
-                    maxLength={10}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
-                    required
-                  />
+                  <div className="flex gap-2">
+                    {/* Country Code Dropdown */}
+                    <div ref={countryCodeRef} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowCountryCodeDropdown(!showCountryCodeDropdown)}
+                        className="flex items-center gap-2 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-all min-w-[100px]"
+                      >
+                        <span className="text-lg">{selectedCountryCode?.flag}</span>
+                        <span className="text-sm font-medium text-gray-700">{selectedCountryCode?.dialCode}</span>
+                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </button>
+                      {showCountryCodeDropdown && (
+                        <div className="absolute z-30 w-72 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-64 overflow-hidden">
+                          <div className="p-2 border-b border-gray-100">
+                            <input
+                              type="text"
+                              placeholder="Search country..."
+                              value={countryCodeSearch}
+                              onChange={(e) => setCountryCodeSearch(e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+                              autoComplete="off"
+                            />
+                          </div>
+                          <div className="max-h-48 overflow-y-auto">
+                            {filteredCountryCodes.length > 0 ? (
+                              filteredCountryCodes.map((cc) => (
+                                <button
+                                  key={cc.code}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData(prev => ({ ...prev, countryCode: cc.dialCode }));
+                                    setShowCountryCodeDropdown(false);
+                                    setCountryCodeSearch('');
+                                  }}
+                                  className={`w-full text-left px-4 py-2.5 hover:bg-orange-50 text-sm transition-colors flex items-center gap-3 ${formData.countryCode === cc.dialCode ? 'bg-orange-50' : ''}`}
+                                >
+                                  <span className="text-lg">{cc.flag}</span>
+                                  <span className="flex-1 text-gray-700">{cc.country}</span>
+                                  <span className="text-gray-500 font-medium">{cc.dialCode}</span>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-4 py-3 text-gray-500 text-sm">No countries found</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* Mobile Input */}
+                    <input
+                      type="tel"
+                      id="mobile"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={handleChange}
+                      placeholder="10-digit number"
+                      maxLength={10}
+                      className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                      required
+                    />
+                  </div>
                 </div>
 
                 {/* DOB */}

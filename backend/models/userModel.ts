@@ -17,6 +17,11 @@ const userSchema = new Schema<IUser>({
     maxlength: 10,
   },
 
+  countryCode: {
+    type: String,
+    default: "+91",
+  },
+
   dob: { type: Date, required: true },
 
   gender: { type: String, enum: GENDERS, required: true },
