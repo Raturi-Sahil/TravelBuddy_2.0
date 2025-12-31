@@ -624,19 +624,20 @@ export const joinActivity = asyncHandler(
     await sendNotification({
       recipient: userId,
       sender: userId,
-      type: "ACTIVITY_JOINED_SELF",
-      message: `You joined the activity: ${activity.title}`,
+      type: "ACTIVITY_JOIN",
+      message: `You successfully joined "${activity.title}"`,
       link: `/activity/${id}`,
       relatedId: id,
     });
 
     // Notify the activity creator
     if (activity.createdBy.toString() !== userId.toString()) {
+      const userName = req.user?.name || "A traveler";
       await sendNotification({
         recipient: activity.createdBy,
         sender: userId,
-        type: "ACTIVITY_JOINED",
-        message: `${req.user.name} joined your activity: ${activity.title}`,
+        type: "ACTIVITY_HOST_JOIN",
+        message: `${userName} has joined your activity "${activity.title}"`,
         link: `/activity/${id}`,
         relatedId: id,
       });
@@ -714,19 +715,20 @@ export const leaveActivity = asyncHandler(
     await sendNotification({
       recipient: userId,
       sender: userId,
-      type: "ACTIVITY_LEFT_SELF",
-      message: `You left the activity: ${activity.title}`,
+      type: "ACTIVITY_LEAVE",
+      message: `You have left the activity "${activity.title}"`,
       link: `/activity/${id}`,
       relatedId: id,
     });
 
     // Notify the activity creator
     if (activity.createdBy.toString() !== userId.toString()) {
+      const userName = req.user?.name || "A traveler";
       await sendNotification({
         recipient: activity.createdBy,
         sender: userId,
-        type: "ACTIVITY_LEFT",
-        message: `${req.user.name} left your activity: ${activity.title}`,
+        type: "ACTIVITY_HOST_LEAVE",
+        message: `${userName} has left your activity "${activity.title}"`,
         link: `/activity/${id}`,
         relatedId: id,
       });

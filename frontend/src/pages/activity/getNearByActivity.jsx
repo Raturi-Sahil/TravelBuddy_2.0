@@ -10,6 +10,41 @@ import {
 import { fetchActivities } from "../../redux/slices/ActivitySlice";
 import { Autocomplete } from "@react-google-maps/api";
 import { useGoogleMaps } from "../../context/GoogleMapsContext";
+import ReverseGeocode from "../../helpers/reverseGeoCode";
+
+// Component to fetch and display address from coordinates
+const AddressDisplay = ({ location }) => {
+  const [address, setAddress] = useState("Loading location...");
+
+  useEffect(() => {
+    // If address string is already available, use it
+    if (location?.address) {
+      setAddress(location.address);
+      return;
+    }
+
+    // Otherwise use coordinates to fetch address
+    const fetchAddress = async () => {
+      if (location?.coordinates && location.coordinates.length === 2) {
+        // coordinates are [lng, lat]
+        const lng = location.coordinates[0];
+        const lat = location.coordinates[1];
+        try {
+          const result = await ReverseGeocode({ lat, lng });
+          setAddress(result);
+        } catch (error) {
+          setAddress("Location text unavailable");
+        }
+      } else {
+        setAddress("Location unspecified");
+      }
+    };
+
+    fetchAddress();
+  }, [location]);
+
+  return <span className="truncate">{address}</span>;
+};
 
 // Helper to calculate status
 const getActivityStatus = (current, max) => {
@@ -415,7 +450,7 @@ export default function ActivityNearMe() {
               return (
                 <div
                   key={activity._id}
-                  className="group bg-white rounded-3xl overflow-hidden border border-slate-100 hover:border-orange-100 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-900/5 hover:-translate-y-1"
+                  className="group bg-gradient-to-br from-gray-50 to-slate-100 rounded-3xl overflow-hidden border border-slate-200 shadow-xl shadow-slate-300/40 hover:border-orange-200 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-400/20 hover:-translate-y-1"
                 >
                   {/* Image Section */}
                   <div className="h-64 relative overflow-hidden">
@@ -455,15 +490,26 @@ export default function ActivityNearMe() {
                     </div>
 
                     <div className="flex items-center gap-2 text-slate-500 text-sm mb-4">
-                       <MapPin className="w-4 h-4 text-orange-500" />
-                       <span className="truncate">{activity.location?.address || "Location detail on map"}</span>
+                       <MapPin className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                       <AddressDisplay location={activity.location} />
                     </div>
 
                     {/* Meta Info Grid */}
                     <div className="flex flex-wrap gap-y-3 gap-x-4 text-xs font-medium text-slate-600 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                        <div className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{activityDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          <span>
+                            {activityDate.getDate()} {activity.endDate ? (
+                              <>
+                                - {new Date(activity.endDate).getDate()} {new Date(activity.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                <span className="ml-1 text-indigo-600">
+                                  ({Math.ceil((new Date(activity.endDate) - activityDate) / (1000 * 60 * 60 * 24)) + 1} days)
+                                </span>
+                              </>
+                            ) : (
+                              activityDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                            )}
+                          </span>
                        </div>
                        <div className="w-px h-4 bg-slate-200"></div>
                        <div className="flex items-center gap-1.5">

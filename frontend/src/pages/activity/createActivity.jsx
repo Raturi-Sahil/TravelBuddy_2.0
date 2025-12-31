@@ -239,19 +239,21 @@ export default function CreateActivity() {
               </div>
             </Section>
 
-            <Section icon={Clock} title="Date & Time">
+            <Section icon={Clock} title="Date & Time" className="relative z-30">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Calendar
                   label="Start Date"
                   value={formData.date}
                   onChange={(date) => setFormData(prev => ({ ...prev, date }))}
                   placeholder="Select start date"
+                  className="relative z-30"
                 />
                 <TimePicker
                   label="Start Time"
                   value={formData.startTime}
                   onChange={(time) => setFormData(prev => ({ ...prev, startTime: time }))}
                   placeholder="Select time"
+                  className="relative z-20"
                 />
                 <Calendar
                   label="End Date"
@@ -259,6 +261,7 @@ export default function CreateActivity() {
                   onChange={(date) => setFormData(prev => ({ ...prev, endDate: date }))}
                   placeholder="Select end date"
                   minDate={formData.date}
+                  className="relative z-10"
                 />
               </div>
             </Section>

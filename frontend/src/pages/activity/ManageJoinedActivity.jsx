@@ -255,7 +255,11 @@ function ManageJoinedActivity() {
                     <p className="text-sm font-medium text-slate-700">
                       {activity.startTime ? new Date(activity.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
                         (activity.time || 'TBD')}
-                      {activity.endTime && ` - ${new Date(activity.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                      {activity.endDate && (
+                        <span className="block text-xs text-slate-500 mt-1">
+                          Ends: {new Date(activity.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>

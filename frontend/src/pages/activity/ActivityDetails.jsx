@@ -270,11 +270,18 @@ function IndividualActivity() {
                   <div>
                     <p className="text-xs font-semibold text-orange-900 mb-1">Date</p>
                     <p className="text-sm font-medium text-slate-700">
-                      {new Date(activity.date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
+                      {new Date(activity.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {activity.endDate ? (
+                        <>
+                          <span className="mx-1 text-slate-400">-</span>
+                          {new Date(activity.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          <span className="block text-xs text-orange-600 font-semibold mt-0.5">
+                            ({Math.ceil((new Date(activity.endDate) - new Date(activity.date)) / (1000 * 60 * 60 * 24)) + 1} days)
+                          </span>
+                        </>
+                      ) : (
+                        `, ${new Date(activity.date).getFullYear()}`
+                      )}
                     </p>
                   </div>
                 </div>
@@ -284,8 +291,7 @@ function IndividualActivity() {
                   <div>
                     <p className="text-xs font-semibold text-amber-900 mb-1">Time</p>
                     <p className="text-sm font-medium text-slate-700">
-                      {activity.startTime ? new Date(activity.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'} -
-                      {activity.endTime ? new Date(activity.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
+                      {activity.startTime ? new Date(activity.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
                     </p>
                   </div>
                 </div>

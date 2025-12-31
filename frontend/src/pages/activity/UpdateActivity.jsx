@@ -318,8 +318,12 @@ function ManageActivity() {
                   <div>
                     <p className="text-xs font-semibold text-amber-900 mb-1">Time</p>
                     <p className="text-sm font-medium text-slate-700">
-                      {activity.startTime ? new Date(activity.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'} -
-                      {activity.endTime ? new Date(activity.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
+                      {activity.startTime ? new Date(activity.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
+                      {activity.endDate && (
+                        <span className="block text-xs text-slate-500 mt-1">
+                          Ends: {new Date(activity.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>

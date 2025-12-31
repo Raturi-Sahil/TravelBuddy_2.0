@@ -75,10 +75,9 @@ export const activityPaymentSchema = new Schema<IActivityPayment>(
     }, {timestamps: true}
 );
 
-// One payment per user per activity (important)
+// One payment per user per activity - removed unique to allow re-joining
 activityPaymentSchema.index(
-    {userId: 1, activityId: 1},
-    {unique: true}
+    {userId: 1, activityId: 1}
 );
 
 export const ActivityPayment = mongoose.model<IActivityPayment>(
