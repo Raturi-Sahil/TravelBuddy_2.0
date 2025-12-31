@@ -234,3 +234,40 @@ export const getGroupChatMessages = asyncHandler(
         );
     }
 );
+
+export const updateGroupChatMessage = asyncHandler(
+    async (req: Request & { user: any }, res: Response) => {
+        const { messageId } = req.params;
+        const { message } = req.body;
+
+        if (!req.user) {
+            throw new ApiError(401, "Unauthorized");
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(messageId)) {
+            throw new ApiError(400, "Invalid message id");
+        }
+
+        const groupMessage = await GroupMessage.findById(messageId);
+
+        if (!groupMessage) {
+            throw new ApiError(404, "Message not found");
+        }
+
+        // Only the sender can update the message
+        if (groupMessage.senderId.toString() !== req.user._id.toString()) {
+            throw new ApiError(403, "You can only update your own messages");
+        }
+
+        groupMessage.message = message || groupMessage.message;
+        await groupMessage.save();
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                groupMessage,
+                "Message updated successfully"
+            )
+        );
+    }
+);

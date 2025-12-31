@@ -778,6 +778,17 @@ export const groupChatService = {
     return response.data;
   },
 
+  // Update a message in a group chat
+  updateGroupChatMessage: async (authApi, messageId, data) => {
+    let payload = data;
+    // If data is just a string, wrap it in JSON
+    if (typeof data === "string") {
+      payload = { message: data };
+    }
+    const response = await authApi.patch(`/group-chats/messages/${messageId}`, payload);
+    return response.data;
+  },
+
 };
 
 // Notification Service functions

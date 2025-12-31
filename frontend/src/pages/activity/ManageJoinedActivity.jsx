@@ -95,6 +95,7 @@ function ManageJoinedActivity() {
       setIsRedirecting(true);
 
       // Delay navigation to show overlay
+      localStorage.removeItem(`joined_chat_${id}`);
       setTimeout(() => {
         navigate('/joined-activities');
       }, 2000);
@@ -139,6 +140,7 @@ function ManageJoinedActivity() {
 
 
   const currentParticipants = activity.participants ? activity.participants.length : 0;
+  const isParticipant = activity.participants?.some(p => (p._id || p) === currentUser?._id);
   // Handle maxCapacity vs participantLimit naming
   const maxCapacity = activity.maxCapacity || activity.participantLimit || 0;
   const spotsLeft = maxCapacity - currentParticipants;
@@ -300,7 +302,14 @@ function ManageJoinedActivity() {
                     <p className="text-slate-600">Connect with other participants and the host securely.</p>
                   </div>
                   <button
-                    onClick={() => setShowChatModal(true)}
+                    onClick={() => {
+                      const hasJoinedLocally = localStorage.getItem(`joined_chat_${id}`);
+                      if (hasJoinedLocally || isCreator || isParticipant) {
+                        navigate(`/activity-chat/${id}`);
+                      } else {
+                        setShowChatModal(true);
+                      }
+                    }}
                     className="px-8 py-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200 hover:shadow-xl hover:-translate-y-0.5 transition-all text-lg whitespace-nowrap"
                   >
                     Open Group Chat

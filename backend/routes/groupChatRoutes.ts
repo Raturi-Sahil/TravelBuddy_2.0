@@ -4,6 +4,7 @@ import {
   getGroupChatByActivity,
   getGroupChatMessages,
   sendGroupChatMessage,
+  updateGroupChatMessage,
 } from "../controller/groupChatController";
 import { requireProfile } from "../middlewares/authMiddleware";
 import upload from "../middlewares/multerMiddleware";
@@ -18,6 +19,7 @@ router.get("/activity/:activityId", getGroupChatByActivity);
 
 // messages
 router.post("/:chatId/messages", upload.single("attachment"), sendGroupChatMessage);
+router.patch("/messages/:messageId", updateGroupChatMessage);
 router.get("/:chatId/messages", getGroupChatMessages);
 
 

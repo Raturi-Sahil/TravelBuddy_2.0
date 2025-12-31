@@ -41,6 +41,7 @@ function JoinChatGroup({ isOpen, onClose, activityId }) {
     setJoining(true);
     setTimeout(() => {
       setJoining(false);
+      localStorage.setItem(`joined_chat_${activityId}`, "true");
       toast.success(`Welcome to ${groupDetails.name}!`);
       onClose(); // Close the modal
       navigate(`/activity-chat/${activityId}`);
