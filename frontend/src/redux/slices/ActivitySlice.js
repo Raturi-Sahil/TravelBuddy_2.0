@@ -92,6 +92,22 @@ export const verifyActivityPayment = createAsyncThunk(
   }
 );
 
+// Async Thunk to invite users
+export const inviteUsersToActivity = createAsyncThunk(
+  'activity/inviteUsers',
+  async ({ getToken, activityId, userIds }, { rejectWithValue }) => {
+    try {
+      const authApi = createAuthenticatedApi(getToken);
+      const response = await activityService.inviteUsers(authApi, activityId, userIds);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to invite users'
+      );
+    }
+  }
+);
+
 const activitySlice = createSlice({
   name: 'activity',
   initialState,

@@ -19,7 +19,11 @@ import {
   Mic,
   Smile,
   Sticker,
-  Gift
+  Gift,
+  UserPlus,
+  X,
+  Search,
+  Check
 } from "lucide-react";
 import EmojiPicker from 'emoji-picker-react';
 import { useEffect, useRef, useState } from "react";
@@ -29,11 +33,17 @@ import AudioMessage from "../../components/chat/AudioMessage";
 
 
 import { createAuthenticatedApi, groupChatService, userService } from "../../redux/services/api";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchFriends } from "../../redux/slices/userSlice";
+import { inviteUsersToActivity } from "../../redux/slices/ActivitySlice";
 
 function GroupChat() {
   const { activityId } = useParams();
   const { getToken, userId } = useAuth();
+
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { friends } = useSelector((state) => state.user);
 
   const authApi = createAuthenticatedApi(getToken);
 
@@ -46,6 +56,14 @@ function GroupChat() {
 
   const [showStickers, setShowStickers] = useState(false);
   const [activeMediaTab, setActiveMediaTab] = useState("emoji"); // emoji | sticker | gif
+
+  // Invite Modal State
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [invitedUsers, setInvitedUsers] = useState(new Set());
+  const [invitingLoader, setInvitingLoader] = useState(new Set());
 
   const [showAttachments, setShowAttachments] = useState(false);
   const messagesEndRef = useRef(null);
@@ -80,12 +98,12 @@ function GroupChat() {
   ];
 
   const handleStickerSend = async (stickerUrl) => {
-    // Send as an image message, but maybe we download it and send as file? 
-    // Or just send the URL if backend supported it. 
+    // Send as an image message, but maybe we download it and send as file?
+    // Or just send the URL if backend supported it.
     // But my backend expects "attachment" file for images usually or "message" text.
     // If I send URL as text, it renders as text unless I implement URL preview or handle it.
-    // But I implemented `attachmentUrl`. 
-    // I can't easily populate `attachmentUrl` without uploading a file. 
+    // But I implemented `attachmentUrl`.
+    // I can't easily populate `attachmentUrl` without uploading a file.
     // OPTION 1: Send as Text with a special flag?
     // OPTION 2: Fetch the sticker blob and upload it.
 
@@ -137,8 +155,9 @@ function GroupChat() {
     };
     if (userId) {
       loadUser();
+      dispatch(fetchFriends(getToken));
     }
-  }, [userId]);
+  }, [userId, dispatch, getToken]);
 
   // Load chat + messages
   useEffect(() => {
@@ -313,6 +332,44 @@ function GroupChat() {
     }
   };
 
+  // Invite Logic
+  const handleSearchUsers = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const limit = 20;
+      const response = await userService.getNearbyTravelers(authApi, { search: searchQuery, limit });
+      setSearchResults(response.data.users || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to search users');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleInviteUser = async (userToInviteId) => {
+    setInvitingLoader(prev => new Set(prev).add(userToInviteId));
+    try {
+      await dispatch(inviteUsersToActivity({
+        getToken,
+        activityId: activityId, // Use the activityID from params
+        userIds: [userToInviteId]
+      })).unwrap();
+
+      setInvitedUsers(prev => new Set(prev).add(userToInviteId));
+      toast.success('Invitation sent successfully');
+    } catch (err) {
+      toast.error(err || 'Failed to send invitation');
+    } finally {
+      setInvitingLoader(prev => {
+        const next = new Set(prev);
+        next.delete(userToInviteId);
+        return next;
+      });
+    }
+  };
+
   // Send Location
   const handleLocation = async () => {
     if (!navigator.geolocation) {
@@ -416,6 +473,16 @@ function GroupChat() {
           </div>
         </div>
         <div className="flex items-center gap-5 text-gray-300">
+          {/* Invite Button (Only for Creator) */}
+          {chat?.createdBy?._id === userId && (
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="p-2 bg-orange-600/20 hover:bg-orange-600 text-orange-500 hover:text-white rounded-full transition-all"
+              title="Invite Participants"
+            >
+              <UserPlus className="w-5 h-5" />
+            </button>
+          )}
           <Video className="w-6 h-6 cursor-pointer hover:text-orange-500 transition-colors" />
           <Phone className="w-5 h-5 cursor-pointer hover:text-orange-500 transition-colors" />
           <MoreVertical className="w-5 h-5 cursor-pointer hover:text-white" />
@@ -652,12 +719,129 @@ function GroupChat() {
             message.trim()
               ? <Send className="w-5 h-5 ml-0.5 text-white" />
               : (isRecording ? <Send className="w-5 h-5 ml-0.5 text-white" /> : <Mic className="w-5 h-5 text-white" />)
-            // If recording, show Send icon to indicate "Stop & Send", or maybe a Stop icon. 
-            // WhatsApp shows a Mic icon that gets bigger or a Send icon. 
+            // If recording, show Send icon to indicate "Stop & Send", or maybe a Stop icon.
+            // WhatsApp shows a Mic icon that gets bigger or a Send icon.
             // Let's explicitly show Send icon when recording to mean "Send Voice Note".
           )}
         </button>
       </div>
+       {/* Invite Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-200 h-[600px] flex flex-col border border-gray-800">
+            {/* Modal Header */}
+            <div className="bg-gray-800 p-6 border-b border-gray-700 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-600/20 rounded-full">
+                    <UserPlus className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Invite to Group</h3>
+                    <p className="text-gray-400 text-sm">Add friends to this chat</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowInviteModal(false)}
+                  className="p-2 hover:bg-gray-700 rounded-full transition-colors text-gray-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 flex-1 flex flex-col overflow-hidden">
+              {/* Search Bar */}
+              <div className="relative mb-6 flex-shrink-0">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchUsers()}
+                  placeholder="Search by name..."
+                  className="w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-xl focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none transition-colors text-white placeholder-gray-500"
+                  autoFocus
+                />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <button
+                  onClick={handleSearchUsers}
+                  disabled={!searchQuery.trim() || isSearching}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-orange-600 text-white rounded-lg text-xs font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}
+                </button>
+              </div>
+
+              {/* Results List */}
+              <div className="flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-transparent">
+               {isSearching ? (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                    <Loader2 className="w-8 h-8 animate-spin mb-2 text-orange-500" />
+                    <p>Searching travelers...</p>
+                  </div>
+                ) : (searchResults.length > 0 ? searchResults : friends).filter(u => !searchQuery || searchResults.length > 0 || u.name?.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+                  (searchResults.length > 0 ? searchResults : friends)
+                    .filter(u => !searchQuery || searchResults.length > 0 || u.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((user) => {
+                    const isParticipant = chat?.participants?.some(p => p._id === user._id || p === user._id);
+                    const isInvited = invitedUsers.has(user._id);
+                    const isLoading = invitingLoader.has(user._id);
+
+                    return (
+                      <div key={user._id} className="flex items-center justify-between p-3 bg-gray-800 rounded-xl hover:bg-gray-750 transition-colors border border-gray-750">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={user.profilePicture || user.profileImage || `https://ui-avatars.com/api/?name=${user.fullName || user.name}`}
+                            alt={user.fullName || user.name}
+                            className="w-10 h-10 rounded-full object-cover border border-gray-600"
+                          />
+                          <div>
+                            <p className="font-semibold text-gray-200">{user.fullName || user.name}</p>
+                            {(user.distanceKm !== null && user.distanceKm !== undefined) && (
+                              <p className="text-xs text-gray-500">{user.distanceKm} km away</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {isParticipant ? (
+                          <span className="px-3 py-1.5 bg-green-900/30 text-green-400 text-xs font-bold rounded-lg flex items-center gap-1 border border-green-900/50">
+                            <Check className="w-3 h-3" /> Joined
+                          </span>
+                        ) : isInvited ? (
+                          <span className="px-3 py-1.5 bg-orange-900/30 text-orange-400 text-xs font-bold rounded-lg border border-orange-900/50">
+                            Invited
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleInviteUser(user._id)}
+                            disabled={isLoading}
+                            className="px-3 py-1.5 bg-orange-600 text-white hover:bg-orange-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50 shadow-lg shadow-orange-900/20"
+                          >
+                            {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                            Invite
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-10 text-gray-600">
+                    <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                      {searchQuery ? <Search className="w-8 h-8 opacity-50" /> : <UserPlus className="w-8 h-8 opacity-50" />}
+                    </div>
+                    <p>{searchQuery ? "No travelers found." : "Invite your friends to join!"}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+             <div className="p-4 bg-gray-800 border-t border-gray-700 text-center">
+               <p className="text-xs text-gray-500">Invited users will join this chat and the activity.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

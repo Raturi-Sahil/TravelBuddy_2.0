@@ -327,6 +327,12 @@ export const activityService = {
     return response.data;
   },
 
+  // Invite users
+  inviteUsers: async (authApi, activityId, userIds) => {
+    const response = await authApi.post(`/activities/${activityId}/invite`, { userIds });
+    return response.data;
+  },
+
   // Get nearby activities
   getNearbyActivities: async (authApi, { lat, lng, radius, search, page, limit }) => {
     const params = new URLSearchParams();

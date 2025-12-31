@@ -19,7 +19,11 @@ import {
   Video,
   AlertTriangle,
   X,
-  Ban
+  Ban,
+  Search,
+  UserPlus,
+  Check,
+  Send
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -28,8 +32,11 @@ import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
 
 import { useGoogleMaps } from '../../context/GoogleMapsContext';
-import { fetchActivityById } from '../../redux/slices/ActivitySlice';
+import { fetchActivityById, inviteUsersToActivity } from '../../redux/slices/ActivitySlice';
+import { fetchFriends } from '../../redux/slices/userSlice';
 import { deleteActivity, cancelActivity } from '../../redux/slices/userActivitySlice';
+
+import { userService, createAuthenticatedApi } from '../../redux/services/api';
 import ParticipantsTable from './Partipiants';
 
 const getEmbedUrl = (url) => {
@@ -56,7 +63,8 @@ function ManageActivity() {
   const { getToken } = useAuth();
 
   const { currentActivity, isLoading, error } = useSelector((state) => state.activity);
-  const { profile: currentUser } = useSelector((state) => state.user);
+
+  const { profile: currentUser, friends } = useSelector((state) => state.user);
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -64,12 +72,22 @@ function ManageActivity() {
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
 
+  // Invite Modal State
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [invitedUsers, setInvitedUsers] = useState(new Set()); // Track accepted invites in this session
+  const [invitingLoader, setInvitingLoader] = useState(new Set()); // Track loading state per user
+
   const { isLoaded } = useGoogleMaps();
+
 
   useEffect(() => {
     if (id) {
       dispatch(fetchActivityById({ getToken, id }));
     }
+    dispatch(fetchFriends(getToken));
   }, [id, dispatch, getToken]);
 
   // Check if activity is in the past
@@ -148,6 +166,48 @@ function ManageActivity() {
       setIsCancelling(false);
       setShowCancelModal(false);
       setCancelReason('');
+    }
+  };
+
+  const handleSearchUsers = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      // Use createAuthenticatedApi to get the auth instance with token
+      const authApi = createAuthenticatedApi(getToken);
+      const limit = 20; // Limit results
+      const response = await userService.getNearbyTravelers(authApi, { search: searchQuery, limit });
+      setSearchResults(response.data.users || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to search users');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleInviteUser = async (userId) => {
+    setInvitingLoader(prev => new Set(prev).add(userId));
+    try {
+      await dispatch(inviteUsersToActivity({
+        getToken,
+        activityId: currentActivity._id,
+        userIds: [userId]
+      })).unwrap();
+
+      setInvitedUsers(prev => new Set(prev).add(userId));
+      toast.success('Invitation sent successfully');
+
+      // Update local state to reflect invitation (opt-in: maybe refresh activity?)
+      // For now just marking as invited in UI
+    } catch (err) {
+      toast.error(err || 'Failed to send invitation');
+    } finally {
+      setInvitingLoader(prev => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
     }
   };
 
@@ -421,6 +481,7 @@ function ManageActivity() {
             <ParticipantsTable
               participants={activity.participants}
               activityLimit={activity.maxCapacity}
+              onInvite={() => setShowInviteModal(true)}
             />
           </div>
 
@@ -682,6 +743,124 @@ function ManageActivity() {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite User Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-200 h-[600px] flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-amber-600 p-6 text-white flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-full">
+                    <UserPlus className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">Invite Travelers</h3>
+                    <p className="text-orange-100 text-sm">Search and invite friends to join</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowInviteModal(false)}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 flex-1 flex flex-col overflow-hidden">
+              {/* Search Bar */}
+              <div className="relative mb-6 flex-shrink-0">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchUsers()}
+                  placeholder="Search by name..."
+                  className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:border-orange-500 focus:ring-0 focus:outline-none transition-colors"
+                  autoFocus
+                />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <button
+                  onClick={handleSearchUsers}
+                  disabled={!searchQuery.trim() || isSearching}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-orange-600 text-white rounded-lg text-xs font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}
+                </button>
+              </div>
+
+              {/* Results List */}
+              <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                {isSearching ? (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                    <Loader2 className="w-8 h-8 animate-spin mb-2 text-orange-500" />
+                    <p>Searching travelers...</p>
+                  </div>
+                ) : (searchResults.length > 0 ? searchResults : friends).filter(u => !searchQuery || searchResults.length > 0 || u.name?.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+                  (searchResults.length > 0 ? searchResults : friends)
+                    .filter(u => !searchQuery || searchResults.length > 0 || u.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((user) => {
+                    const isParticipant = activity.participants?.some(p => p._id === user._id || p === user._id);
+                    const isInvited = invitedUsers.has(user._id) || activity.invitedUsers?.some(iu => iu.userId === user._id);
+                    const isLoading = invitingLoader.has(user._id);
+
+                    return (
+                      <div key={user._id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={user.profilePicture || user.profileImage || `https://ui-avatars.com/api/?name=${user.fullName || user.name}`}
+                            alt={user.fullName || user.name}
+                            className="w-10 h-10 rounded-full object-cover border border-white shadow-sm"
+                          />
+                          <div>
+                            <p className="font-semibold text-slate-900">{user.fullName || user.name}</p>
+                            {(user.distanceKm !== null && user.distanceKm !== undefined) && (
+                              <p className="text-xs text-slate-500">{user.distanceKm} km away</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {isParticipant ? (
+                          <span className="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-bold rounded-lg flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Joined
+                          </span>
+                        ) : isInvited ? (
+                          <span className="px-3 py-1.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-lg">
+                            Invited
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleInviteUser(user._id)}
+                            disabled={isLoading}
+                            className="px-3 py-1.5 bg-orange-100 text-orange-700 hover:bg-orange-200 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50"
+                          >
+                            {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                            Invite
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-10 text-slate-400">
+                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      {searchQuery ? <Search className="w-8 h-8 opacity-50" /> : <UserPlus className="w-8 h-8 opacity-50" />}
+                    </div>
+                    <p>{searchQuery ? "No travelers found." : "Invite your friends to join!"}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 text-center">
+               <p className="text-xs text-slate-400">Invited users will receive a notification.</p>
             </div>
           </div>
         </div>
