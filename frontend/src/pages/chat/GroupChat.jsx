@@ -969,7 +969,6 @@ function GroupChat() {
                         </div>
                       )}
 
-                      {msg.message && !msg.message.startsWith("[") && <span className="break-words leading-snug whitespace-pre-wrap">{msg.message}</span>}
 
                       <span className={`text-[10px] min-w-[50px] text-right ml-auto -mb-1 mt-1 inline-block opacity-60 ${isOwn ? 'text-orange-900/60' : 'text-gray-400'}`}>
                         {new Date(msg.createdAt).toLocaleTimeString([], {
