@@ -412,17 +412,23 @@ export const toggleLike = asyncHandler(
 
     let updatedPost;
     if (hasLiked) {
-      // Unlike
+      // Unlike - remove from likes and decrement likesCount
       updatedPost = await Post.findByIdAndUpdate(
         id,
-        { $pull: { likes: userId } },
+        {
+          $pull: { likes: userId },
+          $inc: { likesCount: -1 }
+        },
         { new: true }
       ).lean();
     } else {
-      // Like
+      // Like - add to likes and increment likesCount
       updatedPost = await Post.findByIdAndUpdate(
         id,
-        { $addToSet: { likes: userId } },
+        {
+          $addToSet: { likes: userId },
+          $inc: { likesCount: 1 }
+        },
         { new: true }
       ).lean();
 
@@ -487,7 +493,10 @@ export const addComment = asyncHandler(
 
     const updatedPost = await Post.findByIdAndUpdate(
       id,
-      { $push: { comments: comment } },
+      {
+        $push: { comments: comment },
+        $inc: { commentsCount: 1 }
+      },
       { new: true }
     ).lean();
 
@@ -547,7 +556,10 @@ export const deleteComment = asyncHandler(
 
     const updatedPost = await Post.findByIdAndUpdate(
       id,
-      { $pull: { comments: { _id: commentId } } },
+      {
+        $pull: { comments: { _id: commentId } },
+        $inc: { commentsCount: -1 }
+      },
       { new: true }
     ).lean();
 

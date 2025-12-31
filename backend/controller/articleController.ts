@@ -4,9 +4,11 @@ import mongoose from "mongoose";
 import uploadOnCloudinary from "../middlewares/cloudinary";
 import deleteFromCloudinaryByUrl from "../middlewares/deleteCloudinary";
 import { Article } from "../models/articleModel";
+import { User } from "../models/userModel";
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
 import asyncHandler from "../utils/asyncHandler";
+import { sendNotification } from "../utils/notificationUtil";
 
 // Create a new article
 export const createArticle = asyncHandler(
@@ -90,6 +92,41 @@ export const createArticle = asyncHandler(
       }
 
       console.log("createArticle: Created article", article._id);
+
+      // Notify User
+      await sendNotification({
+        recipient: userId as any,
+        type: "ARTICLE_CREATED",
+        message: status === "Published" ? "Your article has been published!" : "Your article has been saved as draft",
+        link: `/article/${article._id}`,
+        relatedId: article._id as any,
+      });
+
+      // Notify friends if article is published and public
+      if (status === "Published" && (visibility === "Public" || visibility === "Friends")) {
+        try {
+          // Fetch user's friends
+          const authorUser = await User.findById(userId).select('friends name');
+          if (authorUser && authorUser.friends && authorUser.friends.length > 0) {
+            // Send notification to each friend
+            const friendNotifications = authorUser.friends.map((friendId: any) =>
+              sendNotification({
+                recipient: friendId,
+                sender: userId as any,
+                type: "FRIEND_PUBLISHED_ARTICLE",
+                message: `${user.name} published a new article: "${title}"`,
+                link: `/article/${article._id}`,
+                relatedId: article._id as any,
+              })
+            );
+            await Promise.all(friendNotifications);
+            console.log(`createArticle: Notified ${authorUser.friends.length} friends`);
+          }
+        } catch (friendNotifyErr) {
+          console.error("createArticle: Failed to notify friends", friendNotifyErr);
+          // Don't throw - article creation was successful
+        }
+      }
 
       return res
         .status(201)
@@ -278,6 +315,15 @@ export const updateArticle = asyncHandler(
       runValidators: true,
     }).lean();
 
+    // Notify User
+    await sendNotification({
+      recipient: userId as any,
+      type: "ARTICLE_UPDATED",
+      message: "Your article has been updated successfully",
+      link: `/article/${id}`,
+      relatedId: id as any,
+    });
+
     return res
       .status(200)
       .json(
@@ -325,6 +371,15 @@ export const deleteArticle = asyncHandler(
 
     await Article.findByIdAndDelete(id);
 
+    // Notify User
+    await sendNotification({
+      recipient: userId as any,
+      type: "ARTICLE_DELETED",
+      message: "Your article has been deleted",
+      link: `/manage-article`,
+      relatedId: id as any,
+    });
+
     return res
       .status(200)
       .json(new ApiResponse(200, null, "Article deleted successfully"));
@@ -355,19 +410,37 @@ export const toggleLike = asyncHandler(
 
     let updatedArticle;
     if (hasLiked) {
-      // Unlike
+      // Unlike - remove from likes and decrement likesCount
       updatedArticle = await Article.findByIdAndUpdate(
         id,
-        { $pull: { likes: userId } },
+        {
+          $pull: { likes: userId },
+          $inc: { likesCount: -1 }
+        },
         { new: true }
       ).lean();
     } else {
-      // Like
+      // Like - add to likes and increment likesCount
       updatedArticle = await Article.findByIdAndUpdate(
         id,
-        { $addToSet: { likes: userId } },
+        {
+          $addToSet: { likes: userId },
+          $inc: { likesCount: 1 }
+        },
         { new: true }
       ).lean();
+
+      // Notify Article Owner if liked by someone else
+      if (article.userId !== userId) {
+        await sendNotification({
+          recipient: article.userId as any,
+          sender: userId as any,
+          type: "ARTICLE_LIKED",
+          message: `${req.user.name} liked your article "${article.title}"`,
+          link: `/article/${id}`,
+          relatedId: id as any,
+        });
+      }
     }
 
     return res
@@ -418,9 +491,24 @@ export const addComment = asyncHandler(
 
     const updatedArticle = await Article.findByIdAndUpdate(
       id,
-      { $push: { comments: comment } },
+      {
+        $push: { comments: comment },
+        $inc: { commentsCount: 1 }
+      },
       { new: true }
     ).lean();
+
+    // Notify Article Owner if commented by someone else
+    if (article.userId !== userId) {
+      await sendNotification({
+        recipient: article.userId as any,
+        sender: userId as any,
+        type: "ARTICLE_COMMENTED",
+        message: `${user.name} commented on your article "${article.title}"`,
+        link: `/article/${id}`,
+        relatedId: id as any,
+      });
+    }
 
     return res
       .status(201)
@@ -468,7 +556,10 @@ export const deleteComment = asyncHandler(
 
     const updatedArticle = await Article.findByIdAndUpdate(
       id,
-      { $pull: { comments: { _id: commentId } } },
+      {
+        $pull: { comments: { _id: commentId } },
+        $inc: { commentsCount: -1 }
+      },
       { new: true }
     ).lean();
 
@@ -482,11 +573,17 @@ export const deleteComment = asyncHandler(
 
 // Increment share count
 export const incrementShare = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: Request & { user?: any }, res: Response) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new ApiError(400, "Invalid article id");
+    }
+
+    const article = await Article.findById(id);
+
+    if (!article) {
+      throw new ApiError(404, "Article not found");
     }
 
     const updatedArticle = await Article.findByIdAndUpdate(
@@ -495,8 +592,16 @@ export const incrementShare = asyncHandler(
       { new: true }
     ).lean();
 
-    if (!updatedArticle) {
-      throw new ApiError(404, "Article not found");
+    // Notify Article Owner if shared by someone else
+    if (req.user && article.userId !== req.user._id.toString()) {
+      await sendNotification({
+        recipient: article.userId as any,
+        sender: req.user._id as any,
+        type: "ARTICLE_SHARED",
+        message: `${req.user.name} shared your article "${article.title}"`,
+        link: `/article/${id}`,
+        relatedId: id as any,
+      });
     }
 
     return res
