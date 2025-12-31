@@ -204,259 +204,251 @@ const GuideProfileSetup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-8 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold mb-2">
-                  {isEditing ? 'Edit Guide Profile' : 'Become a Local Guide'}
-                </h1>
-                <p className="text-orange-100">
-                  Share your local expertise with travelers from around the world
-                </p>
-              </div>
-              {isEditing && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/guide-dashboard')}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl transition-colors"
-                >
-                  <X size={18} />
-                  Cancel
-                </button>
-              )}
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 text-gray-900 pt-24 pb-12 px-4 font-sans selection:bg-orange-500/30">
 
-          <form className="p-6 md:p-8 space-y-6" onSubmit={handleSubmit}>
-            {/* City */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                City / Location
-              </label>
-              <Autocomplete
-                onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
-                onPlaceChanged={handlePlaceChanged}
-              >
-                <div className="relative">
-                  <MapPin size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search for your city..."
-                    defaultValue={formData.city}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+      {/* Background Glow */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-200/40 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/40 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isEditing ? 'Edit Profile' : 'Become a Guide'}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Curate experiences. Share your world.
+            </p>
+          </div>
+          {isEditing && (
+             <button
+              onClick={() => navigate('/guide-dashboard')}
+              className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-600 text-sm font-medium transition-all"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+          {/* LEFT COLUMN - Main Info (8 cols) */}
+          <div className="lg:col-span-8 space-y-6">
+
+            {/* Card 1: Essential Info */}
+            <div className="bg-white border border-gray-100 rounded-3xl p-6 relative overflow-hidden shadow-xl group hover:shadow-2xl transition-shadow">
+              <h3 className="text-lg font-semibold text-gray-800 mb-5 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-orange-500" /> Location & Rate
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">City / Base</label>
+                  <Autocomplete
+                    onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+                    onPlaceChanged={handlePlaceChanged}
+                  >
+                   <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search city..."
+                        defaultValue={formData.city}
+                        className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all placeholder-gray-400"
+                      />
+                      <div className="absolute right-3 top-3 text-gray-400 pointer-events-none">
+                        <MapPin size={18} />
+                      </div>
+                    </div>
+                  </Autocomplete>
+                </div>
+
+                <div>
+                   <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">Daily Rate (₹)</label>
+                   <input
+                    type="number"
+                    value={formData.pricePerDay}
+                    onChange={(e) => setFormData({ ...formData, pricePerDay: e.target.value })}
+                    placeholder="2000"
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all placeholder-gray-400"
                   />
                 </div>
-              </Autocomplete>
-            </div>
 
-            {/* Specialties */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Specialties (Select all that apply)
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {GUIDE_SPECIALTIES.map((specialty) => (
-                  <label
-                    key={specialty}
-                    className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
-                      formData.specialties.includes(specialty)
-                        ? 'bg-orange-50 border-orange-300 text-orange-700'
-                        : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.specialties.includes(specialty)}
-                      onChange={() => handleSpecialtyToggle(specialty)}
-                      className="sr-only"
-                    />
-                    <span className="text-sm font-medium">{specialty}</span>
-                  </label>
-                ))}
+                <div>
+                   <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">Years Exp.</label>
+                   <input
+                    type="number"
+                    value={formData.experience}
+                    onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                    placeholder="3"
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all placeholder-gray-400"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Languages */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Languages You Speak
-              </label>
-              <div className="space-y-2">
-                {formData.languages.map((lang, index) => (
-                  <div key={index} className="flex gap-2">
-                    <select
-                      value={lang.name}
-                      onChange={(e) => handleLanguageChange(index, 'name', e.target.value)}
-                      className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none"
-                    >
-                      <option value="">Select Language</option>
-                      {LANGUAGES.map((l) => (
-                        <option key={l} value={l}>{l}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={lang.level}
-                      onChange={(e) => handleLanguageChange(index, 'level', e.target.value)}
-                      className="w-32 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none"
-                    >
-                      {LANGUAGE_LEVELS.map((level) => (
-                        <option key={level} value={level}>{level}</option>
-                      ))}
-                    </select>
-                    {formData.languages.length > 1 && (
+            {/* Card 2: Expertise */}
+            <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-shadow">
+              <h3 className="text-lg font-semibold text-gray-800 mb-5">Expertise</h3>
+
+              <div className="space-y-6">
+                <div>
+                   <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 block">Specialties</label>
+                   <div className="flex flex-wrap gap-2">
+                     {GUIDE_SPECIALTIES.map((specialty) => {
+                       const active = formData.specialties.includes(specialty);
+                       return (
+                         <button
+                           key={specialty}
+                           type="button"
+                           onClick={() => handleSpecialtyToggle(specialty)}
+                           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
+                             active
+                             ? 'bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-500/20'
+                             : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                           }`}
+                         >
+                           {specialty}
+                         </button>
+                       );
+                     })}
+                   </div>
+                </div>
+
+                <div>
+                   <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 block">Languages</label>
+                   <div className="grid gap-3">
+                     {formData.languages.map((lang, index) => (
+                       <div key={index} className="flex gap-2 group">
+                         <select
+                           value={lang.name}
+                           onChange={(e) => handleLanguageChange(index, 'name', e.target.value)}
+                           className="flex-1 bg-gray-50 text-gray-900 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-orange-500 outline-none hover:bg-gray-100 transition-colors"
+                         >
+                           <option value="">Language</option>
+                           {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+                         </select>
+                         <select
+                           value={lang.level}
+                           onChange={(e) => handleLanguageChange(index, 'level', e.target.value)}
+                           className="w-32 bg-gray-50 text-gray-900 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-orange-500 outline-none hover:bg-gray-100 transition-colors"
+                         >
+                           {LANGUAGE_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                         </select>
+                         {formData.languages.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeLanguage(index)}
+                              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <X size={16}/>
+                            </button>
+                         )}
+                       </div>
+                     ))}
+                   </div>
+                   <button
+                    type="button"
+                    onClick={addLanguage}
+                    className="mt-3 text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
+                   >
+                     + Add Language
+                   </button>
+                </div>
+              </div>
+            </div>
+
+             {/* Card 3: Bio */}
+             <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-shadow">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 block">About You</label>
+                <textarea
+                  value={formData.bio}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  placeholder="Introduce yourself. Why should travelers choose you?"
+                  rows={4}
+                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all placeholder-gray-400 resize-none"
+                />
+             </div>
+
+          </div>
+
+
+          {/* RIGHT COLUMN - Media & Availability (4 cols) */}
+          <div className="lg:col-span-4 space-y-6">
+
+            {/* Card 4: Images */}
+            <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-shadow">
+               <div className="flex items-center justify-between mb-4">
+                 <h3 className="text-lg font-semibold text-gray-800">Gallery</h3>
+                 <span className="text-xs text-gray-400">{existingImages.length + coverImages.length}/5</span>
+               </div>
+
+               <div className="grid grid-cols-2 gap-2">
+                 {[...existingImages, ...imagePreview].map((img, i) => (
+                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-100">
+                      <img src={img} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"
-                        onClick={() => removeLanguage(index)}
-                        className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                        onClick={() => removeImage(i, i < existingImages.length)}
+                        className="absolute top-1 right-1 p-1 bg-white/90 hover:bg-red-50 text-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-sm"
                       >
-                        <X size={20} />
+                       <X size={14} />
                       </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={addLanguage}
-                className="mt-2 px-4 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-              >
-                + Add Language
-              </button>
+                    </div>
+                 ))}
+
+                 {(existingImages.length + coverImages.length < 5) && (
+                   <label className="aspect-square rounded-xl border border-dashed border-gray-300 hover:border-orange-500 hover:bg-orange-50 transition-all cursor-pointer flex flex-col items-center justify-center gap-1 group">
+                     <ImagePlus className="w-6 h-6 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                     <span className="text-[10px] text-gray-400 group-hover:text-orange-600 font-medium">Add Photo</span>
+                     <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                   </label>
+                 )}
+               </div>
             </div>
 
-            {/* Price and Experience */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Price per Day (₹)
-                </label>
-                <input
-                  type="number"
-                  value={formData.pricePerDay}
-                  onChange={(e) => setFormData({ ...formData, pricePerDay: e.target.value })}
-                  placeholder="e.g., 2000"
-                  min="0"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Years of Experience
-                </label>
-                <input
-                  type="number"
-                  value={formData.experience}
-                  onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                  placeholder="e.g., 3"
-                  min="0"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Bio */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                About You
-              </label>
-              <textarea
-                value={formData.bio}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                placeholder="Tell travelers about yourself, your local knowledge, and what makes your tours special..."
-                rows={4}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none resize-none"
-              />
-            </div>
-
-            {/* Cover Images */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Cover Images (Up to 5)
-              </label>
-              <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-                {existingImages.map((img, index) => (
-                  <div key={`existing-${index}`} className="relative aspect-square rounded-xl overflow-hidden group">
-                    <img src={img} alt={`Cover ${index + 1}`} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index, true)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-                {imagePreview.map((preview, index) => (
-                  <div key={`new-${index}`} className="relative aspect-square rounded-xl overflow-hidden group">
-                    <img src={preview} alt={`New ${index + 1}`} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index, false)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-                {existingImages.length + coverImages.length < 5 && (
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                    <ImagePlus size={24} className="text-gray-400 mb-1" />
-                    <span className="text-xs text-gray-500">Add</span>
-                  </label>
-                )}
-              </div>
-            </div>
-
-            {/* Availability */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Available Days
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {DAYS_OF_WEEK.map((day, index) => {
-                  const isSelected = formData.availability.some((a) => a.dayOfWeek === index);
-                  return (
+            {/* Card 5: Availability */}
+            <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-shadow">
+               <h3 className="text-lg font-semibold text-gray-800 mb-4">Availability</h3>
+               <div className="flex flex-wrap gap-2">
+                 {DAYS_OF_WEEK.map((day, i) => (
                     <button
                       key={day}
                       type="button"
-                      onClick={() => handleAvailabilityToggle(index)}
-                      className={`px-4 py-3 rounded-xl font-medium transition-all ${
-                        isSelected
-                          ? 'bg-orange-500 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      onClick={() => handleAvailabilityToggle(i)}
+                      className={`flex-1 min-w-[80px] py-2.5 text-xs font-semibold rounded-lg border transition-all ${
+                         formData.availability.some(a => a.dayOfWeek === i)
+                         ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-200'
+                         : 'bg-gray-50 text-gray-500 border-transparent hover:bg-gray-100 hover:text-gray-900'
                       }`}
                     >
-                      {day}
+                      {day.slice(0,3)}
                     </button>
-                  );
-                })}
-              </div>
+                 ))}
+               </div>
             </div>
 
-            <button
+            {/* Submit Action */}
+             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
+              className={`w-full py-4 rounded-2xl font-bold text-lg shadow-xl shadow-orange-500/20 transition-all transform active:scale-95 ${
                 loading
-                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:shadow-lg hover:shadow-orange-500/30'
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-tr from-orange-600 to-orange-500 text-white hover:brightness-110'
               }`}
             >
-              {loading ? 'Saving...' : isEditing ? 'Update Profile' : 'Create Guide Profile'}
+              {loading
+                ? <span className="flex items-center justify-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> Processing...</span>
+                : (isEditing ? 'Save Changes' : 'Publish Profile')
+              }
             </button>
-          </form>
-        </div>
+
+          </div>
+
+        </form>
       </div>
     </div>
   );
