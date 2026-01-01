@@ -16,6 +16,7 @@ import {
   Send,
   Smile,
   Sticker,
+  Video,
   X,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -25,6 +26,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import AudioMessage from '../../components/chat/AudioMessage';
 import ChatListItem from '../../components/chat/ChatListItem';
+import { useCall } from '../../context/CallContext';
 import { useSocket } from '../../hooks/useSocket';
 import { createAuthenticatedApi, userService } from '../../redux/services/api';
 import {
@@ -98,105 +100,12 @@ export default function ChatPage() {
   const imageInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
-  // Call State
-  const [call, setCall] = useState({});
-  const [callAccepted, setCallAccepted] = useState(false);
-  const [callEnded, setCallEnded] = useState(false);
-  const [isCalling, setIsCalling] = useState(false);
-  const [stream, setStream] = useState(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [callDuration, setCallDuration] = useState(0);
-
-  const myVideo = useRef();
-  const userVideo = useRef();
-  const connectionRef = useRef();
-
-  // Audio refs for call sounds
-  const incomingAudio = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3"));
-  const outgoingAudio = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2367/2367-preview.mp3"));
-
-  // Configure audio loops
-  useEffect(() => {
-    incomingAudio.current.loop = true;
-    outgoingAudio.current.loop = true;
-    return () => {
-      incomingAudio.current.pause();
-      outgoingAudio.current.pause();
-    }
-  }, []);
-
-  // Handle Call Sounds
-  useEffect(() => {
-    if (call.isReceivingCall && !callAccepted && !callEnded) {
-      incomingAudio.current.play().catch(e => console.log("Audio play failed", e));
-    } else {
-      incomingAudio.current.pause();
-      incomingAudio.current.currentTime = 0;
-    }
-
-    if (isCalling && !callAccepted && !callEnded) {
-      outgoingAudio.current.play().catch(e => console.log("Audio play failed", e));
-    } else {
-      outgoingAudio.current.pause();
-      outgoingAudio.current.currentTime = 0;
-    }
-  }, [call.isReceivingCall, isCalling, callAccepted, callEnded]);
+  // Global Call Context
+  const { callUser } = useCall();
 
   // Initialize socket connection
   const { getSocket, sendTypingIndicator } = useSocket();
   const socket = getSocket();
-
-  useEffect(() => {
-    if(!socket) return;
-
-    socket.on('callUser', ({ from, name: callerName, signal }) => {
-      setCall({ isReceivingCall: true, from, name: callerName, signal });
-    });
-
-    socket.on('callAccepted', (signal) => {
-      setCallAccepted(true);
-      connectionRef.current.setRemoteDescription(new RTCSessionDescription(signal));
-    });
-
-    socket.on('iceCandidate', async (candidate) => {
-      if (connectionRef.current) {
-        try {
-          await connectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
-        } catch (e) {
-          console.error("Error adding received ice candidate", e);
-        }
-      }
-    });
-
-    socket.on('callEnded', () => {
-      setCallEnded(true);
-      leaveCall();
-    });
-
-    return () => {
-      socket.off('callUser');
-      socket.off('callAccepted');
-      socket.off('iceCandidate');
-      socket.off('callEnded');
-    };
-  }, [socket]);
-
-  // Call Timer
-  useEffect(() => {
-    let interval;
-    if (callAccepted && !callEnded) {
-      interval = setInterval(() => {
-        setCallDuration((prev) => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [callAccepted, callEnded]);
-
-  const formatDuration = (seconds) => {
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
-    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-  };
 
   // Fetch conversations on mount
   useEffect(() => {
@@ -236,6 +145,9 @@ export default function ChatPage() {
         };
         loadUser();
       }
+    } else {
+      dispatch(setCurrentChat(null));
+      setCurrentUser(null);
     }
   }, [userId, conversations, dispatch, getToken]);
 
@@ -487,127 +399,15 @@ export default function ChatPage() {
     return d.toLocaleDateString();
   };
 
-  // Call Functionality
-  const callUser = async () => {
-    setIsCalling(true);
-    setCallEnded(false);
-
-    try {
-      const currentStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      setStream(currentStream);
-
-      const peer = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-      });
-
-      currentStream.getTracks().forEach((track) => peer.addTrack(track, currentStream));
-
-      peer.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.emit("iceCandidate", {
-            to: currentUser?.clerk_id,
-            candidate: event.candidate,
-          });
-        }
-      };
-
-      peer.ontrack = (event) => {
-        if (userVideo.current) {
-          userVideo.current.srcObject = event.streams[0];
-        }
-      };
-
-      connectionRef.current = peer;
-
-      const offer = await peer.createOffer();
-      await peer.setLocalDescription(offer);
-
-      socket.emit("callUser", {
-        userToCall: currentUser?.clerk_id,
-        signalData: offer,
-        from: authUser?.id, // Send my Clerk ID
-        name: authUser?.fullName || "User"
-      });
-    } catch (err) {
-      console.error("Failed to start call:", err);
-      toast.error("Could not access microphone");
-      setIsCalling(false);
-    }
+  const handleCallUser = () => {
+    callUser(currentUser._id, currentUser.name, currentUser.clerk_id, currentUser.profileImage, false);
   };
 
-  const answerCall = async () => {
-    setCallAccepted(true);
-
-    try {
-      let currentStream = stream;
-      if (!currentStream) {
-        currentStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        setStream(currentStream);
-      }
-
-      const peer = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-      });
-
-      currentStream.getTracks().forEach((track) => peer.addTrack(track, currentStream));
-
-      peer.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.emit("iceCandidate", {
-            to: call.from,
-            candidate: event.candidate,
-          });
-        }
-      };
-
-      peer.ontrack = (event) => {
-        if (userVideo.current) {
-          userVideo.current.srcObject = event.streams[0];
-        }
-      };
-
-      connectionRef.current = peer;
-
-      await peer.setRemoteDescription(new RTCSessionDescription(call.signal));
-
-      const answer = await peer.createAnswer();
-      await peer.setLocalDescription(answer);
-
-      socket.emit("answerCall", { signal: answer, to: call.from });
-
-    } catch (err) {
-      console.error("Failed to answer call:", err);
-      toast.error("Could not access microphone");
-    }
+  const handleVideoCall = () => {
+    callUser(currentUser._id, currentUser.name, currentUser.clerk_id, currentUser.profileImage, true);
   };
 
-  const leaveCall = () => {
-    setCallEnded(true);
-    setCall({});
-    setIsCalling(false);
-    setCallAccepted(false);
 
-    if (connectionRef.current) {
-      connectionRef.current.close();
-      connectionRef.current = null;
-    }
-
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-
-    socket.emit("endCall", { to: callAccepted ? currentChatUserId : call.from });
-    // Reload window to clear all WebRTC states cleanly if needed, or just reset state
-    // window.location.reload(); // Hard reset is sometimes safer for WebRTC cleanup but jarring
-  };
-
-  const toggleMute = () => {
-    if (stream) {
-      stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
-      setIsMuted(!stream.getAudioTracks()[0].enabled);
-    }
-  };
 
   const currentMessages = messages[currentChatUserId] || [];
 
@@ -694,20 +494,12 @@ export default function ChatPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={() => navigate('/connections')}
-            className="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors group"
-          >
-            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-            <span>Back to Connections</span>
-          </button>
-        </div>
+
 
         {/* Chat Container */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden h-[calc(100vh-140px)] mx-auto max-w-6xl">
           <div className="flex h-full">
-            <div className="w-96 border-r border-orange-100 flex flex-col bg-white">
+            <div className={`w-full md:w-96 border-r border-orange-100 flex-col bg-white ${currentChatUserId ? 'hidden md:flex' : 'flex'}`}>
               <div className="p-4 border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50">
                 <div className="flex items-center gap-2">
                   <MessageCircle className="w-6 h-6 text-orange-500" />
@@ -739,7 +531,7 @@ export default function ChatPage() {
             </div>
 
             {/* Chat Window - Right Panel */}
-            <div className="flex-1 flex flex-col relative">
+            <div className={`flex-1 flex-col relative ${!currentChatUserId ? 'hidden md:flex' : 'flex'}`}>
               {loadingUser ? (
                 <div className="flex-1 flex items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
@@ -748,6 +540,12 @@ export default function ChatPage() {
                 <>
                   {/* Chat Header */}
                   <div className="p-3 border-b border-orange-100 flex items-center gap-4 bg-gradient-to-r from-orange-50 to-amber-50">
+                    <button
+                      onClick={() => navigate('/chat')}
+                      className="md:hidden p-1 mr-2 text-gray-500 hover:text-gray-800"
+                    >
+                      <ArrowLeft className="w-6 h-6" />
+                    </button>
                     <div className="relative">
                       <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden shadow-md">
                         {currentUser.profileImage ? (
@@ -768,14 +566,23 @@ export default function ChatPage() {
                         <p className="text-sm text-gray-400">Offline</p>
                       )}
                     </div>
-                    {/* Call Button */}
-                    <button
-                      onClick={callUser}
-                      className="ml-auto p-3 hover:bg-orange-100 rounded-full text-orange-500 transition-colors"
-                      title="Start Voice Call"
-                    >
-                      <Phone className="w-6 h-6" />
-                    </button>
+                    {/* Call Buttons */}
+                    <div className="ml-auto flex items-center gap-2">
+                      <button
+                        onClick={handleVideoCall}
+                        className="p-3 hover:bg-orange-100 rounded-full text-orange-500 transition-colors"
+                        title="Start Video Call"
+                      >
+                        <Video className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={handleCallUser}
+                        className="p-3 hover:bg-orange-100 rounded-full text-orange-500 transition-colors"
+                        title="Start Voice Call"
+                      >
+                        <Phone className="w-6 h-6" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Messages */}
@@ -998,78 +805,7 @@ export default function ChatPage() {
       </div>
 
 
-      {/* Incoming Call Modal */}
-      {call.isReceivingCall && !callAccepted && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 w-80 shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-300">
-            <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center mb-4 animate-bounce">
-               <Phone className="w-10 h-10 text-orange-600" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-1">{call.name || "Unknown"}</h3>
-            <p className="text-gray-500 mb-8">Incoming Voice Call...</p>
-            <div className="flex gap-4 w-full">
-              <button
-                onClick={leaveCall}
-                className="flex-1 py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors flex items-center justify-center gap-2"
-              >
-                <PhoneOff className="w-5 h-5" /> Decline
-              </button>
-              <button
-                onClick={answerCall}
-                className="flex-1 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
-              >
-                <Phone className="w-5 h-5" /> Accept
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Active Call UI */}
-      {(callAccepted || isCalling) && !callEnded && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/95 backdrop-blur-md">
-           <div className="flex flex-col items-center gap-8 text-white">
-              <div className="relative">
-                <div className="w-32 h-32 rounded-full border-4 border-white/20 overflow-hidden shadow-2xl">
-                  {currentUser?.profileImage ? (
-                    <img src={currentUser.profileImage} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gray-700 flex items-center justify-center text-4xl font-bold">
-                      {currentUser?.name?.[0]}
-                    </div>
-                  )}
-                </div>
-                {/* Audio Visualizer / Ripple Effect */}
-                <div className="absolute inset-0 rounded-full border-2 border-orange-500 scale-110 animate-ping opacity-20"></div>
-                <div className="absolute inset-0 rounded-full border border-orange-500 scale-125 animate-pulse opacity-10"></div>
-              </div>
-
-              <div className="text-center">
-                 <h2 className="text-2xl font-bold mb-2">{callAccepted ? (call.name || currentUser?.name) : (currentUser?.name || "Calling...")}</h2>
-                 <p className="text-orange-300">{callAccepted ? formatDuration(callDuration) : "Ringing..."}</p>
-              </div>
-
-              <div className="flex items-center gap-6">
-                <button
-                  onClick={toggleMute}
-                  className={`p-4 rounded-full backdrop-blur-md transition-all ${isMuted ? 'bg-white text-gray-900' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                >
-                   {isMuted ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
-                </button>
-                <button
-                  onClick={leaveCall}
-                  className="p-5 bg-red-500 rounded-full text-white hover:bg-red-600 shadow-xl shadow-red-500/30 transition-transform hover:scale-105"
-                >
-                   <PhoneOff className="w-8 h-8" />
-                </button>
-              </div>
-
-              {/* Hidden Video Elements (Audio Only) */}
-              <audio ref={myVideo} autoPlay muted />
-              <audio ref={userVideo} autoPlay />
-           </div>
-        </div>
-      )}
     </div>
   );
 }

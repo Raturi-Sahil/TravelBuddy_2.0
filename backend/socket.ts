@@ -72,13 +72,14 @@ export const initializeSocket = (server: HttpServer) => {
         });
 
         // Call events
-        socket.on("callUser", (data: { userToCall: string; signalData: any; from: string; name: string }) => {
+        socket.on("callUser", (data: { userToCall: string; signalData: any; from: string; name: string; type: string }) => {
             const receiverSocketId = userSocketMap[data.userToCall];
             if (receiverSocketId) {
                 io?.to(receiverSocketId).emit("callUser", {
                     signal: data.signalData,
                     from: data.from,
-                    name: data.name
+                    name: data.name,
+                    type: data.type
                 });
             }
         });

@@ -16,6 +16,8 @@ import TransportTravel from "./components/explore/TransportTravel";
 // Layout components
 import Layout from "./components/layout/Layout";
 import { AudioPlaybackProvider } from "./context/AudioPlaybackContext";
+import { CallProvider } from "./context/CallContext";
+import GlobalCallManager from "./components/chat/GlobalCallManager";
 // About pages
 import AboutUs from "./pages/about/AboutUs";
 // Activity pages
@@ -80,6 +82,8 @@ import Preloader from "./components/common/Preloader";
 function App() {
   return (
     <>
+    <CallProvider>
+      <GlobalCallManager />
       <Preloader />
       <Routes >
       <Route path="/" element={<Layout />} >
@@ -162,6 +166,7 @@ function App() {
       </Route>
 
     </Routes>
+    </CallProvider>
     </>
   );
 }
