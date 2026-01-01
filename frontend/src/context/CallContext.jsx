@@ -13,9 +13,37 @@ export const useCall = () => {
   return context;
 };
 
+// ICE Server configuration with multiple STUN servers and free TURN servers for better connectivity
+const ICE_SERVERS = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    // Free TURN servers from OpenRelay project for NAT traversal
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
+  iceCandidatePoolSize: 10,
+};
+
 export const CallProvider = ({ children }) => {
   const { user: authUser } = useUser();
-  const { getSocket } = useSocket();
+  const { getSocket, isConnected } = useSocket();
   const socket = getSocket();
 
   // Call State
@@ -28,6 +56,7 @@ export const CallProvider = ({ children }) => {
   const [callDuration, setCallDuration] = useState(0);
   const [remoteUser, setRemoteUser] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('idle'); // idle, connecting, connected, failed
 
   const [callType, setCallType] = useState('audio'); // 'audio' or 'video'
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -124,6 +153,44 @@ export const CallProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [callAccepted, callEnded]);
 
+  // Helper to setup ICE connection state monitoring
+  const setupConnectionStateMonitoring = (peer) => {
+    peer.oniceconnectionstatechange = () => {
+      console.log('ICE connection state:', peer.iceConnectionState);
+      switch (peer.iceConnectionState) {
+        case 'checking':
+          setConnectionStatus('connecting');
+          break;
+        case 'connected':
+        case 'completed':
+          setConnectionStatus('connected');
+          break;
+        case 'failed':
+          setConnectionStatus('failed');
+          toast.error('Connection failed. Please check your network and try again.');
+          break;
+        case 'disconnected':
+          setConnectionStatus('connecting');
+          toast('Connection interrupted. Attempting to reconnect...', { icon: '⚠️' });
+          // WebRTC will attempt to reconnect automatically
+          break;
+        case 'closed':
+          setConnectionStatus('idle');
+          break;
+        default:
+          break;
+      }
+    };
+
+    peer.onconnectionstatechange = () => {
+      console.log('Connection state:', peer.connectionState);
+      if (peer.connectionState === 'failed') {
+        toast.error('Call connection failed. Please try again.');
+        cleanupCall();
+      }
+    };
+  };
+
   // Helper to cleanup call state
   const cleanupCall = () => {
      if (connectionRef.current) {
@@ -148,12 +215,20 @@ export const CallProvider = ({ children }) => {
     setRemoteStream(null);
     setCallType('audio');
     setIsVideoEnabled(true);
+    setConnectionStatus('idle');
     answerProcessedRef.current = false;
   };
 
   const callUser = async (userToCallId, userToCallName, userToCallClerkId, userToCallImage, isVideoCall = false) => {
+    // Check socket connection before starting call
+    if (!socket?.connected) {
+      toast.error('Not connected to server. Please refresh the page and try again.');
+      return;
+    }
+
     setIsCalling(true);
     setCallEnded(false);
+    setConnectionStatus('connecting');
     setRemoteUser({ name: userToCallName, profileImage: userToCallImage });
     setCallType(isVideoCall ? 'video' : 'audio');
     setIsVideoEnabled(true);
@@ -177,9 +252,10 @@ export const CallProvider = ({ children }) => {
       setStream(currentStream);
       if (myVideo.current) myVideo.current.srcObject = currentStream;
 
-      const peer = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-      });
+      const peer = new RTCPeerConnection(ICE_SERVERS);
+
+      // Setup connection state monitoring for debugging and user feedback
+      setupConnectionStateMonitoring(peer);
 
       currentStream.getTracks().forEach((track) => peer.addTrack(track, currentStream));
 
@@ -193,6 +269,7 @@ export const CallProvider = ({ children }) => {
       };
 
       peer.ontrack = (event) => {
+        console.log('Received remote track:', event.streams[0]);
         setRemoteStream(event.streams[0]);
         if (userVideo.current) {
           userVideo.current.srcObject = event.streams[0];
@@ -213,14 +290,22 @@ export const CallProvider = ({ children }) => {
       });
     } catch (err) {
       console.error("Failed to start call:", err);
-      toast.error("Could not access media devices. check permissions.");
+      toast.error("Could not access media devices. Check permissions.");
       setIsCalling(false);
       setCallType('audio');
+      setConnectionStatus('idle');
     }
   };
 
   const answerCall = async () => {
+    // Check socket connection before answering
+    if (!socket?.connected) {
+      toast.error('Not connected to server. Please refresh the page.');
+      return;
+    }
+
     setCallAccepted(true);
+    setConnectionStatus('connecting');
     const isVideoCall = call.type === 'video';
     setCallType(isVideoCall ? 'video' : 'audio');
     setIsVideoEnabled(true);
@@ -244,9 +329,10 @@ export const CallProvider = ({ children }) => {
         if (myVideo.current) myVideo.current.srcObject = currentStream;
       }
 
-      const peer = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-      });
+      const peer = new RTCPeerConnection(ICE_SERVERS);
+
+      // Setup connection state monitoring for debugging and user feedback
+      setupConnectionStateMonitoring(peer);
 
       currentStream.getTracks().forEach((track) => peer.addTrack(track, currentStream));
 
@@ -260,6 +346,9 @@ export const CallProvider = ({ children }) => {
       };
 
       peer.ontrack = (event) => {
+        console.log('Received remote track on answer:', event.streams[0]);
+        // FIX: Update remoteStream state so ActiveCallUI can use it
+        setRemoteStream(event.streams[0]);
         if (userVideo.current) {
           userVideo.current.srcObject = event.streams[0];
         }
@@ -277,6 +366,7 @@ export const CallProvider = ({ children }) => {
     } catch (err) {
       console.error("Failed to answer call:", err);
       toast.error("Could not access media devices");
+      setConnectionStatus('idle');
     }
   };
 
@@ -331,7 +421,7 @@ export const CallProvider = ({ children }) => {
 
   const leaveCallWrapped = () => {
       const target = activeCallTarget || call.from;
-      if (target) {
+      if (target && socket?.connected) {
         socket.emit("endCall", { to: target });
       }
       setCallEnded(true);
@@ -361,7 +451,6 @@ export const CallProvider = ({ children }) => {
       callUser: callUserWrapped,
       answerCall,
       leaveCall: leaveCallWrapped,
-      leaveCall: leaveCallWrapped,
       toggleMute,
       toggleVideo: () => {
         if (stream) {
@@ -374,7 +463,8 @@ export const CallProvider = ({ children }) => {
       },
       callType,
       isVideoEnabled,
-      remoteStream
+      remoteStream,
+      connectionStatus
     }}>
       {children}
     </CallContext.Provider>

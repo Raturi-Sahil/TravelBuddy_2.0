@@ -19,7 +19,10 @@ const GlobalCallManager = () => {
     isMuted,
     callType,
     toggleVideo,
-    isVideoEnabled
+    isVideoEnabled,
+    stream,
+    remoteStream,
+    connectionStatus
   } = useCall();
 
   // If no call activity, render nothing
@@ -49,6 +52,9 @@ const GlobalCallManager = () => {
         callType={callType}
         toggleVideo={toggleVideo}
         isVideoEnabled={isVideoEnabled}
+        stream={stream}
+        remoteStream={remoteStream}
+        connectionStatus={connectionStatus}
       />
     </>
   );
