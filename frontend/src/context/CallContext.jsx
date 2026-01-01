@@ -131,7 +131,10 @@ export const CallProvider = ({ children }) => {
     }
 
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(track => {
+         track.stop();
+         track.enabled = false;
+      });
       setStream(null);
     }
 
