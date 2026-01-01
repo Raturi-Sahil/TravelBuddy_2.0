@@ -15,7 +15,15 @@ import {
   X,
   Wand2,
   Navigation,
-  Hash
+  Hash,
+  Edit3,
+  RotateCw,
+  FlipHorizontal,
+  FlipVertical,
+  SunMedium,
+  Contrast,
+  Check,
+  Undo2
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -50,6 +58,22 @@ function UploadPost() {
   const [tagInput, setTagInput] = useState('');
   const [locationLoading, setLocationLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+
+  // Image Editor States
+  const [editingImageIndex, setEditingImageIndex] = useState(null);
+  const [editingImage, setEditingImage] = useState(null);
+  const [imageEditorOpen, setImageEditorOpen] = useState(false);
+  const [imageEditSettings, setImageEditSettings] = useState({
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    rotation: 0,
+    flipH: false,
+    flipV: false,
+    filter: 'none'
+  });
+  const canvasRef = useRef(null);
+  const imageRef = useRef(null);
 
   const autocompleteRef = useRef(null);
 
@@ -94,6 +118,172 @@ function UploadPost() {
     setVideos(newVideos);
     setVideoPreviews(newPreviews);
   };
+
+  // Image Editor Functions
+  const openImageEditor = (index) => {
+    setEditingImageIndex(index);
+    setEditingImage(imagePreviews[index]);
+    setImageEditSettings({
+      brightness: 100,
+      contrast: 100,
+      saturation: 100,
+      rotation: 0,
+      flipH: false,
+      flipV: false,
+      filter: 'none'
+    });
+    setImageEditorOpen(true);
+  };
+
+  const closeImageEditor = () => {
+    setImageEditorOpen(false);
+    setEditingImageIndex(null);
+    setEditingImage(null);
+  };
+
+  const getFilterStyle = () => {
+    const { brightness, contrast, saturation, filter } = imageEditSettings;
+    let filterString = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+
+    switch (filter) {
+      case 'grayscale':
+        filterString += ' grayscale(100%)';
+        break;
+      case 'sepia':
+        filterString += ' sepia(80%)';
+        break;
+      case 'vintage':
+        filterString += ' sepia(40%) contrast(90%) brightness(90%)';
+        break;
+      case 'cool':
+        filterString += ' hue-rotate(180deg) saturate(80%)';
+        break;
+      case 'warm':
+        filterString += ' sepia(30%) saturate(120%)';
+        break;
+      case 'dramatic':
+        filterString += ' contrast(150%) saturate(120%)';
+        break;
+      default:
+        break;
+    }
+    return filterString;
+  };
+
+  const getTransformStyle = () => {
+    const { rotation, flipH, flipV } = imageEditSettings;
+    let transform = `rotate(${rotation}deg)`;
+    if (flipH) transform += ' scaleX(-1)';
+    if (flipV) transform += ' scaleY(-1)';
+    return transform;
+  };
+
+  const rotateImage = () => {
+    setImageEditSettings(prev => ({
+      ...prev,
+      rotation: (prev.rotation + 90) % 360
+    }));
+  };
+
+  const flipHorizontal = () => {
+    setImageEditSettings(prev => ({
+      ...prev,
+      flipH: !prev.flipH
+    }));
+  };
+
+  const flipVertical = () => {
+    setImageEditSettings(prev => ({
+      ...prev,
+      flipV: !prev.flipV
+    }));
+  };
+
+  const resetImageEdit = () => {
+    setImageEditSettings({
+      brightness: 100,
+      contrast: 100,
+      saturation: 100,
+      rotation: 0,
+      flipH: false,
+      flipV: false,
+      filter: 'none'
+    });
+  };
+
+  const saveEditedImage = async () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      const { rotation, flipH, flipV, brightness, contrast, saturation, filter } = imageEditSettings;
+
+      // Calculate canvas size based on rotation
+      const isRotated90or270 = rotation === 90 || rotation === 270;
+      canvas.width = isRotated90or270 ? img.height : img.width;
+      canvas.height = isRotated90or270 ? img.width : img.height;
+
+      ctx.save();
+
+      // Move to center
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+
+      // Apply rotation
+      ctx.rotate((rotation * Math.PI) / 180);
+
+      // Apply flips
+      ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+      // Apply filters
+      let filterString = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+      switch (filter) {
+        case 'grayscale': filterString += ' grayscale(100%)'; break;
+        case 'sepia': filterString += ' sepia(80%)'; break;
+        case 'vintage': filterString += ' sepia(40%) contrast(90%) brightness(90%)'; break;
+        case 'cool': filterString += ' hue-rotate(180deg) saturate(80%)'; break;
+        case 'warm': filterString += ' sepia(30%) saturate(120%)'; break;
+        case 'dramatic': filterString += ' contrast(150%) saturate(120%)'; break;
+      }
+      ctx.filter = filterString;
+
+      // Draw image centered
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+      ctx.restore();
+
+      // Convert canvas to blob and update
+      canvas.toBlob((blob) => {
+        const editedFile = new File([blob], `edited_image_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const editedPreview = URL.createObjectURL(blob);
+
+        // Update images and previews
+        const newImages = [...images];
+        const newPreviews = [...imagePreviews];
+        newImages[editingImageIndex] = editedFile;
+        newPreviews[editingImageIndex] = editedPreview;
+
+        setImages(newImages);
+        setImagePreviews(newPreviews);
+
+        toast.success('Image edited successfully!');
+        closeImageEditor();
+      }, 'image/jpeg', 0.9);
+    };
+
+    img.src = editingImage;
+  };
+
+  const filterPresets = [
+    { id: 'none', name: 'Original' },
+    { id: 'grayscale', name: 'B&W' },
+    { id: 'sepia', name: 'Sepia' },
+    { id: 'vintage', name: 'Vintage' },
+    { id: 'cool', name: 'Cool' },
+    { id: 'warm', name: 'Warm' },
+    { id: 'dramatic', name: 'Dramatic' }
+  ];
 
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim()) && formData.tags.length < 10) {
@@ -342,6 +532,16 @@ function UploadPost() {
                         <div key={`img-${index}`} className="relative aspect-square rounded-xl overflow-hidden group ring-1 ring-gray-200 shadow-sm">
                           <img src={preview} alt="" className="w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all" />
+                          {/* Edit Button */}
+                          <button
+                            type="button"
+                            onClick={() => openImageEditor(index)}
+                            className="absolute bottom-1.5 left-1.5 w-7 h-7 rounded-full bg-white/90 hover:bg-amber-500 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md"
+                            title="Edit Image"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          {/* Remove Button */}
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
@@ -572,6 +772,209 @@ function UploadPost() {
           </form>
         </div>
       </div>
+
+      {/* Image Editor Modal */}
+      {imageEditorOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                  <Edit3 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Edit Image</h3>
+                  <p className="text-xs text-gray-500">Adjust brightness, contrast, apply filters & more</p>
+                </div>
+              </div>
+              <button
+                onClick={closeImageEditor}
+                className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Image Preview */}
+                <div className="bg-gray-100 rounded-2xl p-4 flex items-center justify-center min-h-[300px]">
+                  <div className="relative overflow-hidden rounded-xl shadow-lg">
+                    <img
+                      ref={imageRef}
+                      src={editingImage}
+                      alt="Editing"
+                      className="max-w-full max-h-[400px] object-contain transition-all duration-200"
+                      style={{
+                        filter: getFilterStyle(),
+                        transform: getTransformStyle()
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Edit Controls */}
+                <div className="space-y-5">
+                  {/* Transform Controls */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <RotateCw className="w-4 h-4 text-amber-600" />
+                      Transform
+                    </h4>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={rotateImage}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-amber-100 hover:text-amber-700 rounded-xl font-medium text-sm transition-colors"
+                      >
+                        <RotateCw className="w-4 h-4" />
+                        Rotate
+                      </button>
+                      <button
+                        type="button"
+                        onClick={flipHorizontal}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-colors ${
+                          imageEditSettings.flipH
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-gray-100 hover:bg-amber-100 hover:text-amber-700'
+                        }`}
+                      >
+                        <FlipHorizontal className="w-4 h-4" />
+                        Flip H
+                      </button>
+                      <button
+                        type="button"
+                        onClick={flipVertical}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-colors ${
+                          imageEditSettings.flipV
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-gray-100 hover:bg-amber-100 hover:text-amber-700'
+                        }`}
+                      >
+                        <FlipVertical className="w-4 h-4" />
+                        Flip V
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Adjustment Sliders */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <SunMedium className="w-4 h-4 text-amber-600" />
+                      Adjustments
+                    </h4>
+                    <div className="space-y-4">
+                      {/* Brightness */}
+                      <div>
+                        <div className="flex justify-between text-sm mb-1.5">
+                          <span className="text-gray-600 font-medium">Brightness</span>
+                          <span className="text-amber-600 font-semibold">{imageEditSettings.brightness}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="50"
+                          max="150"
+                          value={imageEditSettings.brightness}
+                          onChange={(e) => setImageEditSettings(prev => ({ ...prev, brightness: parseInt(e.target.value) }))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                        />
+                      </div>
+                      {/* Contrast */}
+                      <div>
+                        <div className="flex justify-between text-sm mb-1.5">
+                          <span className="text-gray-600 font-medium">Contrast</span>
+                          <span className="text-amber-600 font-semibold">{imageEditSettings.contrast}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="50"
+                          max="150"
+                          value={imageEditSettings.contrast}
+                          onChange={(e) => setImageEditSettings(prev => ({ ...prev, contrast: parseInt(e.target.value) }))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                        />
+                      </div>
+                      {/* Saturation */}
+                      <div>
+                        <div className="flex justify-between text-sm mb-1.5">
+                          <span className="text-gray-600 font-medium">Saturation</span>
+                          <span className="text-amber-600 font-semibold">{imageEditSettings.saturation}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="200"
+                          value={imageEditSettings.saturation}
+                          onChange={(e) => setImageEditSettings(prev => ({ ...prev, saturation: parseInt(e.target.value) }))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Filter Presets */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-600" />
+                      Filters
+                    </h4>
+                    <div className="grid grid-cols-4 gap-2">
+                      {filterPresets.map((preset) => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => setImageEditSettings(prev => ({ ...prev, filter: preset.id }))}
+                          className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                            imageEditSettings.filter === preset.id
+                              ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
+                              : 'bg-gray-100 text-gray-600 hover:bg-amber-100 hover:text-amber-700'
+                          }`}
+                        >
+                          {preset.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Reset Button */}
+                  <button
+                    type="button"
+                    onClick={resetImageEdit}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium text-sm text-gray-600 transition-colors"
+                  >
+                    <Undo2 className="w-4 h-4" />
+                    Reset to Original
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+              <button
+                type="button"
+                onClick={closeImageEditor}
+                className="flex-1 py-3 px-6 rounded-xl font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveEditedImage}
+                className="flex-[2] py-3 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-orange-500/30 transition-all flex items-center justify-center gap-2"
+              >
+                <Check className="w-5 h-5" />
+                Apply Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden Canvas for Image Processing */}
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 }
