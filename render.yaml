@@ -12,22 +12,66 @@ services:
     plan: free
     healthCheckPath: /health
     envVars:
+      # Core
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 3000
+
+      # Database
       - key: MONGO_URI
-        sync: false # Set manually in Render dashboard
+        sync: false
+
+      # JWT
       - key: JWT_SECRET
         generateValue: true
-      - key: CLERK_SECRET_KEY
-        sync: false # Set manually in Render dashboard
+
+      # Frontend URL (for CORS and redirects)
+      - key: FRONTEND_URL
+        fromService:
+          name: travelbuddy-frontend
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+
+      # Cloudinary (Image uploads)
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+
+      # Clerk Authentication
+      - key: CLERK_SECRET_KEY
+        sync: false
+
+      # Cashfree (Payments)
+      - key: CASHFREE_APP_ID
+        sync: false
+      - key: CASHFREE_SECRET_KEY
+        sync: false
+      - key: CASHFREE_ENV
+        value: PROD
+
+      # Google APIs
+      - key: GOOGLE_API
+        sync: false
+      - key: GOOGLE_PLACES_API_KEY
+        sync: false
+
+      # AI Features
+      - key: GROQ_API_KEY
+        sync: false
+      - key: WEATHER_API_KEY
+        sync: false
+
+      # Admin Panel Credentials
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_JWT_SECRET
+        generateValue: true
 
   # Frontend User App
   - type: web
@@ -44,7 +88,9 @@ services:
           type: web
           envVarKey: RENDER_EXTERNAL_URL
       - key: VITE_CLERK_PUBLISHABLE_KEY
-        sync: false # Set manually in Render dashboard
+        sync: false
+      - key: VITE_GOOGLE_API
+        sync: false
 
   # Admin Panel
   - type: web
