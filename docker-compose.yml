@@ -35,6 +35,19 @@ services:
     # environment:
     #   - VITE_API_BASE_URL=http://localhost:5000
 
+  admin:
+    build: ./admin
+    image: travelbuddy-admin-image
+    container_name: travelbuddy-admin
+    ports:
+      - "5174:5174"
+    volumes:
+      - ./admin:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Helps with hot reload on Windows
+      - VITE_API_URL=http://localhost:3000/admin
+
   mongo:
     image: mongo:latest
     container_name: travelbuddy-mongo
