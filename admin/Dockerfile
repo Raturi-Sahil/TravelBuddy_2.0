@@ -3,6 +3,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Build arguments - Render passes env vars as build args
+ARG VITE_API_URL
+
+# Convert ARGs to ENVs so Vite can access them during build
+ENV VITE_API_URL=$VITE_API_URL
+
 # Copy package files
 COPY package*.json ./
 
