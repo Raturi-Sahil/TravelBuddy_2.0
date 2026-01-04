@@ -770,7 +770,7 @@ export default function ProfilePage() {
                                 <div>
                                     <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Current Plan</p>
                                     <p className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-amber-200 bg-clip-text text-transparent">
-                                        {profile?.planType || 'Free Tier'}
+                                        {profile?.planType && profile.planType !== 'None' ? profile.planType : 'Free Tier'}
                                     </p>
                                 </div>
                                 <div>
@@ -778,16 +778,18 @@ export default function ProfilePage() {
                                     <p className="text-2xl font-bold">
                                         {['Monthly', 'Yearly'].includes(profile?.planType) ? (
                                             'Unlimited'
-                                        ) : (
+                                        ) : profile?.planType && profile.planType !== 'None' ? (
                                             <>
                                                 {profile?.remainingActivityCount || 0} <span className="text-sm font-normal text-gray-500">/ 5</span>
                                             </>
+                                        ) : (
+                                            <span className="text-orange-400">Free Trial Used</span>
                                         )}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Valid Until</p>
-                                    <p className="text-xl font-bold">{profile?.planEndDate ? formatDate(profile.planEndDate) : 'Forever'}</p>
+                                    <p className="text-xl font-bold">{profile?.planEndDate ? formatDate(profile.planEndDate) : 'N/A'}</p>
                                 </div>
                             </div>
                         </div>
