@@ -9,5 +9,3 @@ dist
 *.md
 .vscode
 .idea
-coverage
-.nyc_output

@@ -54,7 +54,7 @@ cd TravelBuddy_2.0
     GEMINI_KEY=your_google_gemini_key
 
     # Google Services
-    GOOGLE_PLACES_API_KEY=your_google_places_key
+    GOOGLE_API=your_google_places_key
     ```
 
 4.  Start the backend server:

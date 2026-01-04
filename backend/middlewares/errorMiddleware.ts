@@ -1,8 +1,7 @@
 import { NextFunction,Request, Response } from "express";
+import { ZodError } from "zod";
 
 import ApiError from "../utils/apiError";
-
-import { ZodError } from "zod";
 
 const errorMiddleware = (
   err: any,
@@ -18,7 +17,7 @@ const errorMiddleware = (
       success: err.success,
       message: err.message,
       errors: err.errors,
-      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+      stack: process.env.NODE_ENV === "TEST" ? err.stack : undefined,
     });
   }
 
@@ -29,7 +28,7 @@ const errorMiddleware = (
          success: false,
          message: errorMessages || "Validation Error",
          errors: err.issues.map(e => e.message),
-         stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+         stack: process.env.NODE_ENV === "TEST" ? err.stack : undefined,
      });
   }
 
@@ -38,7 +37,7 @@ const errorMiddleware = (
     success: false,
     message: err.message || "Internal Server Error",
     errors: [],
-    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    stack: process.env.NODE_ENV === "TEST" ? err.stack : undefined,
   });
 };
 

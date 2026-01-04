@@ -1,7 +1,18 @@
+# =====================================================
+# TravelBuddy - Local Development Docker Compose
+# =====================================================
+# This file is for LOCAL DEVELOPMENT ONLY
+# For production deployment on Render, use render.yaml
+# =====================================================
+
 services:
+  # Backend API
   backend:
-    build: ./backend
-    image: travelbuddy-backend-image
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: builder  # Use builder stage for dev (has all deps)
+    image: travelbuddy-backend-dev
     container_name: travelbuddy-backend
     ports:
       - "3000:3000"
@@ -11,16 +22,18 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - CHOKIDAR_USEPOLLING=true # Helps with hot reload on Windows
-    # If you want to use the local mongodb service defined below, uncomment the following line
-    # and update your .env or this variable to point to mongodb://mongo:27017/travelbuddy
-    # - MONGO_URI=mongodb://mongo:27017/travelbuddy
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    command: npm run dev
     depends_on:
       - mongo
 
+  # Frontend User App
   frontend:
-    build: ./frontend
-    image: travelbuddy-frontend-image
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    image: travelbuddy-frontend-dev
     container_name: travelbuddy-frontend
     ports:
       - "5173:5173"
@@ -30,14 +43,14 @@ services:
     env_file:
       - ./frontend/.env
     environment:
-      - CHOKIDAR_USEPOLLING=true # Helps with hot reload on Windows
-    # Link to backend if needed for server-side calls (not usually needed for SPA client-side calls)
-    # environment:
-    #   - VITE_API_BASE_URL=http://localhost:5000
+      - CHOKIDAR_USEPOLLING=true
 
+  # Admin Panel
   admin:
-    build: ./admin
-    image: travelbuddy-admin-image
+    build:
+      context: ./admin
+      dockerfile: Dockerfile.dev
+    image: travelbuddy-admin-dev
     container_name: travelbuddy-admin
     ports:
       - "5174:5174"
@@ -45,9 +58,10 @@ services:
       - ./admin:/app
       - /app/node_modules
     environment:
-      - CHOKIDAR_USEPOLLING=true # Helps with hot reload on Windows
+      - CHOKIDAR_USEPOLLING=true
       - VITE_API_URL=http://localhost:3000/admin
 
+  # MongoDB (for local development only)
   mongo:
     image: mongo:latest
     container_name: travelbuddy-mongo
