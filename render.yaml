@@ -1,0 +1,62 @@
+# Render Blueprint - TravelBuddy
+# https://render.com/docs/blueprint-spec
+
+services:
+  # Backend API Service
+  - type: web
+    name: travelbuddy-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: MONGO_URI
+        sync: false # Set manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLERK_SECRET_KEY
+        sync: false # Set manually in Render dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  # Frontend User App
+  - type: web
+    name: travelbuddy-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    region: oregon
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: travelbuddy-backend
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false # Set manually in Render dashboard
+
+  # Admin Panel
+  - type: web
+    name: travelbuddy-admin
+    runtime: docker
+    dockerfilePath: ./admin/Dockerfile
+    dockerContext: ./admin
+    region: oregon
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: travelbuddy-backend
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
