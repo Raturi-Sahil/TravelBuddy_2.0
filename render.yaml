@@ -14,7 +14,7 @@ services:
     envVars:
       # Core
       - key: NODE_ENV
-        value: production
+        value: PROD
       - key: PORT
         value: 3000
 
@@ -50,13 +50,9 @@ services:
         sync: false
       - key: CASHFREE_SECRET_KEY
         sync: false
-      - key: CASHFREE_ENV
-        value: PROD
 
-      # Google APIs
+      # Google API
       - key: GOOGLE_API
-        sync: false
-      - key: GOOGLE_PLACES_API_KEY
         sync: false
 
       # AI Features

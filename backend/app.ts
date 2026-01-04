@@ -55,7 +55,7 @@ app.use(
 );
 
 // HTTP request logger - logs all route hits in dev
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "PROD") {
   app.use(morgan("dev"));
 }
 

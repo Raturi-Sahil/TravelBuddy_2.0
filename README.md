@@ -199,7 +199,7 @@ GROQ_API_KEY=your_groq_api_key  # Same as XAI_API_KEY
 GEMINI_KEY=your_google_gemini_key
 
 # Google Maps & Places
-GOOGLE_PLACES_API_KEY=your_google_places_key
+GOOGLE_API=your_google_places_key
 ```
 
 Start the backend server:

@@ -30,7 +30,7 @@ class ApiError extends Error {
       message: this.message,
       errors: this.errors,
       stack:
-        process.env.NODE_ENV === "development" ? this.stack : undefined,
+        process.env.NODE_ENV === "TEST" ? this.stack : undefined,
     };
   }
 }

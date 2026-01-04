@@ -7,7 +7,7 @@ import { User } from "../models/userModel";
 const getCashfreeConfig = () => {
     const CF_APP_ID = process.env.CASHFREE_APP_ID;
     const CF_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
-    const CF_ENV = process.env.CASHFREE_ENV || "TEST"; // TEST or PROD
+    const CF_ENV = process.env.NODE_ENV || "TEST";
     const BASE_URL = CF_ENV === "PROD"
       ? "https://api.cashfree.com/pg"
       : "https://sandbox.cashfree.com/pg";
