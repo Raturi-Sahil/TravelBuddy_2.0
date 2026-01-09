@@ -88,9 +88,7 @@ function App() {
       <Routes >
       <Route path="/" element={<Layout />} >
         <Route index element={
-          <AuthGuard>
             <HomePage />
-          </AuthGuard>
         } />
         <Route path="sign-up/*" element={<SignUpPage />} />
         <Route path="sign-in/*" element={<SignInPage />} />
