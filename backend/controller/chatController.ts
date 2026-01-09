@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 
 import uploadOnCloudinary from "../middlewares/cloudinary";
 import { Message } from "../models/messageModel";
+import { Notification } from "../models/notificationModel";
 import { User } from "../models/userModel";
 import { getIO, getReceiverSocketId } from "../socket";
 import ApiError from "../utils/apiError";
@@ -240,6 +241,21 @@ export const sendMessage = asyncHandler(
           profileImage: sender.profileImage,
         },
       });
+
+      // Create Notification
+      const notification = await Notification.create({
+        recipient: receiverId,
+        sender: userId,
+        type: "MESSAGE",
+        message: type === "IMAGE" ? `Sent an image` :
+                 type === "VIDEO" ? `Sent a video` :
+                 type === "AUDIO" ? `Sent a voice message` :
+                 `New message from ${sender.name}`,
+        link: `/chat/${userId}`,
+        relatedId: newMessage._id,
+      });
+
+      getIO().to(receiverSocketId).emit("newNotification", notification);
     }
 
     return res

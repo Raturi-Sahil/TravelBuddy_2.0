@@ -1,6 +1,10 @@
 import { SignIn } from "@clerk/clerk-react";
+import { useLocation } from 'react-router-dom';
 
 export default function SignInPage() {
+  const location = useLocation();
+  const redirectUrl = location.state?.from || '/';
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-6xl flex shadow-2xl rounded-2xl overflow-hidden bg-white min-h-[600px]">
@@ -31,8 +35,8 @@ export default function SignInPage() {
           <SignIn
             routing="path"
             path="/sign-in"
-            forceRedirectUrl="/"
-            fallbackRedirectUrl="/"
+            forceRedirectUrl={redirectUrl}
+            fallbackRedirectUrl={redirectUrl}
             signUpUrl="/sign-up"
           />
         </div>
