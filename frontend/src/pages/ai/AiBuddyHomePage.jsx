@@ -60,7 +60,8 @@ const AiBuddyHomePage = () => {
       iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
       link: '/ai-trip-planner',
       status: 'Available',
-      stats: '10k+ Trips Planned'
+      stats: '10k+ Trips Planned',
+      backgroundImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80'
     },
     {
       id: 'packaging-planner',
@@ -73,7 +74,8 @@ const AiBuddyHomePage = () => {
       iconBg: 'bg-gradient-to-br from-purple-500 to-fuchsia-600',
       link: '/ai-packaging-planner',
       status: 'Available',
-      stats: '5k+ Lists Created'
+      stats: '5k+ Lists Created',
+      backgroundImage: 'https://images.unsplash.com/photo-1553531384-cc64ac80f931?w=800&q=80'
     },
     {
       id: 'weather-planner',
@@ -86,7 +88,8 @@ const AiBuddyHomePage = () => {
       iconBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
       link: '/ai-weather-planner',
       status: 'Available',
-      stats: '15k+ Forecasts'
+      stats: '15k+ Forecasts',
+      backgroundImage: 'https://images.unsplash.com/photo-1504253163759-c23fccaebb55?w=800&q=80'
     },
     {
       id: 'local-guide',
@@ -99,7 +102,8 @@ const AiBuddyHomePage = () => {
       iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
       link: '/ai-local-guide',
       status: 'Available',
-      stats: '8k+ Guides Generated'
+      stats: '8k+ Guides Generated',
+      backgroundImage: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80'
     }
   ];
 
@@ -248,21 +252,31 @@ const AiBuddyHomePage = () => {
                   animationDelay: `${index * 100}ms`,
                 }}
               >
-                {/* Card Background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${feature.bgGradient} opacity-50`} />
+                {/* Background Image */}
+                <div className="absolute inset-0 overflow-hidden rounded-3xl">
+                  <img
+                    src={feature.backgroundImage}
+                    alt={feature.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  {/* Dark Gradient Overlay */}
+                  <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 group-hover:from-black/70 group-hover:via-black/30 transition-all duration-500`} />
+                  {/* Color Overlay */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-30 group-hover:opacity-40 transition-opacity duration-500`} />
+                </div>
 
                 {/* Hover Glow Effect */}
                 {isHovered && (
                   <div
-                    className="absolute inset-0 transition-opacity duration-300"
+                    className="absolute inset-0 transition-opacity duration-300 rounded-3xl"
                     style={{
                       background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, ${feature.glowColor} 0%, transparent 50%)`,
                     }}
                   />
                 )}
 
-                {/* Glass Card */}
-                <div className="relative bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl p-8 h-full shadow-xl shadow-slate-200/50 group-hover:shadow-2xl group-hover:border-white transition-all duration-500">
+                {/* Card Content */}
+                <div className="relative p-8 h-full flex flex-col min-h-[320px]">
 
                   {/* Top Section */}
                   <div className="flex items-start justify-between mb-6">
@@ -274,36 +288,38 @@ const AiBuddyHomePage = () => {
                     </div>
 
                     {/* Status Badge */}
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-lg">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                       <span className="text-xs font-semibold text-slate-700">{feature.status}</span>
                     </div>
                   </div>
 
-                  {/* Content */}
-                  <h3 className={`text-2xl font-bold mb-3 bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent group-hover:scale-[1.02] transition-transform duration-300 origin-left`}>
-                    {feature.title}
-                  </h3>
+                  {/* Content - Push to bottom */}
+                  <div className="mt-auto">
+                    <h3 className="text-2xl md:text-3xl font-bold mb-3 text-white drop-shadow-lg group-hover:scale-[1.02] transition-transform duration-300 origin-left">
+                      {feature.title}
+                    </h3>
 
-                  <p className="text-slate-600 mb-6 leading-relaxed text-sm md:text-base">
-                    {feature.description}
-                  </p>
+                    <p className="text-white/85 mb-6 leading-relaxed text-sm md:text-base drop-shadow">
+                      {feature.description}
+                    </p>
 
-                  {/* Stats & CTA */}
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-amber-500" />
-                      <span className="text-xs font-medium text-slate-500">{feature.stats}</span>
+                    {/* Stats & CTA */}
+                    <div className="flex items-center justify-between pt-4 border-t border-white/20">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-400" />
+                        <span className="text-xs font-medium text-white/80">{feature.stats}</span>
+                      </div>
+
+                      <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/95 backdrop-blur-sm text-slate-900 font-semibold text-sm shadow-lg group-hover:shadow-xl group-hover:scale-105 group-hover:bg-white transition-all duration-300">
+                        <span>Explore</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                      </button>
                     </div>
-
-                    <button className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r ${feature.gradient} text-white font-semibold text-sm shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300`}>
-                      <span>Explore</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                    </button>
                   </div>
 
                   {/* Decorative Elements */}
-                  <div className={`absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br ${feature.gradient} rounded-full opacity-5 group-hover:opacity-10 group-hover:scale-150 transition-all duration-700`} />
+                  <div className={`absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br ${feature.gradient} rounded-full opacity-10 group-hover:opacity-20 group-hover:scale-150 transition-all duration-700`} />
                   <div className={`absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br ${feature.gradient} rounded-full opacity-5 group-hover:opacity-10 group-hover:scale-150 transition-all duration-700`} />
                 </div>
               </div>
