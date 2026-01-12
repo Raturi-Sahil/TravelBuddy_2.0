@@ -9,28 +9,32 @@ const aiFeatures = [
     title: "Trip Planner",
     desc: "AI-powered complete India trip planning with day-by-day itineraries",
     path: "/ai-trip-planner",
-    gradient: "from-blue-500 to-cyan-400"
+    gradient: "from-blue-500 to-cyan-400",
+    backgroundImage: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80"
   },
   {
     icon: <Compass className="h-6 w-6" />,
     title: "Local Guide AI",
     desc: "Virtual guide with insider knowledge for any Indian destination",
     path: "/ai-local-guide",
-    gradient: "from-purple-500 to-pink-400"
+    gradient: "from-purple-500 to-pink-400",
+    backgroundImage: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80"
   },
   {
     icon: <CreditCard className="h-6 w-6" />,
     title: "Package Planner",
     desc: "Budget-optimized travel packages for India tours",
     path: "/ai-package-planner",
-    gradient: "from-orange-500 to-red-400"
+    gradient: "from-orange-500 to-red-400",
+    backgroundImage: "https://images.unsplash.com/photo-1553531384-cc64ac80f931?w=600&q=80"
   },
   {
     icon: <Sun className="h-6 w-6" />,
     title: "Weather Planner",
     desc: "Monsoon & weather-based trip suggestions across India",
     path: "/ai-weather-planner",
-    gradient: "from-teal-500 to-green-400"
+    gradient: "from-teal-500 to-green-400",
+    backgroundImage: "https://images.unsplash.com/photo-1504253163759-c23fccaebb55?w=600&q=80"
   }
 ];
 
@@ -185,35 +189,44 @@ const AIFeaturesSection = () => {
               }}
               className="group cursor-pointer"
             >
-              <div className="relative bg-white/[0.03] backdrop-blur-xl p-7 rounded-3xl border border-white/[0.08] hover:border-white/20 hover:bg-white/[0.06] transition-all duration-500 h-full overflow-hidden">
-                {/* Hover Gradient */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 0.1 }}
-                  className={`absolute inset-0 bg-gradient-to-br ${feature.gradient}`}
-                />
+              <div className="relative rounded-3xl border border-white/[0.08] hover:border-white/20 transition-all duration-500 h-full overflow-hidden min-h-[280px]">
+                {/* Background Image */}
+                <div className="absolute inset-0">
+                  <img
+                    src={feature.backgroundImage}
+                    alt={feature.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  {/* Dark Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30 group-hover:from-black/85 group-hover:via-black/50 transition-all duration-500" />
+                  {/* Color Overlay */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-30 group-hover:opacity-40 transition-opacity duration-500`} />
+                </div>
 
-                {/* Animated Icon */}
-                <motion.div
-                  whileHover={{ scale: 1.15, rotate: 10 }}
-                  transition={{ duration: 0.3 }}
-                  className={`relative w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-white mb-6 shadow-lg`}
-                >
-                  {feature.icon}
-                </motion.div>
+                {/* Card Content */}
+                <div className="relative p-7 h-full flex flex-col justify-end z-10">
+                  {/* Animated Icon */}
+                  <motion.div
+                    whileHover={{ scale: 1.15, rotate: 10 }}
+                    transition={{ duration: 0.3 }}
+                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-white mb-4 shadow-lg backdrop-blur-sm`}
+                  >
+                    {feature.icon}
+                  </motion.div>
 
-                {/* Content */}
-                <h3 className="text-lg font-bold text-white mb-3 group-hover:text-white/90">{feature.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed mb-5">{feature.desc}</p>
+                  {/* Content */}
+                  <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">{feature.title}</h3>
+                  <p className="text-white/80 text-sm leading-relaxed mb-4 drop-shadow">{feature.desc}</p>
 
-                {/* CTA */}
-                <motion.div
-                  whileHover={{ x: 5 }}
-                  className="flex items-center gap-2 text-violet-400 text-sm font-semibold group-hover:text-violet-300 transition-colors"
-                >
-                  <span>Try Now</span>
-                  <ArrowRight className="w-4 h-4" />
-                </motion.div>
+                  {/* CTA */}
+                  <motion.div
+                    whileHover={{ x: 5 }}
+                    className="flex items-center gap-2 text-white text-sm font-semibold bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full w-fit hover:bg-white/30 transition-colors"
+                  >
+                    <span>Try Now</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.div>
+                </div>
               </div>
             </motion.div>
           ))}

@@ -12,7 +12,8 @@ const services = [
     shadowColor: "shadow-orange-500/20",
     path: "/activities",
     stats: "500+ Activities",
-    popular: true
+    popular: true,
+    backgroundImage: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80"
   },
   {
     icon: <Compass className="h-7 w-7" />,
@@ -22,7 +23,8 @@ const services = [
     shadowColor: "shadow-emerald-500/20",
     path: "/guides",
     stats: "200+ Guides",
-    popular: false
+    popular: false,
+    backgroundImage: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=800&q=80"
   },
   {
     icon: <Bot className="h-7 w-7" />,
@@ -32,7 +34,8 @@ const services = [
     shadowColor: "shadow-violet-500/20",
     path: "/ai-buddy",
     stats: "Smart Planning",
-    popular: true
+    popular: true,
+    backgroundImage: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80"
   },
   {
     icon: <Camera className="h-7 w-7" />,
@@ -42,7 +45,8 @@ const services = [
     shadowColor: "shadow-rose-500/20",
     path: "/user-posts",
     stats: "1K+ Stories",
-    popular: false
+    popular: false,
+    backgroundImage: "https://images.unsplash.com/photo-1502791451862-7bd8c1df43a7?w=800&q=80"
   },
   {
     icon: <BookOpen className="h-7 w-7" />,
@@ -52,7 +56,8 @@ const services = [
     shadowColor: "shadow-sky-500/20",
     path: "/read-article",
     stats: "Expert Tips",
-    popular: false
+    popular: false,
+    backgroundImage: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80"
   },
   {
     icon: <Wallet className="h-7 w-7" />,
@@ -62,7 +67,8 @@ const services = [
     shadowColor: "shadow-amber-500/20",
     path: "/split-expenses",
     stats: "Easy Splits",
-    popular: false
+    popular: false,
+    backgroundImage: "https://images.unsplash.com/photo-1539635278303-d4002c07eae3?w=800&q=80"
   }
 ];
 
@@ -180,74 +186,63 @@ const ServicesSection = () => {
               onClick={() => navigate(service.path)}
               whileHover={{
                 y: -12,
-                rotateY: 5,
                 transition: { duration: 0.3 }
               }}
-              className={`relative bg-white p-8 rounded-[2rem] border border-gray-100 cursor-pointer transition-all duration-500 group overflow-hidden ${
-                hoveredService === idx
-                  ? `shadow-2xl ${service.shadowColor} border-transparent`
-                  : 'shadow-lg shadow-gray-200/50'
-              }`}
+              className="relative rounded-[2rem] cursor-pointer transition-all duration-500 group overflow-hidden min-h-[320px] shadow-xl hover:shadow-2xl"
               style={{ transformStyle: 'preserve-3d' }}
             >
+              {/* Background Image */}
+              <div className="absolute inset-0">
+                <img
+                  src={service.backgroundImage}
+                  alt={service.title}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+                {/* Dark Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/20 group-hover:from-black/80 group-hover:via-black/40 transition-all duration-500" />
+                {/* Color Overlay */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-20 group-hover:opacity-30 transition-opacity duration-500`} />
+              </div>
+
               {/* Popular Badge */}
               {service.popular && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="absolute top-6 right-6"
+                  className="absolute top-6 right-6 z-10"
                 >
-                  <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-100 rounded-full">
+                  <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider text-white bg-amber-500 rounded-full shadow-lg">
                     Popular
                   </span>
                 </motion.div>
               )}
 
-              {/* Gradient Background on Hover */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: hoveredService === idx ? 0.03 : 0 }}
-                className={`absolute inset-0 bg-gradient-to-br ${service.color} rounded-[2rem]`}
-              />
-
-              {/* Decorative Circle */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{
-                  opacity: hoveredService === idx ? 0.1 : 0,
-                  scale: hoveredService === idx ? 1 : 0.5
-                }}
-                transition={{ duration: 0.3 }}
-                className={`absolute -bottom-10 -right-10 w-40 h-40 bg-gradient-to-br ${service.color} rounded-full blur-2xl`}
-              />
-
-              <div className="relative">
+              {/* Card Content */}
+              <div className="relative h-full p-8 flex flex-col justify-end z-10">
                 {/* Icon with 3D Animation */}
                 <motion.div
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   transition={{ duration: 0.3 }}
-                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${service.color} flex items-center justify-center text-white mb-6 shadow-lg ${service.shadowColor}`}
+                  className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${service.color} flex items-center justify-center text-white mb-5 shadow-lg backdrop-blur-sm`}
                 >
                   {service.icon}
                 </motion.div>
 
-                {/* Title & Stats */}
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-gray-800">{service.title}</h3>
-                </div>
+                {/* Title */}
+                <h3 className="text-2xl font-bold text-white mb-3 drop-shadow-lg">{service.title}</h3>
 
                 {/* Description */}
-                <p className="text-gray-600 mb-6 leading-relaxed">{service.desc}</p>
+                <p className="text-white/85 mb-5 leading-relaxed text-sm drop-shadow">{service.desc}</p>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <span className="text-sm font-semibold text-gray-400 bg-gray-50 px-4 py-2 rounded-full">{service.stats}</span>
+                <div className="flex items-center justify-between pt-4 border-t border-white/20">
+                  <span className="text-sm font-semibold text-white/80 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">{service.stats}</span>
                   <motion.div
                     whileHover={{ x: 5 }}
-                    className={`flex items-center text-sm font-bold bg-gradient-to-r ${service.color} bg-clip-text text-transparent`}
+                    className="flex items-center gap-1 text-sm font-bold text-white bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full hover:bg-white/30 transition-colors"
                   >
                     <span>Explore</span>
-                    <ChevronRight className="w-4 h-4 text-orange-500" />
+                    <ChevronRight className="w-4 h-4" />
                   </motion.div>
                 </div>
               </div>
