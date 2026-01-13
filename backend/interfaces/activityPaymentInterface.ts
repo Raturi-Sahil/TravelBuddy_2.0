@@ -22,7 +22,7 @@ export interface IActivityPayment extends Document {
   cfPaymentId?: string;       // Cashfree payment reference ID
   bankReference?: string;     // Bank reference number
 
-  provider: string;        // Razorpay / Stripe / Cashfree etc.
+  provider: string;        //  Cashfree 
   providerRef?: string;    // payment/order id from gateway
 
   rawResponse?: Record<string, any>;

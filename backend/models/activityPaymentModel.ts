@@ -63,7 +63,7 @@ export const activityPaymentSchema = new Schema<IActivityPayment>(
         provider: {
             type: String,
             default: "Cashfree"
-        }, // Razorpay / Stripe / Cashfree etc.
+        }, // Cashfree 
 
         providerRef: {
             type: String

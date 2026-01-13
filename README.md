@@ -127,9 +127,7 @@
 *   **AI Integration**:
     *   Groq AI (Llama 3.1-8b-instant) via OpenAI SDK 6.14
     *   Google Generative AI 0.24
-*   **Payment Gateways**:
-    *   Cashfree (Primary)
-    *   Razorpay (Legacy)
+*   **Payment Gateway**: Cashfree
 *   **Maps Integration**: Google Places API
 *   **Authentication**: Clerk SDK Node 4.13
 *   **File Upload**: Multer 2.0
@@ -182,14 +180,10 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-# Payments (Cashfree - Primary)
+# Payments (Cashfree)
 CASHFREE_APP_ID=your_cashfree_app_id
 CASHFREE_SECRET_KEY=your_cashfree_secret_key
 CASHFREE_ENV=sandbox  # or 'production'
-
-# Payments (Razorpay - Optional/Legacy)
-RAZORPAY_KEY_ID=your_razorpay_key_id
-RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 
 # AI Services (Groq/xAI)
 XAI_API_KEY=your_groq_api_key
@@ -395,9 +389,9 @@ TravelBuddy_2.0/
 - Create account at [cloudinary.com](https://cloudinary.com)
 - Get cloud name, API key, and secret from dashboard
 
-### 5. Razorpay
-- Register at [razorpay.com](https://razorpay.com)
-- Generate test/live mode keys
+### 5. Cashfree
+- Register at [cashfree.com](https://www.cashfree.com)
+- Generate App ID and Secret Key from dashboard
 
 ## 🤝 Contributing
 
