@@ -1,10 +1,9 @@
-import { createContext, useContext, useRef } from "react";
+import { useRef } from "react";
 
-// Create context
-const AudioPlaybackContext = createContext(null);
+import { AudioPlaybackContext } from "./audioPlaybackContextValue";
 
-// Provider
-export function AudioPlaybackProvider({ children }) {
+// Provider - only component in this file for Fast Refresh compatibility
+export default function AudioPlaybackProvider({ children }) {
     // This will store the currently playing audio element
     const activeAudioRef = useRef(null);
 
@@ -13,15 +12,4 @@ export function AudioPlaybackProvider({ children }) {
             {children}
         </AudioPlaybackContext.Provider>
     );
-}
-
-// Custom hook for easy usage
-export function useAudioPlayback() {
-    const context = useContext(AudioPlaybackContext);
-    if (!context) {
-        throw new Error(
-            "useAudioPlayback must be used inside AudioPlaybackProvider"
-        );
-    }
-    return context;
 }

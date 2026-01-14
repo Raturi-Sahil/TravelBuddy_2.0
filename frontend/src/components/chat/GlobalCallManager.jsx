@@ -1,5 +1,6 @@
 import React from 'react';
-import { useCall } from '../../context/CallContext';
+
+import { useCall } from '../../context/useCall';
 import ActiveCallUI from './ActiveCallUI';
 import IncomingCallModal from './IncomingCallModal';
 

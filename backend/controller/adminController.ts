@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 
 import { generateAdminToken } from "../middlewares/adminMiddleware";
 import { Activity } from "../models/activityModel";

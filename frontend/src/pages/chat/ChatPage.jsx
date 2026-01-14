@@ -9,10 +9,8 @@ import {
   MapPin,
   MessageCircle,
   Mic,
-  MicOff,
   Paperclip,
   Phone,
-  PhoneOff,
   Send,
   Smile,
   Sticker,
@@ -26,7 +24,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import AudioMessage from '../../components/chat/AudioMessage';
 import ChatListItem from '../../components/chat/ChatListItem';
-import { useCall } from '../../context/CallContext';
+import { useCall } from '../../context/useCall';
 import { useSocket } from '../../hooks/useSocket';
 import { createAuthenticatedApi, userService } from '../../redux/services/api';
 import {
@@ -59,11 +57,24 @@ const stickers = [
   "https://cdn-icons-png.flaticon.com/512/569/569544.png",
 ];
 
+// Attachment menu item component
+const AttachmentItem = (props) => {
+  const { icon: Icon, label, color, onClick } = props;
+  return (
+    <div className="flex flex-col items-center gap-2 cursor-pointer hover:scale-105 transition-transform" onClick={onClick}>
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg ${color}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <span className="text-xs text-gray-500 font-medium">{label}</span>
+    </div>
+  );
+};
+
 export default function ChatPage() {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { getToken } = useAuth();
-  const { user: authUser } = useUser();
+  useUser(); // Hook called for side effects
   const dispatch = useDispatch();
 
   const {
@@ -104,8 +115,7 @@ export default function ChatPage() {
   const { callUser } = useCall();
 
   // Initialize socket connection
-  const { getSocket, sendTypingIndicator } = useSocket();
-  const socket = getSocket();
+  const { sendTypingIndicator } = useSocket();
 
   // Fetch conversations on mount
   useEffect(() => {
@@ -411,15 +421,6 @@ export default function ChatPage() {
 
   const currentMessages = messages[currentChatUserId] || [];
 
-  // Attachment menu item component
-  const AttachmentItem = ({ icon: Icon, label, color, onClick }) => (
-    <div className="flex flex-col items-center gap-2 cursor-pointer hover:scale-105 transition-transform" onClick={onClick}>
-      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg ${color}`}>
-        <Icon className="w-5 h-5" />
-      </div>
-      <span className="text-xs text-gray-500 font-medium">{label}</span>
-    </div>
-  );
 
   // Render message with media support
   const renderMessage = (msg, isSent) => {

@@ -1,5 +1,5 @@
 import { BookOpen, Calendar, Camera, Compass, MapPin } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import MapDropdown from './MapDropdown';
 

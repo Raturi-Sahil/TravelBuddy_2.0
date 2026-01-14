@@ -14,9 +14,9 @@ import {
   UtensilsCrossed,
   X
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
 import { placesService } from '../../redux/services/api';
 
 const containerStyle = { width: '100%', height: '100%' };

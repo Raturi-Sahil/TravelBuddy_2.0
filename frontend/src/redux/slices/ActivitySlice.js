@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { createAuthenticatedApi, activityService } from '../services/api';
+
+import { activityService,createAuthenticatedApi } from '../services/api';
 
 const initialState = {
   activities: [],

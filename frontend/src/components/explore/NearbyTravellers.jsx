@@ -13,10 +13,10 @@ import {
   Sliders,
   Users,
   X} from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
 import { createAuthenticatedApi, userService } from '../../redux/services/api';
 
 // MOCK DATA

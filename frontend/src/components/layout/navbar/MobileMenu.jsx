@@ -4,7 +4,7 @@ import {
 Calendar, CalendarDays, Camera, ChevronDown,   Compass, Image, Landmark, Link, LogOut, MapPin, 
 Plane,
 Plus, Receipt, ShieldAlert, ShoppingBag, Upload, User,   Users, UtensilsCrossed} from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 const MobileMenu = ({ isOpen, setIsOpen, isSignedIn, currentLocationName, onNavigate, myGuideProfile }) => {

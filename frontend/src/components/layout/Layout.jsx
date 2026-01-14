@@ -1,10 +1,10 @@
+import { Bot, ChevronDown, MessageCircle, RotateCcw,X } from 'lucide-react';
+import { useCallback,useEffect,useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { MessageCircle, X, Bot, ChevronDown, RotateCcw } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
 
+import chatbotData from '../../data/chatbotData.json';
 import Footer from './Footer';
 import NavBar from './Navbar';
-import chatbotData from '../../data/chatbotData.json';
 
 // Function to format message with bold text
 const formatMessage = (text) => {
@@ -50,12 +50,20 @@ const formatMessage = (text) => {
 
 const FloatingChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => [
+    {
+      id: 1,
+      type: 'bot',
+      text: chatbotData.welcomeMessage,
+      timestamp: new Date()
+    }
+  ]);
   const [isTyping, setIsTyping] = useState(false);
-  const [currentOptions, setCurrentOptions] = useState([]);
+  const [currentOptions, setCurrentOptions] = useState(chatbotData.mainMenu.options);
   const messagesEndRef = useRef(null);
+  const messageIdRef = useRef(1);
 
-  // Initialize with welcome message and main menu
+  // Reset chat to initial state
   const initializeChat = () => {
     setMessages([
       {
@@ -66,23 +74,20 @@ const FloatingChatbot = () => {
       }
     ]);
     setCurrentOptions(chatbotData.mainMenu.options);
+    messageIdRef.current = 1;
   };
 
-  useEffect(() => {
-    if (messages.length === 0) {
-      initializeChat();
-    }
-  }, []);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, currentOptions]);
 
-  const handleOptionClick = (option) => {
+  const handleOptionClick = useCallback((option) => {
     // Add user's selection as a message
+    messageIdRef.current += 1;
     const userMessage = {
-      id: Date.now(),
+      id: messageIdRef.current,
       type: 'user',
       text: option.label,
       timestamp: new Date()
@@ -99,8 +104,9 @@ const FloatingChatbot = () => {
 
       if (conversationId === 'main') {
         // Go back to main menu
+        messageIdRef.current += 1;
         const botMessage = {
-          id: Date.now() + 1,
+          id: messageIdRef.current,
           type: 'bot',
           text: "Sure! Here's the main menu. What would you like to know about?",
           timestamp: new Date()
@@ -110,8 +116,9 @@ const FloatingChatbot = () => {
       } else if (chatbotData.conversations[conversationId]) {
         // Show the conversation response
         const conversation = chatbotData.conversations[conversationId];
+        messageIdRef.current += 1;
         const botMessage = {
-          id: Date.now() + 1,
+          id: messageIdRef.current,
           type: 'bot',
           text: conversation.message,
           timestamp: new Date()
@@ -121,8 +128,8 @@ const FloatingChatbot = () => {
       }
 
       setIsTyping(false);
-    }, 600 + Math.random() * 400);
-  };
+    }, 800); // Fixed delay instead of random
+  }, []);
 
   const handleRestart = () => {
     setMessages([]);

@@ -1,6 +1,5 @@
 import { Loader2, Mic, MicOff, PhoneOff, Video, VideoOff, Wifi, WifiOff } from 'lucide-react';
 import { useEffect } from 'react';
-import { useCall } from '../../context/CallContext';
 
 const ActiveCallUI = ({
   callAccepted,
@@ -21,8 +20,7 @@ const ActiveCallUI = ({
   remoteStream,
   connectionStatus = 'idle' // 'idle' | 'connecting' | 'connected' | 'failed'
 }) => {
-  if ((!callAccepted && !isCalling) || callEnded) return null;
-
+  // Hooks must be called before any conditional returns
   useEffect(() => {
     if (callType === 'video') {
       if (myVideoRef.current && stream) {
@@ -34,14 +32,17 @@ const ActiveCallUI = ({
     }
   }, [callType, stream, remoteStream, myVideoRef, userVideoRef]);
 
+  // Early return AFTER all hooks
+  if ((!callAccepted && !isCalling) || callEnded) return null;
+
   const formatDuration = (seconds) => {
     const min = Math.floor(seconds / 60);
     const sec = seconds % 60;
     return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
-  // Connection status indicator
-  const ConnectionStatusBadge = () => {
+  // Connection status indicator (render function, not a component)
+  const renderConnectionStatusBadge = () => {
     if (connectionStatus === 'connecting') {
       return (
         <div className="flex items-center gap-2 bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full text-sm">
@@ -76,7 +77,7 @@ const ActiveCallUI = ({
           {/* Connection Status Badge - Show during call setup */}
           {!callAccepted && (
             <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
-              <ConnectionStatusBadge />
+              {renderConnectionStatusBadge()}
             </div>
           )}
 
@@ -119,7 +120,7 @@ const ActiveCallUI = ({
                   <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-white/90 font-medium">
                     {callAccepted ? (call.name || currentUser?.name) : 'Connecting...'} ({formatDuration(callDuration)})
                   </div>
-                  {callAccepted && <ConnectionStatusBadge />}
+                  {callAccepted && renderConnectionStatusBadge()}
                 </div>
              </div>
           ) : (
@@ -144,7 +145,7 @@ const ActiveCallUI = ({
                 <p className="text-orange-300">{callAccepted ? formatDuration(callDuration) : "Ringing..."}</p>
                 {callAccepted && (
                   <div className="mt-2">
-                    <ConnectionStatusBadge />
+                    {renderConnectionStatusBadge()}
                   </div>
                 )}
               </div>

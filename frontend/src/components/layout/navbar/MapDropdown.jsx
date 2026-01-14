@@ -1,5 +1,5 @@
 import { Activity, Bed, ChevronDown, Landmark, Plane,ShieldAlert, ShoppingBag, Users, UtensilsCrossed } from 'lucide-react';
-import React, { useEffect,useRef } from 'react';
+import { useEffect,useRef } from 'react';
 
 const MapDropdown = ({ isOpen, setIsOpen, currentPath, onNavigate }) => {
   const dropdownRef = useRef(null);

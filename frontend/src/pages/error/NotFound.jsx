@@ -1,5 +1,5 @@
+import { ArrowLeft, Compass,Home, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Home, ArrowLeft, MapPin, Compass } from "lucide-react";
 
 function NotFound() {
   const navigate = useNavigate();

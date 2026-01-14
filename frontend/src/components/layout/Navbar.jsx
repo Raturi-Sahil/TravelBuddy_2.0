@@ -1,6 +1,6 @@
 import { useAuth,useUser } from '@clerk/clerk-react';
 import { Bell, Bot, Globe, Menu, Plus, X } from 'lucide-react';
-import React, { useEffect, useRef,useState } from 'react';
+import { useEffect, useRef,useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 

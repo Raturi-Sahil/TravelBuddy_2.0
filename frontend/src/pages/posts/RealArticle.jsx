@@ -1,22 +1,18 @@
+import { useAuth } from '@clerk/clerk-react';
 import {
   BookOpen,
   Calendar,
-  Camera,
   Clock,
   Eye,
   Heart,
   Loader2,
-  MapPin,
   MessageCircle,
   Search,
-  Share2,
-  TrendingUp,
-  User
+  TrendingUp
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useAuth } from '@clerk/clerk-react';
+import { useNavigate } from 'react-router-dom';
 
 import { fetchArticles } from '../../redux/slices/articleSlice';
 

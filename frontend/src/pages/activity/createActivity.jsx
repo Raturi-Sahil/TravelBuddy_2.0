@@ -1,14 +1,14 @@
 import { useAuth } from "@clerk/clerk-react";
 import { Autocomplete,GoogleMap, Marker } from "@react-google-maps/api";
 import { AlignLeft, Clock, Crosshair, DollarSign, Image as ImageIcon, Loader2,MapPin, Mic, MicOff, Plus, Search, Send, Sparkles, Users, Video, X } from "lucide-react";
-import React, { useCallback, useEffect,useRef, useState } from "react";
+import { useCallback, useEffect,useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 import Calendar from "../../components/ui/Calendar";
 import TimePicker from "../../components/ui/TimePicker";
-import { useGoogleMaps } from "../../context/GoogleMapsContext";
+import { useGoogleMaps } from "../../context/useGoogleMaps";
 import { createActivity } from "../../redux/slices/ActivitySlice";
 import { generateDescription } from "../../redux/slices/aiSlice";
 
@@ -16,12 +16,15 @@ const containerStyle = { width: "100%", height: "100%", borderRadius: "0.75rem" 
 const categories = ["Adventure", "Culture", "Food", "Nightlife", "Sports", "Nature", "Other"];
 
 // Reusable UI Components
-const Section = ({ icon: Icon, title, children, className = "" }) => (
-  <div className={`bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl shadow-gray-300/60 border border-gray-100 space-y-6 hover:shadow-2xl hover:shadow-gray-400/50 transition-all duration-300 ${className}`}>
-    <h2 className="text-xl font-semibold flex items-center gap-2 text-gray-800"><Icon className="w-5 h-5 text-indigo-500" />{title}</h2>
-    {children}
-  </div>
-);
+const Section = (props) => {
+  const { icon: Icon, title, children, className = "" } = props;
+  return (
+    <div className={`bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl shadow-gray-300/60 border border-gray-100 space-y-6 hover:shadow-2xl hover:shadow-gray-400/50 transition-all duration-300 ${className}`}>
+      <h2 className="text-xl font-semibold flex items-center gap-2 text-gray-800"><Icon className="w-5 h-5 text-indigo-500" />{title}</h2>
+      {children}
+    </div>
+  );
+};
 
 const Input = ({ label, icon: Icon, className, ...props }) => (
   <div className={className}>
@@ -49,7 +52,6 @@ export default function CreateActivity() {
   const { isGenerating } = useSelector((state) => state.ai);
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const mapRef = useRef(null);
   const dispatch = useDispatch();
   const autocompleteRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -98,7 +100,7 @@ export default function CreateActivity() {
           setCenter({ lat: loc.lat, lng: loc.lng });
           toast.success("Current location set!");
         },
-        (error) => {
+        () => {
           toast.error("Unable to get your location. Please enable location services.");
         }
       );

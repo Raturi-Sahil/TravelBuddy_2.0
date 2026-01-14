@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Check, X, Star, Zap, Shield } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { buySubscription } from '../../redux/slices/userSlice';
-import { useAppDispatch } from '../../redux/hooks';
-import { useAuth } from '@clerk/clerk-react';
 import { load } from '@cashfreepayments/cashfree-js';
+import { useAuth } from '@clerk/clerk-react';
+import { Check, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+
+import { useAppDispatch } from '../../redux/hooks';
+import { buySubscription } from '../../redux/slices/userSlice';
 
 const BuySubscription = () => {
   const navigate = useNavigate();
@@ -14,10 +15,10 @@ const BuySubscription = () => {
   const dispatch = useAppDispatch();
   const { getToken } = useAuth();
 
-  let cashfree;
+  const cashfreeRef = useRef(null);
   useEffect(() => {
     const initializeSDK = async () => {
-        cashfree = await load({
+        cashfreeRef.current = await load({
             mode: "sandbox" // Change to "production" for live
         });
     };
@@ -91,8 +92,8 @@ const BuySubscription = () => {
               paymentSessionId: result.payment_session_id,
               redirectTarget: "_self",
           };
-          if (cashfree) {
-            cashfree.checkout(checkoutOptions);
+          if (cashfreeRef.current) {
+            cashfreeRef.current.checkout(checkoutOptions);
           } else {
              // Fallback if cashfree didn't load yet
              const cf = await load({ mode: "sandbox" });
@@ -144,7 +145,7 @@ const BuySubscription = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-7xl relative z-10 px-4">
-        {plans.map((plan, index) => (
+        {plans.map((plan) => (
           <div
             key={plan.name}
             onClick={() => setSelectedPlan(plan.name)}

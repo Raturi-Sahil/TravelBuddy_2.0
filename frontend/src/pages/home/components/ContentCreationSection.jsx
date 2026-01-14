@@ -1,6 +1,4 @@
-import { motion } from 'framer-motion';
 import { ArrowRight, BookOpen, Camera, Compass, PenTool, Star } from 'lucide-react';
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const contentCards = [

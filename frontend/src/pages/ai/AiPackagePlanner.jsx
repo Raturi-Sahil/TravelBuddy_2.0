@@ -1,12 +1,12 @@
-import { Autocomplete } from '@react-google-maps/api';
 import { useAuth } from '@clerk/clerk-react';
-import { Briefcase, CheckSquare, Cloud, Download, MapPin, Printer, Shirt, Sparkles, Thermometer, Umbrella, Wand2 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { Autocomplete } from '@react-google-maps/api';
+import { Briefcase, CheckSquare, Cloud, Download, MapPin, Shirt, Thermometer, Wand2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
-import { generatePackingList, clearPackingList } from '../../redux/slices/aiSlice';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
+import { clearPackingList,generatePackingList } from '../../redux/slices/aiSlice';
 
 function AiPackagePlanner() {
   const autocompleteRef = useRef(null);
@@ -22,7 +22,7 @@ function AiPackagePlanner() {
 
   const dispatch = useDispatch();
   const { getToken } = useAuth();
-  const { packingList, isGenerating, error } = useSelector((state) => state.ai);
+  const { packingList, isGenerating } = useSelector((state) => state.ai);
   const { isLoaded } = useGoogleMaps();
 
   // Clear packing list on unmount

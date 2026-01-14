@@ -1,4 +1,3 @@
-import React from 'react';
 import { Phone, PhoneOff, Video } from 'lucide-react';
 
 const IncomingCallModal = ({ call, callAccepted, answerCall, leaveCall }) => {

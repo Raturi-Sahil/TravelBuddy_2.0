@@ -1,4 +1,4 @@
-import { Users, Crown, UserCheck, Mail, Phone } from 'lucide-react';
+import { Crown, Mail, Phone,UserCheck, Users } from 'lucide-react';
 
 function ParticipantsTable({ participants = [], activityLimit, onInvite }) {
   if (!participants || participants.length === 0) {

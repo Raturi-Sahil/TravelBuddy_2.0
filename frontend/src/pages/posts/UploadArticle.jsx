@@ -376,22 +376,22 @@ function UploadArticle() {
               </label>
               <div className="flex gap-2">
                 {[
-                  { value: 'Public', icon: Globe },
-                  { value: 'Friends', icon: Users },
-                  { value: 'Private', icon: Lock },
-                ].map(({ value, icon: Icon }) => (
+                  { value: 'Public', IconComponent: Globe },
+                  { value: 'Friends', IconComponent: Users },
+                  { value: 'Private', IconComponent: Lock },
+                ].map((item) => (
                   <button
-                    key={value}
+                    key={item.value}
                     type="button"
-                    onClick={() => setFormData({ ...formData, visibility: value })}
+                    onClick={() => setFormData({ ...formData, visibility: item.value })}
                     className={`flex-1 flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all ${
-                      formData.visibility === value
+                      formData.visibility === item.value
                         ? 'border-amber-500 bg-amber-50 text-amber-700'
                         : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}
                   >
-                    <Icon size={18} />
-                    <span className="text-xs font-medium">{value}</span>
+                    <item.IconComponent size={18} />
+                    <span className="text-xs font-medium">{item.value}</span>
                   </button>
                 ))}
               </div>
@@ -405,9 +405,9 @@ function UploadArticle() {
               </label>
               <div className="flex gap-2">
                 {[
-                  { value: 'Draft', label: 'Draft', color: 'gray' },
-                  { value: 'Published', label: 'Publish', color: 'green' },
-                ].map(({ value, label, color }) => (
+                  { value: 'Draft', label: 'Draft' },
+                  { value: 'Published', label: 'Publish' },
+                ].map(({ value, label }) => (
                   <button
                     key={value}
                     type="button"

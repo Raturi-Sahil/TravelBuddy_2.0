@@ -6,7 +6,6 @@ import {
     Camera,
     CreditCard,
     Edit2,
-    Eye,
     EyeOff,
     Facebook,
     Globe,
@@ -32,7 +31,7 @@ import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
 import { COUNTRY_CODES, getCountryByDialCode } from '../../data/countryCodes';
 import {
     COUNTRIES,

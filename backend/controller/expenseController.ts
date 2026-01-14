@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import mongoose from "mongoose";
 
 import { Expense, ExpenseGroup, Settlement } from "../models/expenseModel";
 import { sendNotification } from "../utils/notificationUtil";

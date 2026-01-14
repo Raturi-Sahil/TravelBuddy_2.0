@@ -14,10 +14,10 @@ import {
   Users,
   X
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
 import { activityService,createAuthenticatedApi } from '../../redux/services/api';
 
 const containerStyle = {

@@ -1,20 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  Map,
+  ArrowRight,
+  Bot,
+  Brain,
   Briefcase,
   CloudSun,
   Compass,
-  Sparkles,
-  ArrowRight,
-  Zap,
-  Bot,
-  Brain,
-  Rocket,
-  Star,
   Globe,
-  MessageCircle
-} from 'lucide-react';
+  Map,
+  MessageCircle,
+  Rocket,
+  Sparkles,
+  Star,
+  Zap} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const AiBuddyHomePage = () => {
   const navigate = useNavigate();

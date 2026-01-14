@@ -5,8 +5,8 @@ import toast from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { COUNTRIES, GENDERS, LANGUAGE_LEVELS, LANGUAGES } from '../../data/enums';
 import { COUNTRY_CODES, getCountryByDialCode } from '../../data/countryCodes';
+import { COUNTRIES, GENDERS, LANGUAGE_LEVELS, LANGUAGES } from '../../data/enums';
 import { useUserActions } from '../../redux/hooks/useUser';
 import { fetchNotifications } from '../../redux/slices/notificationSlice';
 

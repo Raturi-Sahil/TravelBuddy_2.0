@@ -3,22 +3,21 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Heart,
   Loader2,
   MapPin,
   MessageCircle,
-  Share2,
-  Upload,
-  Sparkles,
   Send,
-  Clock
-} from 'lucide-react';
+  Share2,
+  Sparkles,
+  Upload} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { fetchPosts, toggleLike, incrementShare, addComment } from '../../redux/slices/postSlice';
+import { addComment,fetchPosts, incrementShare, toggleLike } from '../../redux/slices/postSlice';
 
 // Premium Image Carousel Component
 function ImageCarousel({ images }) {
@@ -122,7 +121,7 @@ function UserPosts() {
       const result = await dispatch(toggleLike({ getToken, id: postId })).unwrap();
       toast.success(result.data.liked ? '❤️ Liked!' : 'Unliked');
       dispatch(fetchPosts({ getToken, page: currentPage, limit: 12, visibility: 'Public' }));
-    } catch (err) {
+    } catch{
       toast.error('Failed to update like');
     }
   };
@@ -143,7 +142,7 @@ function UserPosts() {
       toast.success('Comment added! 💬');
       setCommentText(prev => ({ ...prev, [postId]: '' }));
       dispatch(fetchPosts({ getToken, page: currentPage, limit: 12, visibility: 'Public' }));
-    } catch (err) {
+    } catch{
       toast.error('Failed to add comment');
     }
   };

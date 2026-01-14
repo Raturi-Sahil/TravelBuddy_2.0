@@ -1,5 +1,5 @@
 import { Clock } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useEffect,useMemo,useRef, useState } from 'react';
 
 const TimePicker = ({
   value,
@@ -9,29 +9,31 @@ const TimePicker = ({
   className = ""
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedHour, setSelectedHour] = useState('');
-  const [selectedMinute, setSelectedMinute] = useState('');
-  const [selectedPeriod, setSelectedPeriod] = useState('AM');
   const timePickerRef = useRef(null);
 
-  // Parse initial value
-  useEffect(() => {
-    if (value) {
-      const [hours, minutes] = value.split(':');
-      let hour = parseInt(hours, 10);
-      const minute = minutes;
-
-      if (hour >= 12) {
-        setSelectedPeriod('PM');
-        if (hour > 12) hour -= 12;
-      } else {
-        setSelectedPeriod('AM');
-        if (hour === 0) hour = 12;
-      }
-
-      setSelectedHour(hour.toString().padStart(2, '0'));
-      setSelectedMinute(minute);
+  // Parse value prop to derive hour, minute, and period
+  // Using useMemo avoids cascading renders from useEffect + setState
+  const { selectedHour, selectedMinute, selectedPeriod } = useMemo(() => {
+    if (!value) {
+      return { selectedHour: '', selectedMinute: '', selectedPeriod: 'AM' };
     }
+
+    const [hours, minutes] = value.split(':');
+    let hour = parseInt(hours, 10);
+    let period = 'AM';
+
+    if (hour >= 12) {
+      period = 'PM';
+      if (hour > 12) hour -= 12;
+    } else {
+      if (hour === 0) hour = 12;
+    }
+
+    return {
+      selectedHour: hour.toString().padStart(2, '0'),
+      selectedMinute: minutes,
+      selectedPeriod: period
+    };
   }, [value]);
 
   // Close when clicking outside
@@ -63,21 +65,19 @@ const TimePicker = ({
   };
 
   const handleHourClick = (hour) => {
-    setSelectedHour(hour);
-    if (selectedMinute) {
-      handleTimeSelect(hour, selectedMinute, selectedPeriod);
-    }
+    // Use selected minute or default to '00'
+    const minute = selectedMinute || '00';
+    handleTimeSelect(hour, minute, selectedPeriod);
   };
 
   const handleMinuteClick = (minute) => {
-    setSelectedMinute(minute);
-    if (selectedHour) {
-      handleTimeSelect(selectedHour, minute, selectedPeriod);
-    }
+    // Use selected hour or default to '12'
+    const hour = selectedHour || '12';
+    handleTimeSelect(hour, minute, selectedPeriod);
   };
 
   const handlePeriodClick = (period) => {
-    setSelectedPeriod(period);
+    // Only update if we have both hour and minute
     if (selectedHour && selectedMinute) {
       handleTimeSelect(selectedHour, selectedMinute, period);
     }
@@ -237,8 +237,6 @@ const TimePicker = ({
               type="button"
               onClick={() => {
                 onChange('');
-                setSelectedHour('');
-                setSelectedMinute('');
                 setIsOpen(false);
               }}
               className="flex-1 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"

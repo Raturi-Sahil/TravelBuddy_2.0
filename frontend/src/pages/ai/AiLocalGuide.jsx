@@ -1,13 +1,13 @@
 import { useAuth } from '@clerk/clerk-react';
-import { useEffect } from 'react';
 import { Autocomplete } from '@react-google-maps/api';
-import { Coffee, Compass, Landmark, Map, MapPin, Music, Sparkles, Store, Utensils } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import {  Compass, Landmark, Map, MapPin, Sparkles, Store, Utensils } from 'lucide-react';
+import { useEffect } from 'react';
+import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
-import { generateLocalGuide, clearLocalGuide } from '../../redux/slices/aiSlice';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
+import { clearLocalGuide,generateLocalGuide } from '../../redux/slices/aiSlice';
 
 function AiLocalGuide() {
   const autocompleteRef = useRef(null);
@@ -20,7 +20,7 @@ function AiLocalGuide() {
 
   const dispatch = useDispatch();
   const { getToken } = useAuth();
-  const { guideData, isGenerating, error } = useSelector((state) => state.ai);
+  const { guideData, isGenerating } = useSelector((state) => state.ai);
   const { isLoaded } = useGoogleMaps();
 
   // Clear data on unmount

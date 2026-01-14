@@ -1,12 +1,12 @@
-import { Autocomplete } from '@react-google-maps/api';
 import { useAuth } from '@clerk/clerk-react';
-import { CloudRain, Compass,  MapPin, CloudSun, Sun, Wind, Thermometer, Umbrella, Calendar, Sparkles } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { Autocomplete } from '@react-google-maps/api';
+import { Calendar, CloudRain, CloudSun, Compass,  MapPin, Sparkles,Sun, Thermometer, Umbrella, Wind } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
-import { generateWeatherForecast, clearWeatherForecast } from '../../redux/slices/aiSlice';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
+import { clearWeatherForecast,generateWeatherForecast } from '../../redux/slices/aiSlice';
 
 function AiWeatherPlanner() {
   const autocompleteRef = useRef(null);

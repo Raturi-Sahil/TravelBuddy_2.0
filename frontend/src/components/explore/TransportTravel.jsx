@@ -2,7 +2,7 @@ import { Circle, GoogleMap, Marker } from '@react-google-maps/api';
 import { AlertCircle, ChevronRight, Clock, Filter, Loader2, MapPin, Navigation, Phone, Search, Star, Train, Users, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
 import { placesService } from '../../redux/services/api';
 
 const containerStyle = { width: '100%', height: '100%' };
@@ -80,7 +80,7 @@ function TransportTravel() {
         pageToken ? setNearbyPlaces(prev => [...prev, ...places]) : setNearbyPlaces(places || []);
         setNearbyNextToken(nextPageToken);
       } else setError(response.message);
-    } catch (err) { setError('Failed to fetch transport services.'); }
+    } catch { setError('Failed to fetch transport services.'); }
     finally { setLoadingPlaces(false); setLoadingMore(false); }
   }, []);
 
@@ -94,7 +94,7 @@ function TransportTravel() {
         pageToken ? setSearchResults(prev => [...prev, ...places]) : setSearchResults(places || []);
         setSearchNextToken(nextPageToken);
       } else setError(response.message);
-    } catch (err) { setError('Failed to search.'); }
+    } catch { setError('Failed to search.'); }
     finally { setLoadingPlaces(false); setLoadingMore(false); }
   }, []);
 
@@ -104,7 +104,7 @@ function TransportTravel() {
       (pos) => { const c = { lat: pos.coords.latitude, lng: pos.coords.longitude }; setUserLocation(c); setLoadingLocation(false); fetchNearbyPlaces(c.lat, c.lng); },
       () => { setUserLocation(DEFAULT_CENTER); setLoadingLocation(false); fetchNearbyPlaces(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng); }
     );
-  }, []);
+  }, [fetchNearbyPlaces]);
 
   const handleSearch = () => {
     if (!userLocation) return;

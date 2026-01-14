@@ -3,7 +3,7 @@ import { ArrowRight,CheckCircle, Loader2, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate,useSearchParams } from 'react-router-dom';
 
-import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { useAppDispatch } from '../../redux/hooks';
 import { verifySubscription } from '../../redux/slices/userSlice';
 
 const PaymentStatus = () => {
@@ -12,7 +12,6 @@ const PaymentStatus = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { getToken } = useAuth();
-  const { isLoading, error } = useAppSelector((state) => state.user);
 
   const [status, setStatus] = useState('verifying'); // verifying, success, failed
 

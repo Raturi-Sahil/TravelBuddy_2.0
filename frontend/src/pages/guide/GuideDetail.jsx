@@ -1,6 +1,5 @@
 import { useAuth } from '@clerk/clerk-react';
 import {
-  ArrowLeft,
   Award,
   BadgeCheck,
   Calendar,
@@ -326,7 +325,7 @@ const GuideDetail = () => {
                 <h2 className="text-xl font-bold text-gray-900">Specialties</h2>
               </div>
               <div className="flex flex-wrap gap-3">
-                {selectedGuide.specialties?.map((specialty, index) => (
+                {selectedGuide.specialties?.map((specialty) => (
                   <span
                     key={specialty}
                     className="group relative px-4 py-2.5 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 text-orange-700 font-semibold rounded-xl border border-orange-200/50 hover:border-orange-300 transition-all cursor-default"

@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-import { IExpenseGroup, IExpense, ISettlement } from "../interfaces/expenseInterface";
+import { IExpense, IExpenseGroup, ISettlement } from "../interfaces/expenseInterface";
 
 // Expense Group Schema
 const expenseGroupMemberSchema = new Schema(

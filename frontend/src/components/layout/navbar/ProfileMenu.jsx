@@ -3,7 +3,7 @@ import {
 Activity, BookOpen,   Calendar, CalendarDays, Camera, ChevronDown, Compass,
 Image, Link, LogOut, MapPin,
 Receipt, Upload,   User} from 'lucide-react';
-import React, { useEffect,useRef, useState } from 'react';
+import { useEffect,useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';

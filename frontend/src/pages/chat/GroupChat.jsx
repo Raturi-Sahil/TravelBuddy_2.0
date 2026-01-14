@@ -1,45 +1,40 @@
 import { useAuth } from "@clerk/clerk-react";
+import EmojiPicker from 'emoji-picker-react';
 import {
-  Loader2,
-  Send,
-  Paperclip,
-  Image as ImageIcon,
-  Camera,
-  MapPin,
-  User,
-  FileText,
+  ArrowLeft,
   BarChart2,
   Calendar,
-  IndianRupee,
-  Sparkles,
-  ArrowLeft,
-  Phone,
-  Video,
-  MoreVertical,
-  Mic,
-  Smile,
-  Sticker,
-  Gift,
-  UserPlus,
-  X,
-  Search,
+  Camera,
   Check,
   CheckCircle2,
-  Clock,
   ChevronDown,
-  Plus
-} from "lucide-react";
-import EmojiPicker from 'emoji-picker-react';
+  FileText,
+  Gift,
+  Image as ImageIcon,
+  IndianRupee,
+  Loader2,
+  Mic,
+  MoreVertical,
+  Phone,
+  Plus,
+  Search,
+  Send,
+  Smile,
+  Sparkles,
+  Sticker,
+  User,
+  UserPlus,
+  Video,
+  X} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useParams, useNavigate } from "react-router-dom";
-import AudioMessage from "../../components/chat/AudioMessage";
-
-
-import { createAuthenticatedApi, groupChatService, userService } from "../../redux/services/api";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchFriends } from "../../redux/slices/userSlice";
+import { useNavigate,useParams } from "react-router-dom";
+
+import AudioMessage from "../../components/chat/AudioMessage";
+import { createAuthenticatedApi, groupChatService, userService } from "../../redux/services/api";
 import { inviteUsersToActivity } from "../../redux/slices/ActivitySlice";
+import { fetchFriends } from "../../redux/slices/userSlice";
 
 function GroupChat() {
   const { activityId } = useParams();
@@ -60,8 +55,8 @@ function GroupChat() {
 
   const isOnlyEmojis = (text) => {
     if (!text) return false;
-    // Standard emoji regex
-    const emojiRegex = /^(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]|[ \u200d\ufe0f])+\s*$/;
+    // Standard emoji regex - using Unicode property escapes
+    const emojiRegex = /^[\p{Emoji_Presentation}\p{Extended_Pictographic}\s]+$/u;
     const cleanText = text.trim();
     if (!emojiRegex.test(cleanText)) return false;
 
@@ -70,7 +65,7 @@ function GroupChat() {
       const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
       const count = [...segmenter.segment(cleanText)].filter(s => s.segment.trim().length > 0).length;
       return count >= 1 && count <= 3;
-    } catch (e) {
+    } catch {
       // Fallback for older browsers if Segmenter is missing
       return cleanText.length <= 12; // Very rough fallback
     }
@@ -314,7 +309,7 @@ function GroupChat() {
             formData
           );
           setMessages((prev) => [...prev, res.data]);
-        } catch (err) {
+        } catch {
           toast.error("Failed to send voice message");
         } finally {
           setIsSending(false);
@@ -339,7 +334,7 @@ function GroupChat() {
           return prev - 1;
         });
       }, 1000);
-    } catch (err) {
+    } catch {
       toast.error("Microphone access denied");
     }
   };
@@ -438,7 +433,7 @@ function GroupChat() {
             const res = await groupChatService.sendGroupChatMessage(authApi, chat._id, formData);
             toast.dismiss(toastId);
             setMessages((prev) => [...prev, res.data]);
-          } catch (err) {
+          } catch {
             toast.error("Failed to upload pasted image");
           } finally {
             setIsSending(false);
@@ -497,7 +492,7 @@ function GroupChat() {
       });
       setEditingMessageId(msg._id);
       setShowEventModal(true);
-    } catch (e) {
+    } catch {
       toast.error("Failed to load event data");
     }
   };
@@ -536,57 +531,20 @@ function GroupChat() {
     }
   };
 
-  // Send Location
-  const handleLocation = async () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
-      return;
-    }
-
-    setIsSending(true);
-    setShowAttachments(false);
-    const toastId = toast.loading("Fetching location...");
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const mapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-
-        try {
-          const res = await groupChatService.sendGroupChatMessage(
-            authApi,
-            chat._id,
-            `📍 My Location: ${mapLink}`
-          );
-          setMessages((prev) => [...prev, res.data]);
-        } catch (err) {
-          console.error(err);
-          toast.error("Failed to send location");
-        } finally {
-          toast.dismiss(toastId);
-          setIsSending(false);
-        }
-      },
-      (error) => {
-        console.error(error);
-        toast.error("Unable to retrieve your location");
-        toast.dismiss(toastId);
-        setIsSending(false);
-      }
+  const AttachmentItem = (props) => {
+    const { icon: Icon, label, color, onClick } = props;
+    return (
+      <button
+        onClick={onClick}
+        className="w-full flex items-center gap-3 px-3 py-1.5 hover:bg-gray-50 transition-colors group first:rounded-t-2xl last:rounded-b-2xl"
+      >
+        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white shadow-sm shrink-0 ${color} group-hover:scale-110 transition-transform`}>
+          <Icon className="w-5 h-5" />
+        </div>
+        <span className="text-sm text-gray-700 font-semibold">{label}</span>
+      </button>
     );
   };
-
-  const AttachmentItem = ({ icon: Icon, label, color, onClick }) => (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 px-3 py-1.5 hover:bg-gray-50 transition-colors group first:rounded-t-2xl last:rounded-b-2xl"
-    >
-      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white shadow-sm shrink-0 ${color} group-hover:scale-110 transition-transform`}>
-        <Icon className="w-5 h-5" />
-      </div>
-      <span className="text-sm text-gray-700 font-semibold">{label}</span>
-    </button>
-  );
 
   if (loading) {
     return (
@@ -815,7 +773,7 @@ function GroupChat() {
                                   </button>
                                 </div>
                               )
-                            } catch (e) { return <div className="p-4 text-red-500 italic">Invalid Poll Data</div> }
+                            } catch { return <div className="p-4 text-red-500 italic">Invalid Poll Data</div> }
                           })()}
                         </div>
                       )}
@@ -906,7 +864,7 @@ function GroupChat() {
                                   )}
                                 </div>
                               )
-                            } catch (e) { return <div className="p-4 text-red-500 italic">Invalid Event Data</div> }
+                            } catch { return <div className="p-4 text-red-500 italic">Invalid Event Data</div> }
                           })()}
                         </div>
                       )}
@@ -936,7 +894,7 @@ function GroupChat() {
                                   </button>
                                 </>
                               )
-                            } catch (e) { return <span className="text-red-500 italic">Invalid Payment Request</span> }
+                            } catch { return <span className="text-red-500 italic">Invalid Payment Request</span> }
                           })()}
                         </div>
                       )}
@@ -964,7 +922,7 @@ function GroupChat() {
                                   </button>
                                 </div>
                               )
-                            } catch (e) { return <span className="text-red-500 italic">Invalid Contact Data</span> }
+                            } catch { return <span className="text-red-500 italic">Invalid Contact Data</span> }
                           })()}
                         </div>
                       )}
@@ -1392,7 +1350,7 @@ function GroupChat() {
                           // Update local state
                           setMessages(prev => prev.map(m => m._id === editingMessageId ? res.data : m));
                           toast.success("Event updated!");
-                        } catch (err) {
+                        } catch {
                           toast.error("Failed to update event");
                         } finally {
                           setIsSending(false);

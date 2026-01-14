@@ -1,17 +1,9 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+
 import { useSocket } from '../hooks/useSocket';
-
-const CallContext = createContext(null);
-
-export const useCall = () => {
-  const context = useContext(CallContext);
-  if (!context) {
-    throw new Error('useCall must be used within a CallProvider');
-  }
-  return context;
-};
+import { CallContext } from './callContextInstance';
 
 // ICE Server configuration with multiple STUN servers and free TURN servers for better connectivity
 const ICE_SERVERS = {
@@ -43,7 +35,8 @@ const ICE_SERVERS = {
 
 export const CallProvider = ({ children }) => {
   const { user: authUser } = useUser();
-  const { getSocket, isConnected } = useSocket();
+  const { getSocket, isConnected: _isConnected } = useSocket();
+  void _isConnected; // Acknowledge unused variable
   const socket = getSocket();
 
   // Call State
@@ -72,11 +65,13 @@ export const CallProvider = ({ children }) => {
 
   // Configure audio loops
   useEffect(() => {
-    incomingAudio.current.loop = true;
-    outgoingAudio.current.loop = true;
+    const incomingRef = incomingAudio.current;
+    const outgoingRef = outgoingAudio.current;
+    incomingRef.loop = true;
+    outgoingRef.loop = true;
     return () => {
-      incomingAudio.current.pause();
-      outgoingAudio.current.pause();
+      incomingRef.pause();
+      outgoingRef.pause();
     }
   }, []);
 
@@ -192,7 +187,7 @@ export const CallProvider = ({ children }) => {
   };
 
   // Helper to cleanup call state
-  const cleanupCall = () => {
+  const cleanupCall = useCallback(() => {
      if (connectionRef.current) {
       connectionRef.current.close();
       connectionRef.current = null;
@@ -217,7 +212,7 @@ export const CallProvider = ({ children }) => {
     setIsVideoEnabled(true);
     setConnectionStatus('idle');
     answerProcessedRef.current = false;
-  };
+  }, [stream]);
 
   const callUser = async (userToCallId, userToCallName, userToCallClerkId, userToCallImage, isVideoCall = false) => {
     // Check socket connection before starting call
@@ -370,45 +365,6 @@ export const CallProvider = ({ children }) => {
     }
   };
 
-  const leaveCall = () => {
-    // Notify other user
-    socket.emit("endCall", { to: callAccepted ? (call.from === authUser?.id ? remoteUser?.clerk_id : call.from) : call.from });
-
-    // If I'm the caller, call.from might be undefined or me, logic might need adjustment if call.from isn't always the other person.
-    // Actually, in 'callUser' event, 'from' is the caller.
-    // If I started the call, 'call' state might differ.
-    // Current ChatPage logic seemed to handle it by sending to 'currentChatUserId' or 'call.from'.
-
-    // Let's refine target for endCall:
-    let targetId;
-    if (call.isReceivingCall) {
-        // I am receiver, ending call with caller
-        targetId = call.from;
-    } else {
-        // I am caller (isCalling=true), logic to find who I called?
-        // We didn't store who we called in state other than remoteUser object.
-        // We need the clerk_id of the person we called.
-        // Let's rely on whoever we have connection with or just emit to the room/user if we stored it.
-        // The original ChatPage logic used `currentChatUserId`. We don't have that globally unless we pass it to `callUser`.
-        // I passed userToCallClerkId to `callUser`, I should store it.
-    }
-
-    // Simpler approach compatible with original: emit to BOTH potential targets if unsure, or store target properly.
-    // Ideally we store `callTargetId` in state.
-
-    // For now, let's just do local cleanup and try to emit if we have value.
-    // The original code: socket.emit("endCall", { to: callAccepted ? currentChatUserId : call.from });
-
-    if (connectionRef.current) {
-        // cleanupCall handles reset
-    }
-
-    // We need to know who to tell.
-    // If I am calling, I know `userToCallClerkId` I passed to callUser.
-
-    setCallEnded(true);
-    cleanupCall();
-  };
 
   // We need to fix the 'leaveCall' signaling target in the context logic.
   // Let's modify callUser to store the target ID.

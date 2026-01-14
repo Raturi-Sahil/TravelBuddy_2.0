@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/clerk-react';
 import { Check, Loader2, Search, UserPlus, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { fetchFriends } from '../../redux/slices/userSlice';
@@ -18,7 +18,6 @@ export default function CreateGroupModal({
   const { getToken } = useAuth();
   const dispatch = useDispatch();
   const { friends, isLoading: friendsLoading } = useSelector((state) => state.user);
-  const [filteredFriends, setFilteredFriends] = useState([]);
 
   // Fetch friends when modal opens
   useEffect(() => {
@@ -28,25 +27,23 @@ export default function CreateGroupModal({
   }, [isOpen, dispatch, getToken]);
 
   // Filter friends based on search - show only 5 initially, all when searching
-  useEffect(() => {
+  // Using useMemo instead of useState + useEffect avoids cascading renders
+  const filteredFriends = useMemo(() => {
     if (!friends) {
-      setFilteredFriends([]);
-      return;
+      return [];
     }
 
     if (!memberSearch.trim()) {
       // Show only first 5 friends when not searching
-      setFilteredFriends(friends.slice(0, 5));
-    } else {
-      const search = memberSearch.toLowerCase();
-      setFilteredFriends(
-        friends.filter(
-          (friend) =>
-            friend.name?.toLowerCase().includes(search) ||
-            friend.email?.toLowerCase().includes(search)
-        )
-      );
+      return friends.slice(0, 5);
     }
+
+    const search = memberSearch.toLowerCase();
+    return friends.filter(
+      (friend) =>
+        friend.name?.toLowerCase().includes(search) ||
+        friend.email?.toLowerCase().includes(search)
+    );
   }, [friends, memberSearch]);
 
   // Check if a friend is already added

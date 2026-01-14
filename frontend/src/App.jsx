@@ -17,7 +17,7 @@ import TouristPlaces from "./components/explore/TouristPlaces";
 import TransportTravel from "./components/explore/TransportTravel";
 // Layout components
 import Layout from "./components/layout/Layout";
-import { AudioPlaybackProvider } from "./context/AudioPlaybackContext";
+import AudioPlaybackProvider from "./context/AudioPlaybackContext";
 import { CallProvider } from "./context/CallContext";
 // About pages
 import AboutUs from "./pages/about/AboutUs";

@@ -1,11 +1,11 @@
-import { Autocomplete } from '@react-google-maps/api';
 import { useAuth } from '@clerk/clerk-react';
-import { Calendar, Clock, DollarSign, Download, MapPin, Sparkles, Users, Wand2 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { Autocomplete } from '@react-google-maps/api';
+import { Clock, DollarSign, Download, MapPin, Sparkles, Users, Wand2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
 import { clearTripPlan, generateTripPlan } from '../../redux/slices/aiSlice';
 
 function AiTripPlanner() {

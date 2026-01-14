@@ -1,49 +1,52 @@
-import React, { useEffect, useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
+import { Autocomplete } from "@react-google-maps/api";
+import {
+Calendar, ChevronLeft, ChevronRight, Clock,   Filter, Heart,   Loader2, MapPin, Search, Star, Users, X,
+Zap} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@clerk/clerk-react";
 
-import {
-  Loader2, MapPin, Users, Calendar, Search, Star, Clock, Zap,
-  Filter, Play, ChevronLeft, ChevronRight, DollarSign, Globe, Heart, X
-} from "lucide-react";
-import { fetchActivities } from "../../redux/slices/ActivitySlice";
-import { Autocomplete } from "@react-google-maps/api";
-import { useGoogleMaps } from "../../context/GoogleMapsContext";
+import { useGoogleMaps } from "../../context/useGoogleMaps";
 import ReverseGeocode from "../../helpers/reverseGeoCode";
+import { fetchActivities } from "../../redux/slices/ActivitySlice";
 
 // Component to fetch and display address from coordinates
 const AddressDisplay = ({ location }) => {
-  const [address, setAddress] = useState("Loading location...");
+  // If address is already available from props, use it directly
+  const hasDirectAddress = Boolean(location?.address);
+  const [fetchedAddress, setFetchedAddress] = useState(null);
 
   useEffect(() => {
-    // If address string is already available, use it
-    if (location?.address) {
-      setAddress(location.address);
-      return;
-    }
+    // Only fetch if we don't have a direct address
+    if (hasDirectAddress) return;
 
-    // Otherwise use coordinates to fetch address
+    let isMounted = true;
     const fetchAddress = async () => {
       if (location?.coordinates && location.coordinates.length === 2) {
-        // coordinates are [lng, lat]
         const lng = location.coordinates[0];
         const lat = location.coordinates[1];
         try {
           const result = await ReverseGeocode({ lat, lng });
-          setAddress(result);
-        } catch (error) {
-          setAddress("Location text unavailable");
+          if (isMounted) setFetchedAddress(result);
+        } catch {
+          if (isMounted) setFetchedAddress("Location text unavailable");
         }
       } else {
-        setAddress("Location unspecified");
+        if (isMounted) setFetchedAddress("Location unspecified");
       }
     };
 
     fetchAddress();
-  }, [location]);
+    return () => { isMounted = false; };
+  }, [location, hasDirectAddress]);
 
-  return <span className="truncate">{address}</span>;
+  // Determine what to display
+  const displayAddress = hasDirectAddress
+    ? location.address
+    : fetchedAddress || "Loading location...";
+
+  return <span className="truncate">{displayAddress}</span>;
 };
 
 // Helper to calculate status
@@ -93,7 +96,7 @@ const ImageSlider = ({ photos }) => {
 
 const FilterModal = ({ isOpen, onClose, filters, setFilters, resultCount, onReset }) => {
   const { isLoaded } = useGoogleMaps();
-  const autocompleteRef = React.useRef(null);
+  const autocompleteRef = useRef(null);
 
   const onAutocompleteLoad = (autocomplete) => { autocompleteRef.current = autocomplete; };
   const onPlaceChanged = () => {
@@ -257,7 +260,7 @@ export default function ActivityNearMe() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { getToken } = useAuth();
-  const { activities, isLoading, error } = useSelector((state) => state.activity);
+  const { activities, isLoading } = useSelector((state) => state.activity);
   const { profile: currentUser } = useSelector((state) => state.user);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -441,7 +444,7 @@ export default function ActivityNearMe() {
            </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredActivities.map((activity, index) => {
+            {filteredActivities.map((activity) => {
               const participantsCount = activity.participants ? activity.participants.length : 0;
               const status = getActivityStatus(participantsCount, activity.maxCapacity);
               const activityDate = activity.date ? new Date(activity.date) : new Date();

@@ -1,13 +1,14 @@
-import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
-import toast from "react-hot-toast";
-import { fetchMyCreatedActivities } from "../../redux/slices/userActivitySlice";
 import {
-  Loader2, MapPin, Users, Calendar, Search, Star, Clock, Plus,
-  ChevronLeft, ChevronRight, Edit, Zap, Settings
-} from "lucide-react";
+Calendar,   ChevronLeft, ChevronRight, Clock, Edit,   Loader2, MapPin, Plus,
+Search, Settings,
+Users, Zap} from "lucide-react";
+import { useEffect,useState } from "react";
+import toast from "react-hot-toast";
+import { useDispatch,useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
+import { fetchMyCreatedActivities } from "../../redux/slices/userActivitySlice";
 
 // Helper to calculate status
 const getActivityStatus = (current, max) => {

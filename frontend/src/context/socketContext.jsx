@@ -1,5 +1,5 @@
 import { useUser } from "@clerk/clerk-react";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import io from "socket.io-client";
 

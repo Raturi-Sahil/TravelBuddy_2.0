@@ -10,14 +10,6 @@ import { useNavigate } from "react-router-dom";
 
 import { fetchJoinedActivities, leaveActivity } from "../../redux/slices/userActivitySlice";
 
-// Helper to calculate status
-const getActivityStatus = (current, max) => {
-  const spotsLeft = max - current;
-  if (spotsLeft <= 0) return { type: 'full', text: 'Full', color: 'bg-red-500 text-white' };
-  if (spotsLeft <= 3) return { type: 'limited', text: `${spotsLeft} spots left`, color: 'bg-amber-100 text-amber-800' };
-  return { type: 'open', text: 'Open', color: 'bg-emerald-100 text-emerald-800' };
-};
-
 // ImageSlider Component
 const ImageSlider = ({ photos }) => {
   const [idx, setIdx] = useState(0);
@@ -202,7 +194,6 @@ function JoinedActivites() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredActivities.map((activity) => {
               const participantsCount = activity.participants ? activity.participants.length : 0;
-              const status = getActivityStatus(participantsCount, activity.maxCapacity);
               const activityDate = activity.date ? new Date(activity.date) : new Date();
               const startTime = activity.startTime ? new Date(activity.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "TBD";
               const isPast = activityDate < new Date();
