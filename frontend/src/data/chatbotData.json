@@ -4,555 +4,1224 @@
   "mainMenu": {
     "id": "main",
     "options": [
-      { "id": "getting_started", "label": "🚀 Getting Started" },
-      { "id": "ai_features", "label": "🤖 AI Features" },
-      { "id": "map_explore", "label": "🗺️ Map & Explore" },
-      { "id": "activities", "label": "🤝 Activities" },
-      { "id": "guides", "label": "👨‍🏫 Guides & Tours" },
-      { "id": "posts_content", "label": "📸 Posts & Articles" },
-      { "id": "chat_calls", "label": "💬 Chat & Calls" },
-      { "id": "expenses", "label": "💰 Split Expenses" },
-      { "id": "connections", "label": "👥 Connections" },
-      { "id": "payments", "label": "💳 Payments" },
-      { "id": "support", "label": "🆘 Help & Support" }
+      {
+        "id": "getting_started",
+        "label": "🚀 Getting Started"
+      },
+      {
+        "id": "ai_features",
+        "label": "🤖 AI Features"
+      },
+      {
+        "id": "map_explore",
+        "label": "🗺️ Map & Explore"
+      },
+      {
+        "id": "activities",
+        "label": "🤝 Activities"
+      },
+      {
+        "id": "guides",
+        "label": "👨‍🏫 Guides & Tours"
+      },
+      {
+        "id": "posts_content",
+        "label": "📸 Posts & Articles"
+      },
+      {
+        "id": "chat_calls",
+        "label": "💬 Chat & Calls"
+      },
+      {
+        "id": "expenses",
+        "label": "💰 Split Expenses"
+      },
+      {
+        "id": "connections",
+        "label": "👥 Connections"
+      },
+      {
+        "id": "payments",
+        "label": "💳 Payments"
+      },
+      {
+        "id": "support",
+        "label": "🆘 Help & Support"
+      }
     ]
   },
   "conversations": {
     "getting_started": {
       "message": "Let's get you started with TravelBuddy! 🚀",
       "options": [
-        { "id": "gs_about", "label": "❓ What is TravelBuddy?" },
-        { "id": "gs_signup", "label": "📝 How to sign up?" },
-        { "id": "gs_login", "label": "🔐 How to log in?" },
-        { "id": "gs_profile", "label": "👤 Set up my profile" },
-        { "id": "gs_navigate", "label": "🧭 How to navigate?" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "gs_about",
+          "label": "❓ What is TravelBuddy?"
+        },
+        {
+          "id": "gs_signup",
+          "label": "📝 How to sign up?"
+        },
+        {
+          "id": "gs_login",
+          "label": "🔐 How to log in?"
+        },
+        {
+          "id": "gs_profile",
+          "label": "👤 Set up my profile"
+        },
+        {
+          "id": "gs_navigate",
+          "label": "🧭 How to navigate?"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "gs_about": {
       "message": "**What is TravelBuddy?** 🌍\n\nYour all-in-one travel companion!\n\n**Features:**\n• Find nearby travelers on map\n• Create/join group activities\n• Hire verified local guides\n• AI-powered trip planning\n• Share travel stories & posts\n• Chat with video/voice calls\n• Split expenses with groups\n• Find hotels, food & places",
       "options": [
-        { "id": "gs_signup", "label": "📝 How to sign up?" },
-        { "id": "getting_started", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "gs_signup",
+          "label": "📝 How to sign up?"
+        },
+        {
+          "id": "getting_started",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "gs_signup": {
       "message": "**How to Sign Up** 📝\n\n1. Click 'Sign Up' (top right)\n2. Enter your email & password\n3. Or use 'Sign up with Google'\n4. Verify your email\n5. Complete your profile!\n\nThat's it - you're ready!",
       "options": [
-        { "id": "gs_login", "label": "🔐 How to log in?" },
-        { "id": "gs_profile", "label": "👤 Set up profile" },
-        { "id": "getting_started", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "gs_login",
+          "label": "🔐 How to log in?"
+        },
+        {
+          "id": "gs_profile",
+          "label": "👤 Set up profile"
+        },
+        {
+          "id": "getting_started",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "gs_login": {
       "message": "**How to Log In** 🔐\n\n1. Click 'Sign In' (top right)\n2. Enter email & password\n3. Or use 'Sign in with Google'\n\n**Forgot password?**\n→ Click 'Forgot Password'\n→ Check email for reset link\n→ Create new password",
       "options": [
-        { "id": "gs_profile", "label": "👤 Set up profile" },
-        { "id": "getting_started", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "gs_profile",
+          "label": "👤 Set up profile"
+        },
+        {
+          "id": "getting_started",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "gs_profile": {
       "message": "**Setting Up Your Profile** 👤\n\n1. Click avatar → 'Profile'\n2. Add profile photo\n3. Write your bio\n4. Add travel interests\n5. Set home location\n6. Link social accounts\n\n💡 Complete profiles get more connections!",
       "options": [
-        { "id": "gs_navigate", "label": "🧭 Navigate the app" },
-        { "id": "getting_started", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "gs_navigate",
+          "label": "🧭 Navigate the app"
+        },
+        {
+          "id": "getting_started",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "gs_navigate": {
       "message": "**Navigating TravelBuddy** 🧭\n\n**Top Navigation:**\n• Home, Map, Activities, Guides\n\n**Profile Menu:**\n• My Profile, Posts, Connections\n• Split Expenses, Subscriptions\n\n**Quick Access:**\n• AI Buddy - All AI features\n• Notifications - Updates\n• Messages - Chat list",
       "options": [
-        { "id": "getting_started", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "getting_started",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "ai_features": {
       "message": "Explore our powerful AI tools! 🤖",
       "options": [
-        { "id": "ai_hub", "label": "🏠 AI Buddy Hub" },
-        { "id": "ai_trip", "label": "✈️ AI Trip Planner" },
-        { "id": "ai_packing", "label": "🎒 AI Packing Planner" },
-        { "id": "ai_weather", "label": "🌤️ AI Weather Planner" },
-        { "id": "ai_local", "label": "🧭 AI Local Guide" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "ai_hub",
+          "label": "🏠 AI Buddy Hub"
+        },
+        {
+          "id": "ai_trip",
+          "label": "✈️ AI Trip Planner"
+        },
+        {
+          "id": "ai_packing",
+          "label": "🎒 AI Packing Planner"
+        },
+        {
+          "id": "ai_weather",
+          "label": "🌤️ AI Weather Planner"
+        },
+        {
+          "id": "ai_local",
+          "label": "🧭 AI Local Guide"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "ai_hub": {
       "message": "**AI Buddy Hub** 🏠\n\nYour central hub for all AI features!\n\n**How to access:**\nMenu → AI Buddy\n\n**Available tools:**\n• Trip Planner\n• Packing Planner\n• Weather Planner\n• Local Guide\n\nAll powered by advanced AI!",
       "options": [
-        { "id": "ai_trip", "label": "✈️ Trip Planner" },
-        { "id": "ai_features", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "ai_trip",
+          "label": "✈️ Trip Planner"
+        },
+        {
+          "id": "ai_features",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "ai_trip": {
       "message": "**AI Trip Planner** ✈️\n\nGenerate complete itineraries!\n\n**How to use:**\n1. Go to AI Buddy → Trip Planner\n2. Enter destination\n3. Set travel dates\n4. Choose budget & interests\n5. Get day-by-day plan!\n\n**Includes:**\n• Daily activities\n• Restaurant suggestions\n• Transport options\n• Hidden gems",
       "options": [
-        { "id": "ai_packing", "label": "🎒 Packing Planner" },
-        { "id": "ai_features", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "ai_packing",
+          "label": "🎒 Packing Planner"
+        },
+        {
+          "id": "ai_features",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "ai_packing": {
       "message": "**AI Packing Planner** 🎒\n\nNever forget essentials!\n\n**How to use:**\n1. Go to AI Buddy → Packing\n2. Enter destination & dates\n3. Select planned activities\n4. Get custom packing list!\n\n**Includes:**\n• Weather-based clothing\n• Activity gear\n• Travel essentials\n• Pro tips",
       "options": [
-        { "id": "ai_weather", "label": "🌤️ Weather Planner" },
-        { "id": "ai_features", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "ai_weather",
+          "label": "🌤️ Weather Planner"
+        },
+        {
+          "id": "ai_features",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "ai_weather": {
       "message": "**AI Weather Planner** 🌤️\n\nPlan around weather!\n\n**How to use:**\n1. Go to AI Buddy → Weather\n2. Enter destination & dates\n3. Get detailed forecast!\n\n**Includes:**\n• Day-by-day weather\n• Best activity days\n• What to pack\n• Indoor alternatives",
       "options": [
-        { "id": "ai_local", "label": "🧭 Local Guide" },
-        { "id": "ai_features", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "ai_local",
+          "label": "🧭 Local Guide"
+        },
+        {
+          "id": "ai_features",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "ai_local": {
       "message": "**AI Local Guide** 🧭\n\nDiscover like a local!\n\n**How to use:**\n1. Go to AI Buddy → Local Guide\n2. Enter location\n3. Select interests\n4. Get curated spots!\n\n**Includes:**\n• Hidden gems\n• Best local food\n• Cultural tips\n• Off-beaten paths",
       "options": [
-        { "id": "ai_features", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "ai_features",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "map_explore": {
       "message": "Explore everything around you! 🗺️",
       "options": [
-        { "id": "map_travelers", "label": "👥 Nearby Travelers" },
-        { "id": "map_hotels", "label": "🏨 Find Hotels" },
-        { "id": "map_food", "label": "🍽️ Food & Nightlife" },
-        { "id": "map_tourist", "label": "📍 Tourist Places" },
-        { "id": "map_shopping", "label": "🛍️ Shopping" },
-        { "id": "map_transport", "label": "🚗 Transport" },
-        { "id": "map_emergency", "label": "🚨 Emergency Services" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "map_travelers",
+          "label": "👥 Nearby Travelers"
+        },
+        {
+          "id": "map_hotels",
+          "label": "🏨 Find Hotels"
+        },
+        {
+          "id": "map_food",
+          "label": "🍽️ Food & Nightlife"
+        },
+        {
+          "id": "map_tourist",
+          "label": "📍 Tourist Places"
+        },
+        {
+          "id": "map_shopping",
+          "label": "🛍️ Shopping"
+        },
+        {
+          "id": "map_transport",
+          "label": "🚗 Transport"
+        },
+        {
+          "id": "map_emergency",
+          "label": "🚨 Emergency Services"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "map_travelers": {
       "message": "**Nearby Travelers** 👥\n\nFind travelers around you!\n\n**How to use:**\n1. Go to Map section\n2. Allow location access\n3. See travelers on map\n4. Click to view profile\n5. Connect or message!\n\n💡 Great for meetups!",
       "options": [
-        { "id": "map_explore", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "map_explore",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "map_hotels": {
       "message": "**Find Hotels** 🏨\n\n1. Go to Map → Hotels\n2. See nearby hotels on map\n3. View ratings & prices\n4. Get directions\n5. Contact or book!\n\n⭐ Shows real-time availability",
       "options": [
-        { "id": "map_food", "label": "🍽️ Food & Nightlife" },
-        { "id": "map_explore", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "map_food",
+          "label": "🍽️ Food & Nightlife"
+        },
+        {
+          "id": "map_explore",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "map_food": {
       "message": "**Food & Nightlife** 🍽️\n\n1. Go to Map → Food & Nightlife\n2. Find restaurants, cafes, bars\n3. View ratings & reviews\n4. See menus & prices\n5. Get directions!\n\n🍕 Discover local cuisine!",
       "options": [
-        { "id": "map_tourist", "label": "📍 Tourist Places" },
-        { "id": "map_explore", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "map_tourist",
+          "label": "📍 Tourist Places"
+        },
+        {
+          "id": "map_explore",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "map_tourist": {
       "message": "**Tourist Places** 📍\n\n1. Go to Map → Tourist Places\n2. Find attractions nearby\n3. View photos & info\n4. Check timings & fees\n5. Get directions!\n\n🏛️ Museums, monuments & more!",
       "options": [
-        { "id": "map_shopping", "label": "🛍️ Shopping" },
-        { "id": "map_explore", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "map_shopping",
+          "label": "🛍️ Shopping"
+        },
+        {
+          "id": "map_explore",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "map_shopping": {
       "message": "**Shopping & Entertainment** 🛍️\n\n1. Go to Map → Shopping\n2. Find malls, markets, stores\n3. View entertainment venues\n4. Check timings\n5. Get directions!\n\n🛒 Local markets to malls!",
       "options": [
-        { "id": "map_transport", "label": "🚗 Transport" },
-        { "id": "map_explore", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "map_transport",
+          "label": "🚗 Transport"
+        },
+        {
+          "id": "map_explore",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "map_transport": {
       "message": "**Transport & Travel** 🚗\n\n1. Go to Map → Transport\n2. Find bus/train stations\n3. Locate airports\n4. Find taxi stands\n5. Get directions!\n\n🚌 All transport options!",
       "options": [
-        { "id": "map_emergency", "label": "🚨 Emergency" },
-        { "id": "map_explore", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "map_emergency",
+          "label": "🚨 Emergency"
+        },
+        {
+          "id": "map_explore",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "map_emergency": {
       "message": "**Emergency Services** 🚨\n\n1. Go to Map → Emergency\n2. Find hospitals nearby\n3. Locate police stations\n4. Find pharmacies\n5. Embassy contacts\n\n⚠️ Stay safe while traveling!",
       "options": [
-        { "id": "map_explore", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "map_explore",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "activities": {
       "message": "Connect through activities! 🤝",
       "options": [
-        { "id": "act_browse", "label": "🔍 Browse Activities" },
-        { "id": "act_create", "label": "➕ Create Activity" },
-        { "id": "act_join", "label": "✋ Join Activity" },
-        { "id": "act_manage", "label": "⚙️ Manage My Activities" },
-        { "id": "act_joined", "label": "📋 My Joined Activities" },
-        { "id": "act_chat", "label": "💬 Activity Group Chat" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "act_browse",
+          "label": "🔍 Browse Activities"
+        },
+        {
+          "id": "act_create",
+          "label": "➕ Create Activity"
+        },
+        {
+          "id": "act_join",
+          "label": "✋ Join Activity"
+        },
+        {
+          "id": "act_manage",
+          "label": "⚙️ Manage My Activities"
+        },
+        {
+          "id": "act_joined",
+          "label": "📋 My Joined Activities"
+        },
+        {
+          "id": "act_chat",
+          "label": "💬 Activity Group Chat"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "act_browse": {
       "message": "**Browse Activities** 🔍\n\n1. Go to Activities page\n2. See activities on map\n3. Filter by type/date\n4. View details & members\n5. Join interesting ones!\n\n🏔️ Hiking, tours, meetups!",
       "options": [
-        { "id": "act_join", "label": "✋ How to join?" },
-        { "id": "activities", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "act_join",
+          "label": "✋ How to join?"
+        },
+        {
+          "id": "activities",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "act_create": {
       "message": "**Create Activity** ➕\n\n1. Go to Create Activity\n2. Add title & description\n3. Set date, time, location\n4. Add cover image\n5. Set max participants\n6. Add joining fee (optional)\n7. Publish!\n\n🎉 Others can now join!",
       "options": [
-        { "id": "act_manage", "label": "⚙️ Manage activities" },
-        { "id": "activities", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "act_manage",
+          "label": "⚙️ Manage activities"
+        },
+        {
+          "id": "activities",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "act_join": {
       "message": "**Join Activity** ✋\n\n1. Find activity you like\n2. Click 'View Details'\n3. Check requirements\n4. Click 'Join'\n5. Pay fee (if any)\n6. Added to group chat!\n\n📱 Get reminders before event!",
       "options": [
-        { "id": "act_chat", "label": "💬 Group chat" },
-        { "id": "activities", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "act_chat",
+          "label": "💬 Group chat"
+        },
+        {
+          "id": "activities",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "act_manage": {
       "message": "**Manage My Activities** ⚙️\n\n1. Go to My Activities\n2. See activities you created\n3. Edit details\n4. Manage participants\n5. Send announcements\n6. Cancel if needed\n\n👑 Full control as organizer!",
       "options": [
-        { "id": "act_joined", "label": "📋 Joined activities" },
-        { "id": "activities", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "act_joined",
+          "label": "📋 Joined activities"
+        },
+        {
+          "id": "activities",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "act_joined": {
       "message": "**My Joined Activities** 📋\n\n1. Go to Joined Activities\n2. See all activities joined\n3. View upcoming events\n4. Access group chats\n5. Leave if needed\n\n📅 Never miss an event!",
       "options": [
-        { "id": "act_chat", "label": "💬 Group chat" },
-        { "id": "activities", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "act_chat",
+          "label": "💬 Group chat"
+        },
+        {
+          "id": "activities",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "act_chat": {
       "message": "**Activity Group Chat** 💬\n\nAuto-added when you join!\n\n**Features:**\n• Text messages\n• Voice messages\n• Share location\n• Send images\n• Organizer announcements\n\n🔔 Stay connected!",
       "options": [
-        { "id": "activities", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "activities",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "guides": {
       "message": "Find or become a guide! 👨‍🏫",
       "options": [
-        { "id": "guide_find", "label": "🔍 Find a Guide" },
-        { "id": "guide_book", "label": "📅 Book a Guide" },
-        { "id": "guide_become", "label": "⭐ Become a Guide" },
-        { "id": "guide_dashboard", "label": "📊 Guide Dashboard" },
-        { "id": "guide_bookings", "label": "📋 My Bookings" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "guide_find",
+          "label": "🔍 Find a Guide"
+        },
+        {
+          "id": "guide_book",
+          "label": "📅 Book a Guide"
+        },
+        {
+          "id": "guide_become",
+          "label": "⭐ Become a Guide"
+        },
+        {
+          "id": "guide_dashboard",
+          "label": "📊 Guide Dashboard"
+        },
+        {
+          "id": "guide_bookings",
+          "label": "📋 My Bookings"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "guide_find": {
       "message": "**Find a Guide** 🔍\n\n1. Go to Guides section\n2. Search by location\n3. Filter: language, price, rating\n4. View guide profiles\n5. Read reviews\n6. Select your guide!\n\nAll guides are verified!",
       "options": [
-        { "id": "guide_book", "label": "📅 How to book?" },
-        { "id": "guides", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "guide_book",
+          "label": "📅 How to book?"
+        },
+        {
+          "id": "guides",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "guide_book": {
       "message": "**Book a Guide** 📅\n\n1. Select guide profile\n2. Choose date & time\n3. Select service type\n4. Add special requests\n5. Pay securely\n6. Get confirmation!\n\n💬 Chat with guide anytime!",
       "options": [
-        { "id": "guide_bookings", "label": "📋 My bookings" },
-        { "id": "guides", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "guide_bookings",
+          "label": "📋 My bookings"
+        },
+        {
+          "id": "guides",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "guide_become": {
       "message": "**Become a Guide** ⭐\n\n1. Go to Guide Setup\n2. Complete verification\n3. Add expertise & languages\n4. Set availability\n5. Set your rates\n6. Upload portfolio\n7. Start receiving bookings!\n\n💰 Earn sharing your knowledge!",
       "options": [
-        { "id": "guide_dashboard", "label": "📊 Dashboard" },
-        { "id": "guides", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "guide_dashboard",
+          "label": "📊 Dashboard"
+        },
+        {
+          "id": "guides",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "guide_dashboard": {
       "message": "**Guide Dashboard** 📊\n\nManage your guide business!\n\n**Features:**\n• View bookings\n• Accept/decline requests\n• See earnings\n• Manage availability\n• View reviews\n• Update profile\n\n📈 Track your success!",
       "options": [
-        { "id": "guide_bookings", "label": "📋 Bookings" },
-        { "id": "guides", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "guide_bookings",
+          "label": "📋 Bookings"
+        },
+        {
+          "id": "guides",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "guide_bookings": {
       "message": "**My Guide Bookings** 📋\n\n**As Traveler:**\n• View booked guides\n• Upcoming tours\n• Past tours\n• Leave reviews\n\n**As Guide:**\n• Pending requests\n• Confirmed bookings\n• Completed tours\n• Earnings history",
       "options": [
-        { "id": "guides", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "guides",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "posts_content": {
       "message": "Share your travel stories! 📸",
       "options": [
-        { "id": "post_upload", "label": "📷 Upload Post" },
-        { "id": "post_article", "label": "📝 Write Article" },
-        { "id": "post_manage", "label": "⚙️ Manage Posts" },
-        { "id": "post_discover", "label": "🔍 Discover Content" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "post_upload",
+          "label": "📷 Upload Post"
+        },
+        {
+          "id": "post_article",
+          "label": "📝 Write Article"
+        },
+        {
+          "id": "post_manage",
+          "label": "⚙️ Manage Posts"
+        },
+        {
+          "id": "post_discover",
+          "label": "🔍 Discover Content"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "post_upload": {
       "message": "**Upload Post** 📷\n\n1. Go to Upload Post\n2. Add photos/videos\n3. Write caption\n4. Add location tag\n5. Add hashtags\n6. Set visibility\n7. Post!\n\n✨ AI Enhance available!",
       "options": [
-        { "id": "post_manage", "label": "⚙️ Manage posts" },
-        { "id": "posts_content", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "post_manage",
+          "label": "⚙️ Manage posts"
+        },
+        {
+          "id": "posts_content",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "post_article": {
       "message": "**Write Article** 📝\n\n1. Go to Upload Article\n2. Add cover image\n3. Write title\n4. Write content\n5. Add tags\n6. Publish!\n\n✍️ Share travel stories!",
       "options": [
-        { "id": "post_manage", "label": "⚙️ Manage" },
-        { "id": "posts_content", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "post_manage",
+          "label": "⚙️ Manage"
+        },
+        {
+          "id": "posts_content",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "post_manage": {
       "message": "**Manage Content** ⚙️\n\n1. Go to Manage Posts/Articles\n2. View all your content\n3. Edit or delete\n4. See analytics\n5. Manage comments\n\n📊 Track engagement!",
       "options": [
-        { "id": "posts_content", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "posts_content",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "post_discover": {
       "message": "**Discover Content** 🔍\n\n1. Go to User Posts\n2. Browse travel content\n3. Like & comment\n4. Follow creators\n5. Read articles\n\n🌍 Get inspired!",
       "options": [
-        { "id": "posts_content", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "posts_content",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "chat_calls": {
       "message": "Stay connected! 💬",
       "options": [
-        { "id": "chat_dm", "label": "💬 Direct Messages" },
-        { "id": "chat_voice", "label": "📞 Voice Calls" },
-        { "id": "chat_video", "label": "📹 Video Calls" },
-        { "id": "chat_audio", "label": "🎤 Audio Messages" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "chat_dm",
+          "label": "💬 Direct Messages"
+        },
+        {
+          "id": "chat_voice",
+          "label": "📞 Voice Calls"
+        },
+        {
+          "id": "chat_video",
+          "label": "📹 Video Calls"
+        },
+        {
+          "id": "chat_audio",
+          "label": "🎤 Audio Messages"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "chat_dm": {
       "message": "**Direct Messages** 💬\n\n**Start a chat:**\n1. Go to user's profile\n2. Click message icon\n3. Start chatting!\n\n**Features:**\n• Text messages\n• Send images\n• Voice messages\n• Share location\n• Real-time typing indicator",
       "options": [
-        { "id": "chat_voice", "label": "📞 Voice calls" },
-        { "id": "chat_calls", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "chat_voice",
+          "label": "📞 Voice calls"
+        },
+        {
+          "id": "chat_calls",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "chat_voice": {
       "message": "**Voice Calls** 📞\n\n1. Open chat with user\n2. Click phone icon\n3. Wait for answer\n4. Talk!\n\n**Features:**\n• HD audio\n• Mute option\n• Speaker mode\n• Call history",
       "options": [
-        { "id": "chat_video", "label": "📹 Video calls" },
-        { "id": "chat_calls", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "chat_video",
+          "label": "📹 Video calls"
+        },
+        {
+          "id": "chat_calls",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "chat_video": {
       "message": "**Video Calls** 📹\n\n1. Open chat with user\n2. Click video icon\n3. Allow camera access\n4. Wait for answer\n5. Video chat!\n\n**Features:**\n• HD video\n• Camera on/off\n• Mute audio\n• Full screen",
       "options": [
-        { "id": "chat_audio", "label": "🎤 Audio messages" },
-        { "id": "chat_calls", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "chat_audio",
+          "label": "🎤 Audio messages"
+        },
+        {
+          "id": "chat_calls",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "chat_audio": {
       "message": "**Audio Messages** 🎤\n\n1. Open any chat\n2. Hold microphone button\n3. Record message\n4. Release to send\n\n**Features:**\n• Playback controls\n• Waveform preview\n• Listen anytime",
       "options": [
-        { "id": "chat_calls", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "chat_calls",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "expenses": {
       "message": "Split expenses easily! 💰",
       "options": [
-        { "id": "exp_about", "label": "ℹ️ What is Split Expenses?" },
-        { "id": "exp_group", "label": "👥 Create Group" },
-        { "id": "exp_add", "label": "➕ Add Expense" },
-        { "id": "exp_settle", "label": "💵 Settle Up" },
-        { "id": "exp_calc", "label": "🧮 Calculator" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "exp_about",
+          "label": "ℹ️ What is Split Expenses?"
+        },
+        {
+          "id": "exp_group",
+          "label": "👥 Create Group"
+        },
+        {
+          "id": "exp_add",
+          "label": "➕ Add Expense"
+        },
+        {
+          "id": "exp_settle",
+          "label": "💵 Settle Up"
+        },
+        {
+          "id": "exp_calc",
+          "label": "🧮 Calculator"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "exp_about": {
       "message": "**Split Expenses** 💰\n\nTravel with friends? We help!\n\n**Features:**\n• Create expense groups\n• Log shared expenses\n• Auto-calculate splits\n• Settlement suggestions\n• Track who owes whom\n\n💡 No more awkward money talks!",
       "options": [
-        { "id": "exp_group", "label": "👥 Create group" },
-        { "id": "expenses", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "exp_group",
+          "label": "👥 Create group"
+        },
+        {
+          "id": "expenses",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "exp_group": {
       "message": "**Create Group** 👥\n\n1. Go to Split Expenses\n2. Click 'Create Group'\n3. Name your group\n4. Add members\n5. Start tracking!\n\n👥 Add anyone from contacts!",
       "options": [
-        { "id": "exp_add", "label": "➕ Add expense" },
-        { "id": "expenses", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "exp_add",
+          "label": "➕ Add expense"
+        },
+        {
+          "id": "expenses",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "exp_add": {
       "message": "**Add Expense** ➕\n\n1. Open expense group\n2. Click 'Add Expense'\n3. Enter description\n4. Enter amount\n5. Select who paid\n6. Select who shares\n7. Save!\n\n📊 Auto-calculates splits!",
       "options": [
-        { "id": "exp_settle", "label": "💵 Settle up" },
-        { "id": "expenses", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "exp_settle",
+          "label": "💵 Settle up"
+        },
+        {
+          "id": "expenses",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "exp_settle": {
       "message": "**Settle Up** 💵\n\n1. View group balances\n2. See who owes whom\n3. Get settlement suggestions\n4. Mark as settled\n5. Track history!\n\n🤝 Simplified settlements!",
       "options": [
-        { "id": "exp_calc", "label": "🧮 Calculator" },
-        { "id": "expenses", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "exp_calc",
+          "label": "🧮 Calculator"
+        },
+        {
+          "id": "expenses",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "exp_calc": {
       "message": "**Expense Calculator** 🧮\n\nQuick split calculations!\n\n**Features:**\n• Equal split\n• Percentage split\n• Custom amounts\n• Tip calculator\n\n📱 Quick access in app!",
       "options": [
-        { "id": "expenses", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "expenses",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "connections": {
       "message": "Build your travel network! 👥",
       "options": [
-        { "id": "conn_about", "label": "ℹ️ What are Connections?" },
-        { "id": "conn_add", "label": "➕ Add Connections" },
-        { "id": "conn_manage", "label": "⚙️ Manage Connections" },
-        { "id": "conn_profile", "label": "👤 View Traveler Profile" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "conn_about",
+          "label": "ℹ️ What are Connections?"
+        },
+        {
+          "id": "conn_add",
+          "label": "➕ Add Connections"
+        },
+        {
+          "id": "conn_manage",
+          "label": "⚙️ Manage Connections"
+        },
+        {
+          "id": "conn_profile",
+          "label": "👤 View Traveler Profile"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "conn_about": {
       "message": "**Connections** 👥\n\nYour travel network!\n\n**Benefits:**\n• Stay connected with travelers\n• See their posts & activities\n• Quick chat access\n• Plan trips together\n\n🌐 Build your travel community!",
       "options": [
-        { "id": "conn_add", "label": "➕ Add connections" },
-        { "id": "connections", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "conn_add",
+          "label": "➕ Add connections"
+        },
+        {
+          "id": "connections",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "conn_add": {
       "message": "**Add Connections** ➕\n\n**Ways to connect:**\n• From Map - click traveler\n• From Activities - members\n• From Posts - content creators\n• Search by name\n\n1. Visit profile\n2. Click 'Connect'\n3. Wait for accept!",
       "options": [
-        { "id": "conn_manage", "label": "⚙️ Manage" },
-        { "id": "connections", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "conn_manage",
+          "label": "⚙️ Manage"
+        },
+        {
+          "id": "connections",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "conn_manage": {
       "message": "**Manage Connections** ⚙️\n\n1. Go to Connections page\n2. View all connections\n3. See pending requests\n4. Accept/decline\n5. Remove if needed\n\n📊 Track your network!",
       "options": [
-        { "id": "connections", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "connections",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "conn_profile": {
       "message": "**View Traveler Profile** 👤\n\nSee complete profile:\n\n• Profile photo & bio\n• Travel interests\n• Posts & articles\n• Activities joined\n• Reviews given\n• Message button\n\n🔍 Learn before connecting!",
       "options": [
-        { "id": "connections", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "connections",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "payments": {
       "message": "Payment & Subscription info 💳",
       "options": [
-        { "id": "pay_methods", "label": "💳 Payment Methods" },
-        { "id": "pay_sub", "label": "⭐ Subscription Plans" },
-        { "id": "pay_refund", "label": "↩️ Refunds" },
-        { "id": "pay_secure", "label": "🔒 Security" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "pay_methods",
+          "label": "💳 Payment Methods"
+        },
+        {
+          "id": "pay_sub",
+          "label": "⭐ Subscription Plans"
+        },
+        {
+          "id": "pay_refund",
+          "label": "↩️ Refunds"
+        },
+        {
+          "id": "pay_secure",
+          "label": "🔒 Security"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "pay_methods": {
-      "message": "**Payment Methods** 💳\n\n**We accept:**\n• Credit/Debit Cards\n• UPI (GPay, PhonePe, etc.)\n• Net Banking\n• Wallets\n\n🔐 Secured by Razorpay",
+      "message": "**Payment Methods** 💳\n\n**We accept:**\n• Credit/Debit Cards\n• UPI (GPay, PhonePe, etc.)\n• Net Banking\n• Wallets\n\n🔐 Secured by Cashfree",
       "options": [
-        { "id": "pay_secure", "label": "🔒 Security" },
-        { "id": "payments", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "pay_secure",
+          "label": "🔒 Security"
+        },
+        {
+          "id": "payments",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "pay_sub": {
       "message": "**Subscription Plans** ⭐\n\n**Free:**\n• Basic features\n• Limited AI requests\n\n**Premium:**\n• Unlimited AI\n• Priority matching\n• Ad-free\n• Exclusive features\n\n🚀 Upgrade from Subscription page!",
       "options": [
-        { "id": "payments", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "payments",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "pay_refund": {
       "message": "**Refunds** ↩️\n\n**Guide Bookings:**\n• 48+ hrs: Full refund\n• 24-48 hrs: 50%\n• <24 hrs: No refund\n\n**Subscription:**\n• Cancel anytime\n• Access till period ends\n\n📧 Contact support for issues",
       "options": [
-        { "id": "support", "label": "🆘 Support" },
-        { "id": "payments", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "support",
+          "label": "🆘 Support"
+        },
+        {
+          "id": "payments",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "pay_secure": {
-      "message": "**Payment Security** 🔒\n\n• Razorpay certified\n• PCI DSS compliant\n• 256-bit SSL\n• No card storage\n• OTP verification\n\n💯 100% safe transactions!",
+      "message": "**Payment Security** 🔒\n\n• Cashfree certified\n• PCI DSS compliant\n• 256-bit SSL\n• No card storage\n• OTP verification\n\n💯 100% safe transactions!",
       "options": [
-        { "id": "payments", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "payments",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "support": {
       "message": "How can we help? 🆘",
       "options": [
-        { "id": "help_bug", "label": "🐛 Report Bug" },
-        { "id": "help_account", "label": "👤 Account Issues" },
-        { "id": "help_safety", "label": "🛡️ Safety" },
-        { "id": "help_contact", "label": "📧 Contact Us" },
-        { "id": "help_legal", "label": "📜 Legal Pages" },
-        { "id": "main", "label": "⬅️ Main Menu" }
+        {
+          "id": "help_bug",
+          "label": "🐛 Report Bug"
+        },
+        {
+          "id": "help_account",
+          "label": "👤 Account Issues"
+        },
+        {
+          "id": "help_safety",
+          "label": "🛡️ Safety"
+        },
+        {
+          "id": "help_contact",
+          "label": "📧 Contact Us"
+        },
+        {
+          "id": "help_legal",
+          "label": "📜 Legal Pages"
+        },
+        {
+          "id": "main",
+          "label": "⬅️ Main Menu"
+        }
       ]
     },
     "help_bug": {
       "message": "**Report Bug** 🐛\n\n**Try first:**\n• Refresh page\n• Clear cache\n• Different browser\n\n**Still issues?**\n📧 support@travelbuddy.com\n\nInclude:\n• Screenshot\n• Steps to reproduce\n• Browser info",
       "options": [
-        { "id": "help_contact", "label": "📧 Contact" },
-        { "id": "support", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "help_contact",
+          "label": "📧 Contact"
+        },
+        {
+          "id": "support",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "help_account": {
       "message": "**Account Issues** 👤\n\n**Can't login?**\n→ Reset password\n\n**Account hacked?**\n→ Contact support ASAP\n\n**Delete account?**\n→ Profile → Settings → Delete\n\n**Change email?**\n→ Profile → Settings",
       "options": [
-        { "id": "help_contact", "label": "📧 Contact" },
-        { "id": "support", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "help_contact",
+          "label": "📧 Contact"
+        },
+        {
+          "id": "support",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "help_safety": {
       "message": "**Safety** 🛡️\n\n**Feeling unsafe?**\n→ Map → Emergency Services\n\n**Report user:**\n→ Profile → Report\n\n**Harassment:**\n→ Block + Report\n\n**Scam:**\n→ Never pay outside app\n→ Report immediately",
       "options": [
-        { "id": "map_emergency", "label": "🚨 Emergency" },
-        { "id": "support", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "map_emergency",
+          "label": "🚨 Emergency"
+        },
+        {
+          "id": "support",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "help_contact": {
       "message": "**Contact Support** 📧\n\n📧 support@travelbuddy.com\n⏰ Response: 24 hours\n\n🕐 Working hours:\nMon-Sat: 9 AM - 6 PM IST\n\n🚨 Urgent safety issues:\nUse in-app emergency feature",
       "options": [
-        { "id": "support", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "support",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     },
     "help_legal": {
       "message": "**Legal Pages** 📜\n\nAccess from footer:\n\n• 📋 Terms of Service\n• 🔒 Privacy Policy\n• 🍪 Cookie Policy\n• 📖 Community Guidelines\n• ↩️ Refund Policy",
       "options": [
-        { "id": "support", "label": "⬅️ Back" },
-        { "id": "main", "label": "🏠 Main Menu" }
+        {
+          "id": "support",
+          "label": "⬅️ Back"
+        },
+        {
+          "id": "main",
+          "label": "🏠 Main Menu"
+        }
       ]
     }
   }

@@ -91,6 +91,10 @@ const guideBookingSchema = new Schema<IGuideBooking>(
     cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     
     notes: { type: String },
+    
+    // Rating token for email-based rating
+    ratingToken: { type: String },
+    ratingTokenExpiry: { type: Date },
   },
   { timestamps: true }
 );

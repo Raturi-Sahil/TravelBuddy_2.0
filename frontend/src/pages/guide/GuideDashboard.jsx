@@ -119,6 +119,7 @@ const GuideDashboard = () => {
 
   const [activeTab, setActiveTab] = useState('pending');
   const [profileFetched, setProfileFetched] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null); // Track which booking action is loading
 
   useEffect(() => {
     const fetchData = async () => {
@@ -147,10 +148,13 @@ const GuideDashboard = () => {
 
   const handleConfirmBooking = async (bookingId) => {
     try {
+      setActionLoading(bookingId);
       await dispatch(confirmBooking({ getToken, bookingId })).unwrap();
       toast.success('Booking accepted! Waiting for traveler payment.');
     } catch (error) {
       toast.error(error || 'Failed to accept booking');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -158,19 +162,25 @@ const GuideDashboard = () => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
 
     try {
+      setActionLoading(bookingId);
       await dispatch(cancelBooking({ getToken, bookingId, reason: 'Cancelled by guide' })).unwrap();
       toast.success('Booking cancelled');
     } catch (error) {
       toast.error(error || 'Failed to cancel booking');
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleCompleteBooking = async (bookingId) => {
     try {
+      setActionLoading(bookingId);
       await dispatch(completeBooking({ getToken, bookingId })).unwrap();
-      toast.success('Booking marked as completed!');
+      toast.success('Booking marked as completed! Rating email sent to traveler.');
     } catch (error) {
       toast.error(error || 'Failed to complete booking');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -352,9 +362,9 @@ const GuideDashboard = () => {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={booking.traveler?.profileImage || '/default-avatar.png'}
+                          src={booking.traveler?.profileImage || ''}
                           alt={booking.traveler?.name}
-                          className="w-12 h-12 rounded-full object-cover"
+                          className="w-12 h-12 rounded-full object-cover bg-gray-200"
                         />
                         <div>
                           <p className="font-semibold text-gray-900">{booking.traveler?.name}</p>
@@ -432,9 +442,17 @@ const GuideDashboard = () => {
                           {canCompleteBooking(booking) ? (
                             <button
                               onClick={() => handleCompleteBooking(booking._id)}
-                              className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors"
+                              disabled={actionLoading === booking._id}
+                              className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors disabled:opacity-70 disabled:cursor-wait flex items-center gap-2"
                             >
-                              Mark Complete
+                              {actionLoading === booking._id ? (
+                                <>
+                                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                  Completing...
+                                </>
+                              ) : (
+                                'Mark Complete'
+                              )}
                             </button>
                           ) : (
                             <button

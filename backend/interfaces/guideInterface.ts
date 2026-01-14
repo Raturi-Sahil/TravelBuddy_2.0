@@ -50,9 +50,14 @@ export interface IGuideBooking extends Document {
   
   notes?: string;
   
+  // Rating token for email-based rating
+  ratingToken?: string;
+  ratingTokenExpiry?: Date;
+  
   createdAt: Date;
   updatedAt: Date;
 }
+
 
 export interface IGuideReview extends Document {
   guide: Types.ObjectId;

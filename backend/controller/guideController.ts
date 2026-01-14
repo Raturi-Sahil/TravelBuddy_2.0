@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
+import { v4 as uuidv4 } from "uuid";
 
 import uploadOnCloudinary from "../middlewares/cloudinary";
 import deleteFromCloudinaryByUrl from "../middlewares/deleteCloudinary";
@@ -8,6 +9,7 @@ import { User } from "../models/userModel";
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
 import asyncHandler from "../utils/asyncHandler";
+import { sendRatingEmail } from "../utils/emailUtil";
 
 // ==================== GUIDE PROFILE MANAGEMENT ====================
 
@@ -608,13 +610,19 @@ export const completeBooking = asyncHandler(
     const userId = req.user._id;
     const { id } = req.params;
 
-    const booking = await GuideBooking.findById(id).populate("guide");
+    const booking = await GuideBooking.findById(id)
+      .populate({
+        path: "guide",
+        populate: { path: "user", select: "name email profileImage" },
+      })
+      .populate("traveler", "name email");
+      
     if (!booking) {
       throw new ApiError(404, "Booking not found");
     }
 
     const guide = booking.guide as any;
-    if (guide.user.toString() !== userId.toString()) {
+    if (guide.user._id.toString() !== userId.toString()) {
       throw new ApiError(403, "Not authorized to complete this booking");
     }
 
@@ -622,15 +630,40 @@ export const completeBooking = asyncHandler(
       throw new ApiError(400, "Only confirmed bookings can be marked complete");
     }
 
+    // Generate rating token
+    const ratingToken = uuidv4();
+    const ratingTokenExpiry = new Date();
+    ratingTokenExpiry.setDate(ratingTokenExpiry.getDate() + 7); // 7 days expiry
+
     booking.status = "completed";
     booking.paymentStatus = "paid";
+    booking.ratingToken = ratingToken;
+    booking.ratingTokenExpiry = ratingTokenExpiry;
     await booking.save();
 
     // Increment guide's total bookings
     await Guide.findByIdAndUpdate(guide._id, { $inc: { totalBookings: 1 } });
 
+    // Send rating email to traveler
+    const traveler = booking.traveler as any;
+    if (traveler?.email) {
+      await sendRatingEmail(
+        traveler.email,
+        traveler.name || "Traveler",
+        guide.user.name || "Your Guide",
+        guide.user.profileImage || "",
+        booking.startDate,
+        booking.endDate,
+        ratingToken
+      );
+    }
+
+    // Re-fetch with populated traveler data for the response
+    const populatedBooking = await GuideBooking.findById(booking._id)
+      .populate("traveler", "name email profileImage mobile");
+
     return res.status(200).json(
-      new ApiResponse(200, booking, "Booking completed successfully")
+      new ApiResponse(200, populatedBooking, "Booking completed successfully. Rating email sent to traveler.")
     );
   }
 );
@@ -793,6 +826,117 @@ export const getGuideReviews = asyncHandler(
         },
         "Reviews fetched successfully"
       )
+    );
+  }
+);
+
+// ==================== TOKEN-BASED RATING (PUBLIC) ====================
+
+// Get booking info by rating token (for rating page)
+export const getBookingByToken = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { token } = req.params;
+
+    const booking = await GuideBooking.findOne({ ratingToken: token })
+      .populate({
+        path: "guide",
+        populate: { path: "user", select: "name profileImage" },
+      });
+
+    if (!booking) {
+      throw new ApiError(404, "Invalid or expired rating link");
+    }
+
+    if (!booking.ratingTokenExpiry || new Date() > booking.ratingTokenExpiry) {
+      throw new ApiError(410, "This rating link has expired");
+    }
+
+    // Check if already reviewed
+    const existingReview = await GuideReview.findOne({ booking: booking._id });
+    if (existingReview) {
+      throw new ApiError(400, "You have already submitted a review for this booking");
+    }
+
+    const guide = booking.guide as any;
+
+    return res.status(200).json(
+      new ApiResponse(200, {
+        bookingId: booking._id,
+        guideId: guide._id,
+        guideName: guide.user?.name || "Your Guide",
+        guideImage: guide.user?.profileImage || "",
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+      }, "Booking info fetched successfully")
+    );
+  }
+);
+
+// Submit rating by token (public - no auth required)
+export const submitRatingByToken = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { token } = req.params;
+    const { rating, comment } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+      throw new ApiError(400, "Rating must be between 1 and 5");
+    }
+
+    if (!comment || comment.trim().length < 5) {
+      throw new ApiError(400, "Please provide a comment (at least 5 characters)");
+    }
+
+    const booking = await GuideBooking.findOne({ ratingToken: token })
+      .populate("guide")
+      .populate("traveler", "name");
+
+    if (!booking) {
+      throw new ApiError(404, "Invalid or expired rating link");
+    }
+
+    if (!booking.ratingTokenExpiry || new Date() > booking.ratingTokenExpiry) {
+      throw new ApiError(410, "This rating link has expired");
+    }
+
+    // Check if already reviewed
+    const existingReview = await GuideReview.findOne({ booking: booking._id });
+    if (existingReview) {
+      throw new ApiError(400, "You have already submitted a review for this booking");
+    }
+
+    const guide = booking.guide as any;
+
+    // Create review
+    const review = await GuideReview.create({
+      guide: guide._id,
+      booking: booking._id,
+      reviewer: booking.traveler,
+      rating: Number(rating),
+      comment: comment.trim(),
+    });
+
+    // Update guide's average rating
+    const allReviews = await GuideReview.find({ guide: guide._id });
+    const totalRating = allReviews.reduce((sum, r) => sum + r.rating, 0);
+    const averageRating = totalRating / allReviews.length;
+
+    await Guide.findByIdAndUpdate(guide._id, {
+      averageRating: Math.round(averageRating * 10) / 10,
+      totalReviews: allReviews.length,
+    });
+
+    // Clear the rating token (one-time use)
+    booking.ratingToken = undefined;
+    booking.ratingTokenExpiry = undefined;
+    await booking.save();
+
+    const populatedReview = await GuideReview.findById(review._id).populate(
+      "reviewer",
+      "name profileImage"
+    );
+
+    return res.status(201).json(
+      new ApiResponse(201, populatedReview, "Thank you for your review!")
     );
   }
 );
