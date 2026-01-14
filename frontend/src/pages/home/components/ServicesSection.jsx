@@ -1,3 +1,5 @@
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 import { Activity, BookOpen, Bot, Camera, ChevronRight, Compass, MessageCircle, Sparkles, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
