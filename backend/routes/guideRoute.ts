@@ -8,6 +8,7 @@ import {
   createGuideBookingPayment,
   createGuideProfile,
   createReview,
+  getBookingByToken,
   getGuideById,
   getGuideReviews,
   getGuides,
@@ -15,6 +16,7 @@ import {
   getMyBookingsAsTraveler,
   getMyGuideProfile,
   getNearbyGuides,
+  submitRatingByToken,
   toggleGuideStatus,
   updateGuideProfile,
   verifyGuideBookingPayment,
@@ -50,6 +52,10 @@ router.post("/bookings/:id/verify-payment", requireProfile, verifyGuideBookingPa
 // Review Routes
 router.post("/:id/reviews", requireProfile, createReview);
 router.get("/:id/reviews", requireProfile, getGuideReviews);
+
+// Public Rating Routes (no auth required - accessed via email link)
+router.get("/rate/:token", getBookingByToken);
+router.post("/rate/:token", submitRatingByToken);
 
 export default router;
 

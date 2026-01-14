@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import GlobalCallManager from "./components/chat/GlobalCallManager";
 // Common components
 import AuthGuard from "./components/common/AuthGuard";
+import Preloader from "./components/common/Preloader";
 // Expense components
 import SplitExpenses from "./components/expenses/SplitExpenses";
 // Explore components
@@ -17,7 +19,6 @@ import TransportTravel from "./components/explore/TransportTravel";
 import Layout from "./components/layout/Layout";
 import { AudioPlaybackProvider } from "./context/AudioPlaybackContext";
 import { CallProvider } from "./context/CallContext";
-import GlobalCallManager from "./components/chat/GlobalCallManager";
 // About pages
 import AboutUs from "./pages/about/AboutUs";
 // Activity pages
@@ -53,6 +54,7 @@ import GuideDashboard from "./pages/guide/GuideDashboard";
 import GuideDetail from "./pages/guide/GuideDetail";
 import GuideProfileSetup from "./pages/guide/GuideProfileSetup";
 import MyGuideBookings from "./pages/guide/MyGuideBookings";
+import RateGuide from "./pages/guide/RateGuide";
 // Home pages
 import HomePage from "./pages/home/UserHome";
 // Legal pages
@@ -75,9 +77,6 @@ import UserPosts from "./pages/posts/UserPosts";
 import Connections from "./pages/user/Connections";
 import ProfilePage from "./pages/user/profile";
 import TravelerProfile from "./pages/user/TravelerProfile";
-
-
-import Preloader from "./components/common/Preloader";
 
 function App() {
   return (
@@ -137,6 +136,7 @@ function App() {
         <Route path="guide-dashboard" element={<AuthGuard><GuideDashboard /></AuthGuard>} />
         <Route path="my-guide-bookings" element={<AuthGuard><MyGuideBookings /></AuthGuard>} />
         <Route path="guide-booking-payment-status" element={<AuthGuard><GuideBookingPaymentStatus /></AuthGuard>} />
+        <Route path="rate-guide/:token" element={<RateGuide />} />
 
         {/* Ai Features Routes */}
         <Route path="ai-buddy" element={<AuthGuard><AiBuddyHomePage /></AuthGuard>} />
