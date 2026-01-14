@@ -1,8 +1,9 @@
 // components/chat/AudioMessage.jsx
+import { Mic, Pause, Play, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Mic, User } from "lucide-react";
 import WaveSurfer from "wavesurfer.js";
-import { useAudioPlayback } from "../../context/AudioPlaybackContext";
+
+import { useAudioPlayback } from "../../context/useAudioPlayback";
 
 function formatTime(seconds = 0) {
     const m = Math.floor(seconds / 60);

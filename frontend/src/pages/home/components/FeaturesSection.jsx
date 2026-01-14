@@ -1,6 +1,4 @@
-import { motion } from 'framer-motion';
 import { Clock, Heart, Shield, Sparkles, Users } from 'lucide-react';
-import React from 'react';
 
 const features = [
   {

@@ -9,7 +9,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 
@@ -42,16 +42,13 @@ const TABS = [
 ];
 
 export default function SplitExpenses() {
-  const { getToken } = useAuth();
+  useAuth(); // Hook for auth context
   const { profile: userProfile } = useSelector((state) => state.user);
 
   // State management
-  const [groups, setGroups] = useState([]);
-  const [expenses, setExpenses] = useState([]);
   const [activeTab, setActiveTab] = useState('expenses');
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState(null);
 
   // Form states
   const [newGroup, setNewGroup] = useState({ name: '', members: [] });
@@ -65,80 +62,82 @@ export default function SplitExpenses() {
     category: 'food'
   });
 
-  // Load mock data
-  useEffect(() => {
-    setGroups([
-      {
-        _id: '1',
-        name: 'Goa Trip 2024',
-        members: [
-          { _id: 'u1', name: 'You', profileImage: userProfile?.profileImage },
-          { _id: 'u2', name: 'Rahul', profileImage: null },
-          { _id: 'u3', name: 'Priya', profileImage: null },
-        ],
-        totalExpenses: 15000,
-        createdAt: new Date()
-      },
-      {
-        _id: '2',
-        name: 'Kerala Backwaters',
-        members: [
-          { _id: 'u1', name: 'You', profileImage: userProfile?.profileImage },
-          { _id: 'u4', name: 'Amit', profileImage: null },
-        ],
-        totalExpenses: 8500,
-        createdAt: new Date()
-      }
-    ]);
+  // Mock data using useMemo instead of useEffect + setState
+  const initialGroups = useMemo(() => [
+    {
+      _id: '1',
+      name: 'Goa Trip 2024',
+      members: [
+        { _id: 'u1', name: 'You', profileImage: userProfile?.profileImage },
+        { _id: 'u2', name: 'Rahul', profileImage: null },
+        { _id: 'u3', name: 'Priya', profileImage: null },
+      ],
+      totalExpenses: 15000,
+      createdAt: new Date()
+    },
+    {
+      _id: '2',
+      name: 'Kerala Backwaters',
+      members: [
+        { _id: 'u1', name: 'You', profileImage: userProfile?.profileImage },
+        { _id: 'u4', name: 'Amit', profileImage: null },
+      ],
+      totalExpenses: 8500,
+      createdAt: new Date()
+    }
+  ], [userProfile?.profileImage]);
 
-    setExpenses([
-      {
-        _id: 'e1',
-        description: 'Beach Shack Dinner',
-        amount: 2400,
-        paidBy: { _id: 'u1', name: 'You' },
-        splitBetween: [
-          { _id: 'u1', name: 'You', amount: 800 },
-          { _id: 'u2', name: 'Rahul', amount: 800 },
-          { _id: 'u3', name: 'Priya', amount: 800 },
-        ],
-        groupId: '1',
-        groupName: 'Goa Trip 2024',
-        category: 'food',
-        createdAt: new Date()
-      },
-      {
-        _id: 'e2',
-        description: 'Hotel Stay - 2 Nights',
-        amount: 6000,
-        paidBy: { _id: 'u2', name: 'Rahul' },
-        splitBetween: [
-          { _id: 'u1', name: 'You', amount: 2000 },
-          { _id: 'u2', name: 'Rahul', amount: 2000 },
-          { _id: 'u3', name: 'Priya', amount: 2000 },
-        ],
-        groupId: '1',
-        groupName: 'Goa Trip 2024',
-        category: 'accommodation',
-        createdAt: new Date()
-      },
-      {
-        _id: 'e3',
-        description: 'Scuba Diving',
-        amount: 4500,
-        paidBy: { _id: 'u3', name: 'Priya' },
-        splitBetween: [
-          { _id: 'u1', name: 'You', amount: 1500 },
-          { _id: 'u2', name: 'Rahul', amount: 1500 },
-          { _id: 'u3', name: 'Priya', amount: 1500 },
-        ],
-        groupId: '1',
-        groupName: 'Goa Trip 2024',
-        category: 'activity',
-        createdAt: new Date()
-      }
-    ]);
-  }, [userProfile]);
+  const initialExpenses = useMemo(() => [
+    {
+      _id: 'e1',
+      description: 'Beach Shack Dinner',
+      amount: 2400,
+      paidBy: { _id: 'u1', name: 'You' },
+      splitBetween: [
+        { _id: 'u1', name: 'You', amount: 800 },
+        { _id: 'u2', name: 'Rahul', amount: 800 },
+        { _id: 'u3', name: 'Priya', amount: 800 },
+      ],
+      groupId: '1',
+      groupName: 'Goa Trip 2024',
+      category: 'food',
+      createdAt: new Date()
+    },
+    {
+      _id: 'e2',
+      description: 'Hotel Stay - 2 Nights',
+      amount: 6000,
+      paidBy: { _id: 'u2', name: 'Rahul' },
+      splitBetween: [
+        { _id: 'u1', name: 'You', amount: 2000 },
+        { _id: 'u2', name: 'Rahul', amount: 2000 },
+        { _id: 'u3', name: 'Priya', amount: 2000 },
+      ],
+      groupId: '1',
+      groupName: 'Goa Trip 2024',
+      category: 'accommodation',
+      createdAt: new Date()
+    },
+    {
+      _id: 'e3',
+      description: 'Scuba Diving',
+      amount: 4500,
+      paidBy: { _id: 'u3', name: 'Priya' },
+      splitBetween: [
+        { _id: 'u1', name: 'You', amount: 1500 },
+        { _id: 'u2', name: 'Rahul', amount: 1500 },
+        { _id: 'u3', name: 'Priya', amount: 1500 },
+      ],
+      groupId: '1',
+      groupName: 'Goa Trip 2024',
+      category: 'activity',
+      createdAt: new Date()
+    }
+  ], []);
+
+  const [groups, setGroups] = useState(initialGroups);
+  const [expenses, setExpenses] = useState(initialExpenses);
+
 
   // Calculate balances
   const calculateBalances = () => {
@@ -363,11 +362,10 @@ export default function SplitExpenses() {
                     onButtonClick={() => setIsCreateGroupOpen(true)}
                   />
                 ) : (
-                  groups.map(group => (
+                    groups.map(group => (
                     <GroupCard
                       key={group._id}
                       group={group}
-                      onClick={() => setSelectedGroup(group)}
                     />
                   ))
                 )}
@@ -400,7 +398,7 @@ export default function SplitExpenses() {
           <div className="space-y-4">
             <GroupsSidebar
               groups={groups}
-              onGroupClick={setSelectedGroup}
+              onGroupClick={() => {}}
               setActiveTab={setActiveTab}
             />
             <RecentActivitySidebar
@@ -437,11 +435,12 @@ export default function SplitExpenses() {
 }
 
 // Empty State Component
-function EmptyState({ icon: Icon, title, description, buttonText, onButtonClick }) {
+function EmptyState(props) {
+  const { icon: IconComponent, title, description, buttonText, onButtonClick } = props;
   return (
     <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
       <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <Icon className="w-10 h-10 text-emerald-500" />
+        <IconComponent className="w-10 h-10 text-emerald-500" />
       </div>
       <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
       <p className="text-gray-500 mb-6">{description}</p>

@@ -8,7 +8,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import App from './App.jsx';
 import ScrollToTop from './components/common/ScrollToTop.jsx';
-import { AudioPlaybackProvider } from './context/AudioPlaybackContext.jsx';
+import AudioPlaybackProvider from './context/AudioPlaybackContext.jsx';
 import { GoogleMapsProvider } from './context/GoogleMapsContext.jsx';
 import { SocketContextProvider } from './context/socketContext.jsx';
 import store from './redux/store.js';

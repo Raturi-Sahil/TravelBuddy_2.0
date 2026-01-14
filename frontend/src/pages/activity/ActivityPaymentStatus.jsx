@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '@clerk/clerk-react';
-import { CheckCircle, XCircle, Loader2, ArrowRight, PartyPopper } from 'lucide-react';
+import { ArrowRight, CheckCircle, Loader2, PartyPopper,XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate,useSearchParams } from 'react-router-dom';
 
 import { verifyActivityPayment } from '../../redux/slices/ActivitySlice';
 
@@ -15,7 +15,7 @@ const ActivityPaymentStatus = () => {
   const dispatch = useDispatch();
   const { getToken } = useAuth();
 
-  const { currentActivity, isPaymentProcessing, error } = useSelector((state) => state.activity);
+  const { currentActivity } = useSelector((state) => state.activity);
 
   const [status, setStatus] = useState('verifying'); // verifying, success, failed
 

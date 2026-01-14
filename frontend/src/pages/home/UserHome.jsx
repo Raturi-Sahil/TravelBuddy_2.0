@@ -1,5 +1,4 @@
 import { useUser } from "@clerk/clerk-react";
-import React from 'react';
 
 // Import all section components
 import AIFeaturesSection from './components/AIFeaturesSection';

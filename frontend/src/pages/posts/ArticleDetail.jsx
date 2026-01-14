@@ -9,14 +9,13 @@ import {
   Loader2,
   MessageCircle,
   Share2,
-  User
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { fetchArticleById, toggleArticleLike, addArticleComment, incrementArticleShare } from '../../redux/slices/articleSlice';
+import { addArticleComment, fetchArticleById, incrementArticleShare,toggleArticleLike } from '../../redux/slices/articleSlice';
 
 function ArticleDetail() {
   const { id } = useParams();
@@ -46,7 +45,7 @@ function ArticleDetail() {
   const handleLike = async () => {
     try {
       await dispatch(toggleArticleLike({ getToken, id })).unwrap();
-    } catch (err) {
+    } catch{
       toast.error('Failed to like article');
     }
   };
@@ -59,7 +58,7 @@ function ArticleDetail() {
       const articleUrl = window.location.href;
       await navigator.clipboard.writeText(articleUrl);
       toast.success('Link copied to clipboard! 🔗');
-    } catch (err) {
+    } catch{
       toast.error('Failed to share article');
     }
   };
@@ -73,7 +72,7 @@ function ArticleDetail() {
       await dispatch(addArticleComment({ getToken, id, commentData: { text: comment } })).unwrap();
       setComment('');
       toast.success('Comment added! 💬');
-    } catch (err) {
+    } catch{
       toast.error('Failed to add comment');
     } finally {
       setIsCommenting(false);

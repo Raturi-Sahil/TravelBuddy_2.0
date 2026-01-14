@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Edit,
-  Eye,
   Globe,
   Heart,
   Image as ImageIcon,
@@ -295,7 +294,7 @@ function EditPostModal({ post, onClose, onSave }) {
 
 function ManagePost() {
   const dispatch = useDispatch();
-  const { getToken, userId } = useAuth();
+  const { getToken } = useAuth();
 
   const { myPosts, isLoading, isUpdating, isDeleting, error } = useSelector((state) => state.post);
   const [editingPost, setEditingPost] = useState(null);

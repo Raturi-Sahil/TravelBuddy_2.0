@@ -1,6 +1,18 @@
 import { Delete, X } from 'lucide-react';
 import { useState } from 'react';
 
+// Button component defined OUTSIDE of CalculatorModal to prevent recreation on each render
+const Button = ({ onClick, className, children, span = 1 }) => (
+  <button
+    onClick={onClick}
+    className={`h-16 rounded-2xl font-semibold text-xl transition-all duration-200 active:scale-95 ${className} ${
+      span === 2 ? 'col-span-2' : ''
+    }`}
+  >
+    {children}
+  </button>
+);
+
 export default function CalculatorModal({ isOpen, onClose }) {
   const [display, setDisplay] = useState('0');
   const [previousValue, setPreviousValue] = useState(null);
@@ -115,17 +127,6 @@ export default function CalculatorModal({ isOpen, onClose }) {
     setOperation(null);
     setWaitingForOperand(true);
   };
-
-  const Button = ({ onClick, className, children, span = 1 }) => (
-    <button
-      onClick={onClick}
-      className={`h-16 rounded-2xl font-semibold text-xl transition-all duration-200 active:scale-95 ${className} ${
-        span === 2 ? 'col-span-2' : ''
-      }`}
-    >
-      {children}
-    </button>
-  );
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">

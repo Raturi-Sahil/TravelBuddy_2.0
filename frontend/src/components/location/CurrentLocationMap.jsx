@@ -1,6 +1,6 @@
 import { GoogleMap, Marker } from '@react-google-maps/api';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
 
 const containerStyle = {
   width: '100%',

@@ -1,3 +1,4 @@
+import { useAuth } from '@clerk/clerk-react';
 import { GoogleMap, Marker } from '@react-google-maps/api';
 import {
   Calendar,
@@ -8,24 +9,22 @@ import {
   Globe,
   Info,
   Loader2,
+  LogOut,
   MapPin,
   MessageCircle,
+  MessagesSquare,
   Phone,
   ShieldAlert,
   Star,
   Tag,
   Users,
-  Video,
-  LogOut,
-  MessagesSquare
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { useAuth } from '@clerk/clerk-react';
+  Video} from 'lucide-react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate,useParams } from 'react-router-dom';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
 import { getSingleActivity, leaveActivity } from '../../redux/slices/userActivitySlice';
 import JoinChatGroup from './JoinActivityGroup';
 
@@ -52,7 +51,7 @@ function ManageJoinedActivity() {
   const dispatch = useDispatch();
   const { getToken } = useAuth();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [isLeaving, setIsLeaving] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -70,7 +69,6 @@ function ManageJoinedActivity() {
 
   useEffect(() => {
     if (id) {
-      setLoading(true);
       dispatch(getSingleActivity({ getToken, activityId: id })).finally(() => {
         setLoading(false);
       });

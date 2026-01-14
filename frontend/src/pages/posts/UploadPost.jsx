@@ -1,36 +1,35 @@
 import { useAuth } from '@clerk/clerk-react';
 import { Autocomplete } from '@react-google-maps/api';
 import {
+  Check,
+  Contrast,
+  Edit3,
+  FlipHorizontal,
+  FlipVertical,
   Globe,
+  Hash,
   Image as ImageIcon,
   Loader2,
   Lock,
   MapPin,
+  Navigation,
   Plus,
+  RotateCw,
   Sparkles,
+  SunMedium,
   Tag,
+  Undo2,
   Upload as UploadIcon,
   Users,
   Video,
-  X,
   Wand2,
-  Navigation,
-  Hash,
-  Edit3,
-  RotateCw,
-  FlipHorizontal,
-  FlipVertical,
-  SunMedium,
-  Contrast,
-  Check,
-  Undo2
-} from 'lucide-react';
+  X} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
 import { generatePostCaption } from '../../redux/slices/aiSlice';
 import { createPost, resetPostState } from '../../redux/slices/postSlice';
 
@@ -358,7 +357,7 @@ function UploadPost() {
             const locationName = data.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
             setFormData(prev => ({ ...prev, locationName }));
             toast.success('Location captured!');
-          } catch (err) {
+          } catch{
             setFormData(prev => ({ ...prev, locationName: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` }));
           }
           setLocationLoading(false);

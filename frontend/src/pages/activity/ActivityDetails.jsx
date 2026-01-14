@@ -1,15 +1,14 @@
+import { load } from '@cashfreepayments/cashfree-js';
+import { useAuth } from '@clerk/clerk-react';
 import { GoogleMap, Marker } from '@react-google-maps/api';
 import {
   Calendar,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
-  DollarSign,
   Globe,
   Info,
   Loader2,
-  Mail,
   MapPin,
   MessageCircle,
   Phone,
@@ -18,15 +17,13 @@ import {
   Tag,
   Users,
   Video} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { useAuth } from '@clerk/clerk-react';
-import { load } from '@cashfreepayments/cashfree-js';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate,useParams } from 'react-router-dom';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
-import { fetchActivityById, createActivityPayment } from '../../redux/slices/ActivitySlice';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
+import { createActivityPayment,fetchActivityById } from '../../redux/slices/ActivitySlice';
 
 const getEmbedUrl = (url) => {
   if (!url) return null;
@@ -60,10 +57,10 @@ function IndividualActivity() {
 
   const { isLoaded } = useGoogleMaps();
 
-  let cashfree;
+  const cashfreeRef = useRef(null);
   useEffect(() => {
     const initializeSDK = async () => {
-      cashfree = await load({
+      cashfreeRef.current = await load({
         mode: "sandbox" // Change to "production" for live
       });
     };
@@ -85,8 +82,8 @@ function IndividualActivity() {
           redirectTarget: "_self",
         };
 
-        if (cashfree) {
-          cashfree.checkout(checkoutOptions);
+        if (cashfreeRef.current) {
+          cashfreeRef.current.checkout(checkoutOptions);
         } else {
           // Fallback if cashfree didn't load yet
           const cf = await load({ mode: "sandbox" });

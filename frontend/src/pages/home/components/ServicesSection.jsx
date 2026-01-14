@@ -1,6 +1,4 @@
-import { motion } from 'framer-motion';
 import { Activity, BookOpen, Bot, Camera, ChevronRight, Compass, MessageCircle, Sparkles, Wallet } from 'lucide-react';
-import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const services = [
@@ -97,7 +95,6 @@ const cardVariants = {
 };
 
 const ServicesSection = () => {
-  const [hoveredService, setHoveredService] = useState(null);
   const navigate = useNavigate();
 
   return (
@@ -181,8 +178,6 @@ const ServicesSection = () => {
             <motion.div
               key={idx}
               variants={cardVariants}
-              onMouseEnter={() => setHoveredService(idx)}
-              onMouseLeave={() => setHoveredService(null)}
               onClick={() => navigate(service.path)}
               whileHover={{
                 y: -12,

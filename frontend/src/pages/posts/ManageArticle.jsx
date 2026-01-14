@@ -1,3 +1,4 @@
+import { useAuth } from '@clerk/clerk-react';
 import {
   BookOpen,
   Calendar,
@@ -18,9 +19,8 @@ import {
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
-import { useAuth } from '@clerk/clerk-react';
 
-import { fetchMyArticles, updateArticle, deleteArticle } from '../../redux/slices/articleSlice';
+import { deleteArticle,fetchMyArticles, updateArticle } from '../../redux/slices/articleSlice';
 
 // Edit Modal Component
 function EditArticleModal({ article, onClose, onSave }) {
@@ -169,7 +169,7 @@ function ManageArticle() {
   const dispatch = useDispatch();
   const { getToken } = useAuth();
 
-  const { myArticles, isLoading, isUpdating, isDeleting, error } = useSelector((state) => state.article);
+  const { myArticles, isLoading, isDeleting, error } = useSelector((state) => state.article);
   const [editingArticle, setEditingArticle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVisibility, setFilterVisibility] = useState('All');

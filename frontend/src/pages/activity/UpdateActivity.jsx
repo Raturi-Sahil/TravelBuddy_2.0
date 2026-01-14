@@ -1,6 +1,10 @@
+import { useAuth } from '@clerk/clerk-react';
 import { GoogleMap, Marker } from '@react-google-maps/api';
 import {
+  AlertTriangle,
+  Ban,
   Calendar,
+  Check,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -11,32 +15,26 @@ import {
   MapPin,
   MessageCircle,
   Phone,
+  Search,
+  Send,
   ShieldAlert,
   Star,
   Tag,
   Trash2,
+  UserPlus,
   Users,
   Video,
-  AlertTriangle,
-  X,
-  Ban,
-  Search,
-  UserPlus,
-  Check,
-  Send
-} from 'lucide-react';
+  X} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate,useParams } from 'react-router-dom';
 
-import { useGoogleMaps } from '../../context/GoogleMapsContext';
+import { useGoogleMaps } from '../../context/useGoogleMaps';
+import { createAuthenticatedApi,userService } from '../../redux/services/api';
 import { fetchActivityById, inviteUsersToActivity } from '../../redux/slices/ActivitySlice';
+import { cancelActivity,deleteActivity } from '../../redux/slices/userActivitySlice';
 import { fetchFriends } from '../../redux/slices/userSlice';
-import { deleteActivity, cancelActivity } from '../../redux/slices/userActivitySlice';
-
-import { userService, createAuthenticatedApi } from '../../redux/services/api';
 import ParticipantsTable from './Partipiants';
 
 const getEmbedUrl = (url) => {
@@ -64,7 +62,7 @@ function ManageActivity() {
 
   const { currentActivity, isLoading, error } = useSelector((state) => state.activity);
 
-  const { profile: currentUser, friends } = useSelector((state) => state.user);
+  const { friends } = useSelector((state) => state.user);
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);

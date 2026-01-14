@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { createAuthenticatedApi, activityService } from '../services/api';
+
+import { activityService,createAuthenticatedApi } from '../services/api';
 
 const initialState = {
   joinedActivities: [],
@@ -15,7 +16,7 @@ const initialState = {
 // Async Thunk to fetch user's joined activities
 export const getJoinedActivities = createAsyncThunk(
   'userActivity/getJoinedActivities',
-  async (_, { getState, rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
       // Get the getToken function from window (set by Clerk)
       // This approach requires that the component passes getToken or we get it from context

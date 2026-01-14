@@ -3,7 +3,6 @@ import { Autocomplete } from '@react-google-maps/api';
 import {
   Award,
   BadgeCheck,
-  Calendar,
   ChevronDown,
   Clock,
   Compass,

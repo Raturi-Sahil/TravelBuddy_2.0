@@ -1,5 +1,6 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { notificationService, createAuthenticatedApi } from "../services/api";
+import { createAsyncThunk,createSlice } from "@reduxjs/toolkit";
+
+import { createAuthenticatedApi,notificationService } from "../services/api";
 
 // Thunks
 export const fetchNotifications = createAsyncThunk(

@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import uploadOnCloudinary from "../middlewares/cloudinary";
 import deleteFromCloudinaryByUrl from "../middlewares/deleteCloudinary";
 import { Post } from "../models/postModel";
-import { User } from "../models/userModel";
 import ApiError from "../utils/apiError";
 import ApiResponse from "../utils/apiResponse";
 import asyncHandler from "../utils/asyncHandler";

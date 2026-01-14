@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import { generateDescription, generateLocalGuide, generatePackingList, generatePlan, generatePostCaption, generateWeatherForecast } from "../controller/aifeatureContoller";
 
 const router = Router();

@@ -1,21 +1,16 @@
 import { useAuth } from '@clerk/clerk-react';
 import {
-  ArrowRight,
   Calculator,
   Check,
   ChevronDown,
   CircleDollarSign,
   Clock,
   DollarSign,
-  Loader2,
-  Minus,
   Plus,
   Receipt,
   Search,
   Sparkles,
   Split,
-  Trash2,
-  User,
   Users,
   Wallet,
   X
@@ -29,11 +24,8 @@ import {
   createExpenseGroup,
   fetchMyExpenseGroups,
   fetchMyExpenses,
-  fetchGroupBalances,
   sendPaymentReminder,
-  settleUp,
 } from '../../redux/slices/expenseSlice';
-import AddExpenseModal from './AddExpenseModal';
 import CalculatorModal from './CalculatorModal';
 import CreateGroupModal from './CreateGroupModal';
 import GroupCard from './GroupCard';
@@ -46,8 +38,6 @@ export default function SplitExpenses() {
   const {
     groups,
     expenses,
-    balances: reduxBalances,
-    isLoading,
     isCreating,
   } = useSelector((state) => state.expense);
 
@@ -194,7 +184,7 @@ export default function SplitExpenses() {
     }
 
     try {
-      const result = await dispatch(
+      await dispatch(
         createExpenseGroup({
           getToken,
           groupData: {
@@ -219,7 +209,7 @@ export default function SplitExpenses() {
     }
 
     try {
-      const result = await dispatch(
+      await dispatch(
         createExpense({
           getToken,
           expenseData: {
@@ -415,7 +405,7 @@ export default function SplitExpenses() {
                       <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
                         <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Split between:</span>
                         <div className="flex -space-x-2">
-                          {expense.splitBetween.slice(0, 4).map((member, idx) => (
+                          {expense.splitBetween.slice(0, 4).map((member) => (
                             <div
                               key={member._id}
                               className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-sm"

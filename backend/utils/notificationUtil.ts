@@ -1,7 +1,8 @@
 import { Types } from "mongoose";
+
 import { Notification } from "../models/notificationModel";
-import { getIO, getReceiverSocketId } from "../socket";
 import { User } from "../models/userModel";
+import { getIO, getReceiverSocketId } from "../socket";
 
 interface NotificationData {
   recipient: Types.ObjectId | string;

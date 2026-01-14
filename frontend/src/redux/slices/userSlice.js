@@ -219,7 +219,7 @@ const userSlice = createSlice({
         state.isFetchingFriends = false;
         state.friends = action.payload.data || [];
       })
-      .addCase(fetchFriends.rejected, (state, action) => {
+      .addCase(fetchFriends.rejected, (state) => {
         state.isFetchingFriends = false;
         state.friends = [];
       })

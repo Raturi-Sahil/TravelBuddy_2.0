@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+
 import { createAuthenticatedApi } from '../services/api';
 
 // Article service
@@ -215,7 +216,7 @@ export const deleteArticleComment = createAsyncThunk(
   async ({ getToken, articleId, commentId }, { rejectWithValue }) => {
     try {
       const authApi = createAuthenticatedApi(getToken);
-      const response = await articleService.deleteComment(authApi, articleId, commentId);
+      await articleService.deleteComment(authApi, articleId, commentId);
       return { articleId, commentId };
     } catch (error) {
       return rejectWithValue(

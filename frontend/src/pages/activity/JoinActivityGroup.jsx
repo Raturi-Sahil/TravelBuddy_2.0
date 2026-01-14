@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import {
-  Users,
-  MessageCircle,
   Loader2,
+  MessageCircle,
   ShieldCheck,
+  Users,
   X
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useAuth } from '@clerk/clerk-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+
 import { getSingleActivity } from '../../redux/slices/userActivitySlice';
 
 function JoinChatGroup({ isOpen, onClose, activityId }) {

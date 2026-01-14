@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+
 import { INotification } from "../interfaces/notificationInterface";
 
 const notificationSchema = new Schema<INotification>(
