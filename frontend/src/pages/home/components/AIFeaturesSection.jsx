@@ -1,5 +1,6 @@
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 import { ArrowRight, Bot, Compass, CreditCard, Plane, Sparkles, Sun, Wand2 } from 'lucide-react';
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const aiFeatures = [

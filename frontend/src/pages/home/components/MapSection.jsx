@@ -1,3 +1,5 @@
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 import { Activity, ChevronRight, Globe, Map, MapPin, Star, TrendingUp, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
