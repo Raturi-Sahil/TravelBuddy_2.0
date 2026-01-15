@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import {
   cancelBooking,
   createGuideBookingPayment,
@@ -138,6 +139,7 @@ const MyGuideBookings = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
+  const [cancelBookingId, setCancelBookingId] = useState(null);
 
   // Initialize Cashfree SDK
   const cashfreeRef = useRef(null);
@@ -160,8 +162,7 @@ const MyGuideBookings = () => {
   });
 
   const handleCancelBooking = async (bookingId) => {
-    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
-
+    setCancelBookingId(null);
     try {
       await dispatch(cancelBooking({ getToken, bookingId, reason: 'Cancelled by traveler' })).unwrap();
       toast.success('Booking cancelled successfully');
@@ -490,7 +491,7 @@ const MyGuideBookings = () => {
                   <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-gray-100">
                     {booking.status === 'pending' && (
                       <button
-                        onClick={() => handleCancelBooking(booking._id)}
+                        onClick={() => setCancelBookingId(booking._id)}
                         className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold rounded-xl border border-red-200 transition-all"
                       >
                         <XCircle size={16} />
@@ -557,7 +558,6 @@ const MyGuideBookings = () => {
         )}
       </div>
 
-      {/* Review Modal */}
       {showReviewModal && selectedBooking && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
@@ -684,6 +684,18 @@ const MyGuideBookings = () => {
           </div>
         </div>
       )}
+
+      {/* Cancel Booking Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!cancelBookingId}
+        title="Cancel Booking"
+        message="Are you sure you want to cancel this booking? This action cannot be undone."
+        confirmText="Yes, Cancel"
+        cancelText="Keep Booking"
+        variant="warning"
+        onConfirm={() => handleCancelBooking(cancelBookingId)}
+        onCancel={() => setCancelBookingId(null)}
+      />
     </div>
   );
 };

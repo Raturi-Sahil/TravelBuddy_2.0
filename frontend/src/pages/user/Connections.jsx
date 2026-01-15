@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useSocket } from '../../hooks/useSocket';
 import { activityService, createAuthenticatedApi, userService } from '../../redux/services/api';
 import { fetchConversations } from '../../redux/slices/chatSlice';
@@ -27,6 +28,7 @@ export default function Connections() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, userId: null });
 
   // Fetch conversations for chat list
   useEffect(() => {
@@ -117,8 +119,14 @@ export default function Connections() {
     }
   };
 
+  // Open confirm dialog for removing friend
+  const openRemoveFriendDialog = (userId) => {
+    setConfirmDialog({ isOpen: true, userId });
+  };
+
+  // Handle the actual friend removal after confirmation
   const handleRemoveFriend = async (userId) => {
-    if (!confirm('Are you sure you want to remove this friend?')) return;
+    setConfirmDialog({ isOpen: false, userId: null });
     setActionLoading(prev => ({ ...prev, [userId]: true }));
     try {
       const authApi = createAuthenticatedApi(getToken);
@@ -344,7 +352,7 @@ export default function Connections() {
                           <Users className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleRemoveFriend(friend._id); }}
+                          onClick={(e) => { e.stopPropagation(); openRemoveFriendDialog(friend._id); }}
                           disabled={actionLoading[friend._id]}
                           className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                           title="Remove Friend"
@@ -465,6 +473,18 @@ export default function Connections() {
           )}
         </div>
       </div>
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Remove Friend"
+        message="Are you sure you want to remove this friend? You can send them a friend request again later."
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={() => handleRemoveFriend(confirmDialog.userId)}
+        onCancel={() => setConfirmDialog({ isOpen: false, userId: null })}
+        loading={actionLoading[confirmDialog.userId]}
+      />
     </div>
   );
 }
