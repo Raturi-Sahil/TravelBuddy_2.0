@@ -30,6 +30,7 @@ import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate,useParams } from 'react-router-dom';
 
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useGoogleMaps } from '../../context/useGoogleMaps';
 import { createAuthenticatedApi,userService } from '../../redux/services/api';
 import { fetchActivityById, inviteUsersToActivity } from '../../redux/slices/ActivitySlice';
@@ -69,6 +70,7 @@ function ManageActivity() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Invite Modal State
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -121,17 +123,16 @@ function ManageActivity() {
       return;
     }
 
-    if (window.confirm('Are you sure you want to delete this activity? This action cannot be undone.')) {
-      setIsDeleting(true);
-      try {
-        await dispatch(deleteActivity({ getToken, activityId: currentActivity._id })).unwrap();
-        toast.success('Activity deleted successfully');
-        navigate('/my-activities');
-      } catch (err) {
-        toast.error(err || 'Failed to delete activity');
-      } finally {
-        setIsDeleting(false);
-      }
+    setShowDeleteDialog(false);
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteActivity({ getToken, activityId: currentActivity._id })).unwrap();
+      toast.success('Activity deleted successfully');
+      navigate('/my-activities');
+    } catch (err) {
+      toast.error(err || 'Failed to delete activity');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -544,7 +545,7 @@ function ManageActivity() {
                     {/* Show Delete button if 0 or 1 participant (admin only), Cancel button if more participants */}
                     {currentParticipants <= 1 ? (
                       <button
-                        onClick={handleDeleteActivity}
+                        onClick={() => setShowDeleteDialog(true)}
                         disabled={isDeleting}
                         className="w-full py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 bg-red-50 text-red-600 border-2 border-red-200 hover:bg-red-100 active:scale-95"
                       >
@@ -863,6 +864,19 @@ function ManageActivity() {
           </div>
         </div>
       )}
+
+      {/* Delete Activity Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        title="Delete Activity"
+        message="Are you sure you want to delete this activity? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteActivity}
+        onCancel={() => setShowDeleteDialog(false)}
+        loading={isDeleting}
+      />
     </div>
   );
 }

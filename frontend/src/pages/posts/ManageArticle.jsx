@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { deleteArticle,fetchMyArticles, updateArticle } from '../../redux/slices/articleSlice';
 
 // Edit Modal Component
@@ -174,6 +175,7 @@ function ManageArticle() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVisibility, setFilterVisibility] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [deleteArticleId, setDeleteArticleId] = useState(null);
 
   // Fetch user's articles on mount
   useEffect(() => {
@@ -223,10 +225,7 @@ function ManageArticle() {
 
   // Handle delete
   const handleDeleteArticle = async (articleId) => {
-    if (!window.confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
-      return;
-    }
-
+    setDeleteArticleId(null);
     try {
       await dispatch(deleteArticle({ getToken, id: articleId })).unwrap();
       toast.success('Article deleted successfully! 🗑️');
@@ -421,7 +420,7 @@ function ManageArticle() {
                       <Edit size={20} />
                     </button>
                     <button
-                      onClick={() => handleDeleteArticle(article._id)}
+                      onClick={() => setDeleteArticleId(article._id)}
                       disabled={isDeleting}
                       className="p-3 bg-white rounded-full hover:bg-red-500 hover:text-white transition-all duration-200 transform hover:scale-110 disabled:opacity-50"
                     >
@@ -493,6 +492,19 @@ function ManageArticle() {
           onSave={handleEditArticle}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!deleteArticleId}
+        title="Delete Article"
+        message="Are you sure you want to delete this article? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={() => handleDeleteArticle(deleteArticleId)}
+        onCancel={() => setDeleteArticleId(null)}
+        loading={isDeleting}
+      />
     </div>
   );
 }

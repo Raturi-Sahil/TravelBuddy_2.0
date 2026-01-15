@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { useDispatch,useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import { fetchJoinedActivities, leaveActivity } from "../../redux/slices/userActivitySlice";
 
 // ImageSlider Component
@@ -58,6 +59,7 @@ function JoinedActivites() {
   const currentUser = useSelector((state) => state.user.profile);
   const { joinedActivities = [], loading } = useSelector((state) => state.userActivity);
   const [searchQuery, setSearchQuery] = useState('');
+  const [leaveActivityId, setLeaveActivityId] = useState(null);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -83,15 +85,13 @@ function JoinedActivites() {
     return matchesSearch;
   });
 
-  const handleLeaveActivity = async (e, activityId) => {
-    e.stopPropagation();
-    if (window.confirm('Are you sure you want to leave this activity?')) {
-      try {
-        await dispatch(leaveActivity({ getToken, activityId })).unwrap();
-        toast.success('Successfully left the activity');
-      } catch (err) {
-        toast.error(err || 'Failed to leave activity');
-      }
+  const handleLeaveActivity = async (activityId) => {
+    setLeaveActivityId(null);
+    try {
+      await dispatch(leaveActivity({ getToken, activityId })).unwrap();
+      toast.success('Successfully left the activity');
+    } catch (err) {
+      toast.error(err || 'Failed to leave activity');
     }
   };
 
@@ -254,7 +254,10 @@ function JoinedActivites() {
 
                       {!isPast && !isCancelled && (
                         <button
-                          onClick={(e) => handleLeaveActivity(e, activity._id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLeaveActivityId(activity._id);
+                          }}
                           className="p-2 bg-white/90 backdrop-blur-md rounded-full text-slate-700 hover:bg-red-500 hover:text-white transition-colors"
                           title="Leave Activity"
                         >
@@ -339,6 +342,18 @@ function JoinedActivites() {
           </div>
         )}
       </div>
+
+      {/* Leave Activity Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!leaveActivityId}
+        title="Leave Activity"
+        message="Are you sure you want to leave this activity? You can rejoin later if spots are available."
+        confirmText="Leave"
+        cancelText="Stay"
+        variant="warning"
+        onConfirm={() => handleLeaveActivity(leaveActivityId)}
+        onCancel={() => setLeaveActivityId(null)}
+      />
     </div>
   );
 }

@@ -26,12 +26,13 @@ import {
   UserPlus,
   Video,
   X} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate,useParams } from "react-router-dom";
 
 import AudioMessage from "../../components/chat/AudioMessage";
+import { LinkifiedText } from "../../helpers/linkify";
 import { createAuthenticatedApi, groupChatService, userService } from "../../redux/services/api";
 import { inviteUsersToActivity } from "../../redux/slices/ActivitySlice";
 import { fetchFriends } from "../../redux/slices/userSlice";
@@ -44,7 +45,7 @@ function GroupChat() {
   const dispatch = useDispatch();
   const { friends } = useSelector((state) => state.user);
 
-  const authApi = createAuthenticatedApi(getToken);
+  const authApi = useMemo(() => createAuthenticatedApi(getToken), [getToken]);
 
   const [chat, setChat] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -192,7 +193,7 @@ function GroupChat() {
       loadUser();
       dispatch(fetchFriends(getToken));
     }
-  }, [userId, dispatch, getToken]);
+  }, [userId, dispatch, getToken, authApi]);
 
   // Load chat + messages
   useEffect(() => {
@@ -222,7 +223,7 @@ function GroupChat() {
     if (activityId) {
       loadChat();
     }
-  }, [activityId]);
+  }, [activityId, authApi]);
 
   // Send message (Text)
   const handleSend = async () => {
@@ -684,8 +685,8 @@ function GroupChat() {
                         </div>
                       ) : (
                         !isImage && !isAudio && msg.type !== "DOCUMENT" && !msg.message?.startsWith("[") && (
-                          <p className="whitespace-pre-wrap break-words leading-relaxed">
-                            {msg.message}
+                          <p className="whitespace-pre-wrap leading-relaxed" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                            <LinkifiedText text={msg.message} />
                           </p>
                         )
                       )}

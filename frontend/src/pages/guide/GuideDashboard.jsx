@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import {
   cancelBooking,
   completeBooking,
@@ -120,6 +121,7 @@ const GuideDashboard = () => {
   const [activeTab, setActiveTab] = useState('pending');
   const [profileFetched, setProfileFetched] = useState(false);
   const [actionLoading, setActionLoading] = useState(null); // Track which booking action is loading
+  const [cancelBookingId, setCancelBookingId] = useState(null); // For confirm dialog
 
   useEffect(() => {
     const fetchData = async () => {
@@ -159,8 +161,7 @@ const GuideDashboard = () => {
   };
 
   const handleCancelBooking = async (bookingId) => {
-    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
-
+    setCancelBookingId(null);
     try {
       setActionLoading(bookingId);
       await dispatch(cancelBooking({ getToken, bookingId, reason: 'Cancelled by guide' })).unwrap();
@@ -416,7 +417,7 @@ const GuideDashboard = () => {
                             Accept
                           </button>
                           <button
-                            onClick={() => handleCancelBooking(booking._id)}
+                            onClick={() => setCancelBookingId(booking._id)}
                             className="px-4 py-2 bg-red-100 text-red-600 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors"
                           >
                             Decline
@@ -485,6 +486,19 @@ const GuideDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Cancel Booking Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!cancelBookingId}
+        title="Cancel Booking"
+        message="Are you sure you want to cancel this booking? The traveler will be notified."
+        confirmText="Yes, Cancel"
+        cancelText="Keep Booking"
+        variant="warning"
+        onConfirm={() => handleCancelBooking(cancelBookingId)}
+        onCancel={() => setCancelBookingId(null)}
+        loading={actionLoading === cancelBookingId}
+      />
     </div>
   );
 };

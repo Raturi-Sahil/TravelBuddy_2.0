@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { createAuthenticatedApi, userService } from '../../redux/services/api';
 
 export default function TravelerProfile() {
@@ -15,6 +16,7 @@ export default function TravelerProfile() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showRemoveFriendDialog, setShowRemoveFriendDialog] = useState(false);
 
   const loadProfile = useCallback(async () => {
     if (!id) return;
@@ -97,7 +99,7 @@ export default function TravelerProfile() {
   };
 
   const handleRemoveFriend = async () => {
-    if (!confirm('Are you sure you want to remove this friend?')) return;
+    setShowRemoveFriendDialog(false);
     setActionLoading(true);
     try {
       const authApi = createAuthenticatedApi(getToken);
@@ -212,7 +214,7 @@ export default function TravelerProfile() {
                     >
                       <MessageCircle className="w-5 h-5" /> Message
                     </button>
-                    <button onClick={handleRemoveFriend} disabled={actionLoading} className="flex items-center gap-2 px-5 py-2.5 bg-red-50 text-red-500 font-medium rounded-xl hover:bg-red-100 border border-red-100 transition-all">
+                    <button onClick={() => setShowRemoveFriendDialog(true)} disabled={actionLoading} className="flex items-center gap-2 px-5 py-2.5 bg-red-50 text-red-500 font-medium rounded-xl hover:bg-red-100 border border-red-100 transition-all">
                       {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserMinus className="w-5 h-5" />}
                       Remove
                     </button>
@@ -376,6 +378,19 @@ export default function TravelerProfile() {
           )}
         </div>
       </div>
+
+      {/* Confirm Remove Friend Dialog */}
+      <ConfirmDialog
+        isOpen={showRemoveFriendDialog}
+        title="Remove Friend"
+        message="Are you sure you want to remove this friend? You can send them a friend request again later."
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleRemoveFriend}
+        onCancel={() => setShowRemoveFriendDialog(false)}
+        loading={actionLoading}
+      />
     </div>
   );
 }

@@ -24,6 +24,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { deletePost, fetchMyPosts, updatePost } from '../../redux/slices/postSlice';
 
 // Image Carousel Component
@@ -300,6 +301,7 @@ function ManagePost() {
   const [editingPost, setEditingPost] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVisibility, setFilterVisibility] = useState('All');
+  const [deletePostId, setDeletePostId] = useState(null);
 
   // Fetch user's own posts
   useEffect(() => {
@@ -347,10 +349,7 @@ function ManagePost() {
 
   // Handle delete post
   const handleDeletePost = async (postId) => {
-    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-      return;
-    }
-
+    setDeletePostId(null);
     try {
       await dispatch(deletePost({ getToken, id: postId })).unwrap();
       toast.success('Post deleted successfully! 🗑️');
@@ -529,7 +528,7 @@ function ManagePost() {
                       <Edit size={20} />
                     </button>
                     <button
-                      onClick={() => handleDeletePost(post._id)}
+                      onClick={() => setDeletePostId(post._id)}
                       disabled={isDeleting}
                       className="p-3 bg-white rounded-full hover:bg-red-500 hover:text-white transition-all duration-200 transform hover:scale-110 disabled:opacity-50"
                     >
@@ -625,6 +624,19 @@ function ManagePost() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!deletePostId}
+        title="Delete Post"
+        message="Are you sure you want to delete this post? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={() => handleDeletePost(deletePostId)}
+        onCancel={() => setDeletePostId(null)}
+        loading={isDeleting}
+      />
     </div>
   );
 }
