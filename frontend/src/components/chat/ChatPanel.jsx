@@ -3,6 +3,7 @@ import { Loader2, MessageCircle, Send, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { LinkifiedText } from '../../helpers/linkify';
 import { useSocket } from '../../hooks/useSocket';
 import {
   addNewConversation,
@@ -291,7 +292,12 @@ export default function ChatPanel({ friends = [], onClose }) {
                                 : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'
                             }`}
                           >
-                            <p className="text-sm break-words">{msg.message}</p>
+                            <p className="text-sm" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                              <LinkifiedText 
+                                text={msg.message} 
+                                linkClassName={isSent ? '!text-white hover:!text-orange-100' : ''}
+                              />
+                            </p>
                             <p className={`text-xs mt-1 ${isSent ? 'text-orange-100' : 'text-gray-400'}`}>
                               {formatTime(msg.createdAt)}
                             </p>

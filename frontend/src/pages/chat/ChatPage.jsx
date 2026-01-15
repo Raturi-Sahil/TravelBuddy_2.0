@@ -3,6 +3,7 @@ import EmojiPicker from 'emoji-picker-react';
 import {
   ArrowLeft,
   Camera,
+  FileText,
   Gift,
   Image as ImageIcon,
   Loader2,
@@ -25,6 +26,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import AudioMessage from '../../components/chat/AudioMessage';
 import ChatListItem from '../../components/chat/ChatListItem';
 import { useCall } from '../../context/useCall';
+import { LinkifiedText } from '../../helpers/linkify';
 import { useSocket } from '../../hooks/useSocket';
 import { createAuthenticatedApi, userService } from '../../redux/services/api';
 import {
@@ -110,6 +112,7 @@ export default function ChatPage() {
   // File inputs
   const imageInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const documentInputRef = useRef(null);
 
   // Global Call Context
   const { callUser } = useCall();
@@ -277,6 +280,65 @@ export default function ChatPage() {
     }
   };
 
+  // Document upload
+  const handleDocumentSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentChatUserId || sendingMessage) return;
+
+    setShowAttachments(false);
+
+    const formData = new FormData();
+    formData.append("attachment", file);
+    formData.append("type", "DOCUMENT");
+
+    const toastId = toast.loading("Sending document...");
+
+    try {
+      await dispatch(sendMessage({
+        getToken,
+        receiverId: currentChatUserId,
+        message: formData,
+      }));
+      toast.dismiss(toastId);
+      toast.success("Document sent!");
+    } catch {
+      toast.dismiss(toastId);
+      toast.error("Failed to send document");
+    } finally {
+      e.target.value = null;
+    }
+  };
+
+  // Paste image handler
+  const handlePaste = async (e) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image") !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) {
+          const file = new File([blob], `pasted_image_${Date.now()}.png`, { type: blob.type });
+
+          const formData = new FormData();
+          formData.append("attachment", file);
+
+          const toastId = toast.loading("Sending pasted image...");
+          try {
+            await dispatch(sendMessage({
+              getToken,
+              receiverId: currentChatUserId,
+              message: formData,
+            }));
+            toast.dismiss(toastId);
+            toast.success("Image sent!");
+          } catch {
+            toast.dismiss(toastId);
+            toast.error("Failed to send pasted image");
+          }
+        }
+      }
+    }
+  };
+
   // Location sharing
   const handleLocation = async () => {
     if (!navigator.geolocation) {
@@ -426,11 +488,12 @@ export default function ChatPage() {
   const renderMessage = (msg, isSent) => {
     const isImage = msg.type === "IMAGE" || (msg.attachmentUrl && msg.attachmentUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i));
     const isAudio = msg.type === "AUDIO" || (msg.attachmentUrl && msg.attachmentUrl.match(/\.(webm|mp3|wav|ogg)$/i));
+    const isDocument = msg.type === "DOCUMENT" || (msg.attachmentUrl && msg.attachmentUrl.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|zip|rar)$/i));
 
     // Emoji detection: check if message is only emojis
     const emojiRegex = /^[\p{Emoji_Presentation}\p{Extended_Pictographic}\s]+$/u;
     const emojiCount = msg.message ? [...msg.message].filter(char => /\p{Emoji_Presentation}|\p{Extended_Pictographic}/u.test(char)).length : 0;
-    const isOnlyEmoji = !isImage && !isAudio && msg.message && emojiRegex.test(msg.message.trim());
+    const isOnlyEmoji = !isImage && !isAudio && !isDocument && msg.message && emojiRegex.test(msg.message.trim());
     const isSingleEmoji = isOnlyEmoji && emojiCount === 1;
     const isFewEmojis = isOnlyEmoji && emojiCount >= 2 && emojiCount <= 4;
     // Determine emoji text size class
@@ -462,9 +525,26 @@ export default function ChatPage() {
           </div>
         )}
 
+        {isDocument && msg.attachmentUrl && (
+          <div 
+            className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl mb-2 border border-gray-100 hover:bg-gray-100 cursor-pointer transition-colors" 
+            onClick={() => window.open(msg.attachmentUrl, '_blank')}
+          >
+            <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="text-sm font-semibold text-gray-900 truncate">{msg.attachmentUrl.split('/').pop()}</p>
+              <p className="text-[10px] text-gray-500 uppercase font-bold">Document</p>
+            </div>
+          </div>
+        )}
+
         {msg.message && (
           <div className="relative">
-            <p className={`leading-relaxed break-words ${isOnlyEmoji ? '' : 'pr-14'} ${getEmojiSizeClass()}`}>{msg.message}</p>
+            <p className={`leading-relaxed ${isOnlyEmoji ? '' : 'pr-14'} ${getEmojiSizeClass()}`} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+              {isOnlyEmoji ? msg.message : <LinkifiedText text={msg.message} />}
+            </p>
             <span className={`text-[10px] ${isOnlyEmoji ? 'block text-right mt-1' : 'absolute bottom-0 right-0'} ${isSent ? 'text-gray-500' : 'text-gray-400'}`}>
               {formatTime(msg.createdAt)}
             </span>
@@ -490,6 +570,12 @@ export default function ChatPage() {
         onChange={handleFileSelect}
         accept="image/*"
         capture="environment"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={documentInputRef}
+        onChange={handleDocumentSelect}
         className="hidden"
       />
 
@@ -699,8 +785,14 @@ export default function ChatPage() {
 
                   {/* Attachment Menu Overlay */}
                   {showAttachments && (
-                    <div className="absolute bottom-20 left-4 bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 z-20" style={{ width: '280px' }}>
-                      <div className="grid grid-cols-3 gap-4">
+                    <div className="absolute bottom-20 left-4 bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 z-20" style={{ width: '320px' }}>
+                      <div className="grid grid-cols-4 gap-4">
+                        <AttachmentItem
+                          icon={FileText}
+                          label="Document"
+                          color="bg-indigo-500"
+                          onClick={() => documentInputRef.current?.click()}
+                        />
                         <AttachmentItem
                           icon={ImageIcon}
                           label="Photos"
@@ -761,6 +853,7 @@ export default function ChatPage() {
                           value={messageInput}
                           onChange={handleInputChange}
                           onKeyDown={handleKeyPress}
+                          onPaste={handlePaste}
                           placeholder="Type a message..."
                           className="flex-1 px-4 py-3 bg-white rounded-lg text-base focus:outline-none placeholder-gray-400"
                         />
