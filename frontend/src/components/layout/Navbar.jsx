@@ -1,5 +1,5 @@
 import { useAuth,useUser } from '@clerk/clerk-react';
-import { Bell, Bot, Globe, Menu, Plus, X } from 'lucide-react';
+import { Bell, Bot, Car, Globe, Menu, Plus, X } from 'lucide-react';
 import { useEffect, useRef,useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -21,7 +21,7 @@ function NavBar() {
 
   const { user, isSignedIn } = useUser();
   const { getToken } = useAuth();
-  
+
   const { profile: userProfile } = useSelector((state) => state.user);
   const { myGuideProfile } = useSelector((state) => state.guide);
   const { unreadCount } = useSelector((state) => state.notifications);
@@ -115,6 +115,15 @@ function NavBar() {
                 <span className="hidden xl:inline">Ai Buddy</span>
               </button>
 
+              {/* Transport Buddy */}
+              <button
+                onClick={() => navigate('/transport-buddy')}
+                className="flex items-center space-x-1.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-3 py-2 rounded-xl hover:shadow-lg hover:shadow-teal-500/30 hover:-translate-y-0.5 transition-all duration-300 font-semibold text-xs group"
+              >
+                <Car size={16} className="group-hover:translate-x-0.5 transition-transform duration-300" />
+                <span className="hidden xl:inline">Transport Buddy</span>
+              </button>
+
               {isSignedIn ? (
                 <>
                   {/* Notifications */}
@@ -144,9 +153,9 @@ function NavBar() {
 
                   {/* Profile Menu */}
                   <div className="pl-1">
-                    <ProfileMenu 
-                        user={user} 
-                        userProfile={userProfile} 
+                    <ProfileMenu
+                        user={user}
+                        userProfile={userProfile}
                         currentLocationName={currentLocationName}
                         isOpen={isProfileMenuOpen}
                         setIsOpen={setIsProfileMenuOpen}
@@ -173,12 +182,19 @@ function NavBar() {
             </div>
 
             {/* Mobile Actions */}
-            <div className="md:hidden flex items-center space-x-2">
+            <div className="md:hidden flex items-center space-x-1.5">
               <button
                 onClick={() => navigate('/ai-buddy')}
                 className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-xl shadow-md shadow-purple-500/20 active:scale-95 transition-transform"
               >
                 <Bot size={18} />
+              </button>
+
+              <button
+                onClick={() => navigate('/transport-buddy')}
+                className="flex items-center justify-center w-9 h-9 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl shadow-md shadow-teal-500/20 active:scale-95 transition-transform"
+              >
+                <Car size={18} />
               </button>
 
               {isSignedIn && (
@@ -209,8 +225,8 @@ function NavBar() {
           </div>
 
           {/* Mobile Menu Component */}
-          <MobileMenu 
-            isOpen={isMenuOpen} 
+          <MobileMenu
+            isOpen={isMenuOpen}
             setIsOpen={setIsMenuOpen}
             isSignedIn={isSignedIn}
             currentLocationName={currentLocationName}

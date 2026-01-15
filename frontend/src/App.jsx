@@ -38,6 +38,9 @@ import AiLocalGuide from "./pages/ai/AiLocalGuide";
 import AiPackagePlanner from "./pages/ai/AiPackagePlanner";
 import AiTripPlanner from "./pages/ai/AiTripPlanner";
 import AiWeatherPlanner from "./pages/ai/AiWeatherPlanner";
+// Transport pages
+import TransportBuddy from "./pages/transport/TransportBuddy";
+import ListVehicle from "./pages/transport/ListVehicle";
 // Auth pages
 import CompleteRegistration from "./pages/auth/CompleteRegistration";
 import SignInPage from "./pages/auth/SignIn";
@@ -144,6 +147,11 @@ function App() {
         <Route path="ai-packaging-planner" element={<AuthGuard><AiPackagePlanner /></AuthGuard>} />
         <Route path="ai-weather-planner" element={<AuthGuard><AiWeatherPlanner /></AuthGuard>} />
         <Route path="ai-local-guide" element={<AuthGuard><AiLocalGuide /></AuthGuard>} />
+
+        {/* Transport Routes */}
+        <Route path="transport-buddy" element={<AuthGuard><TransportBuddy /></AuthGuard>} />
+        <Route path="list-vehicle" element={<AuthGuard><ListVehicle /></AuthGuard>} />
+
         <Route path="user-posts" element={<AuthGuard><UserPosts /></AuthGuard>} />
         <Route path="upload-post" element={<AuthGuard><UploadPost /></AuthGuard>} />
         <Route path="manage-posts" element={<AuthGuard><ManagePost /></AuthGuard>} />

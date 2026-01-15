@@ -1,8 +1,8 @@
 import { useClerk } from '@clerk/clerk-react';
 import {
-Activity, BookOpen,   Calendar, CalendarDays, Camera, ChevronDown, Compass,
+Activity, BookOpen, Calendar, CalendarDays, Camera, Car, ChevronDown, Compass,
 Image, Link, LogOut, MapPin,
-Receipt, Upload,   User} from 'lucide-react';
+Receipt, Upload, User} from 'lucide-react';
 import { useEffect,useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
@@ -33,6 +33,7 @@ const ProfileMenu = ({ user, userProfile, currentLocationName, isOpen, setIsOpen
       { name: 'My Profile', path: '/profile', icon: User },
       { name: 'Connections', path: '/connections', icon: Link },
       { name: 'Split Group Expenses', path: '/split-expenses', icon: Receipt },
+      { name: 'List your Vehicle', path: '/list-vehicle', icon: Car },
       ...(myGuideProfile
         ? [{ name: 'Guide Dashboard', path: '/guide-dashboard', icon: Compass }]
         : [{ name: 'Become a Guide', path: '/guide-setup', icon: Compass }]
@@ -89,8 +90,8 @@ const ProfileMenu = ({ user, userProfile, currentLocationName, isOpen, setIsOpen
           />
           <div className="absolute bottom-0 right-0 w-2.5 h-2.5 lg:w-3 lg:h-3 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
         </div>
-        <ChevronDown 
-            className={`w-4 h-4 text-gray-400 group-hover:text-amber-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
+        <ChevronDown
+            className={`w-4 h-4 text-gray-400 group-hover:text-amber-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
             strokeWidth={2.5}
         />
       </button>
@@ -98,7 +99,7 @@ const ProfileMenu = ({ user, userProfile, currentLocationName, isOpen, setIsOpen
       {/* Dropdown Menu */}
       {isOpen && (
         <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-gray-200/50 border border-gray-100 overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200 origin-top-right ring-1 ring-black/5">
-          
+
           {/* User Info Header */}
           <div className="px-6 py-5 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100">
             <div className="flex items-center space-x-4">
@@ -149,16 +150,16 @@ const ProfileMenu = ({ user, userProfile, currentLocationName, isOpen, setIsOpen
                 <button
                   key={index}
                   onClick={() => handleNavigation(item.path)}
-                  className="w-full flex items-center justify-between px-4 py-3 text-gray-600 hover:text-gray-900 hover:bg-gradient-to-r hover:from-gray-50 hover:to-transparent rounded-xl transition-all duration-200 text-left group"
+                  className="w-full flex items-center justify-between px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gradient-to-r hover:from-gray-50 hover:to-transparent rounded-xl transition-all duration-200 text-left group"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2.5 rounded-xl ${
-                        activeTab === 'profile' ? 'bg-indigo-50/50 text-indigo-500' : 
-                        activeTab === 'activity' ? 'bg-orange-50/50 text-orange-500' : 
-                        activeTab === 'posts' ? 'bg-pink-50/50 text-pink-500' : 
+                  <div className="flex items-center space-x-2.5">
+                    <div className={`p-2 rounded-xl ${
+                        activeTab === 'profile' ? 'bg-indigo-50/50 text-indigo-500' :
+                        activeTab === 'activity' ? 'bg-orange-50/50 text-orange-500' :
+                        activeTab === 'posts' ? 'bg-pink-50/50 text-pink-500' :
                         'bg-emerald-50/50 text-emerald-500'
                     } group-hover:bg-white group-hover:shadow-sm transition-all duration-200`}>
-                      <item.icon size={18} strokeWidth={2} />
+                      <item.icon size={16} strokeWidth={2} />
                     </div>
                     <span className="font-semibold text-sm">{item.name}</span>
                   </div>
@@ -175,7 +176,7 @@ const ProfileMenu = ({ user, userProfile, currentLocationName, isOpen, setIsOpen
           <div className="p-2 border-t border-gray-100 bg-gray-50">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center space-x-2.5 px-4 py-3 text-gray-600 hover:text-red-600 hover:bg-white hover:shadow-sm rounded-xl transition-all duration-200 font-semibold text-sm border border-transparent hover:border-gray-100"
+              className="w-full flex items-center justify-center space-x-2.5 px-4 py-3 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-xl transition-all duration-200 font-semibold text-sm border border-red-100"
             >
               <LogOut size={18} />
               <span>Sign out</span>
