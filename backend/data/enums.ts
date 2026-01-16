@@ -96,3 +96,44 @@ export const GUIDE_SPECIALTIES = [
   "Local Experiences",
 ];
 
+// Transport Enums
+export const VEHICLE_TYPES = [
+  "taxi",
+  "auto",
+  "minivan",
+  "tempo",
+  "bus",
+  "bike",
+];
+
+export const PRICE_TYPES = [
+  "per_trip",
+  "per_day",
+  "per_km",
+  "per_seat",
+];
+
+export const LISTING_STATUS = [
+  "pending",
+  "approved",
+  "rejected",
+  "suspended",
+];
+
+export const TRANSPORT_FEATURES = [
+  "AC",
+  "Non-AC",
+  "Music System",
+  "USB Charging",
+  "WiFi",
+  "First Aid Kit",
+  "Luggage Space",
+  "Reclining Seats",
+  "GPS Navigation",
+  "Child Seat Available",
+  "Helmet Provided",
+  "Fuel Included",
+  "Driver Included",
+  "Flexible Routes",
+];
+

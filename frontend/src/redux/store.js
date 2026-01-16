@@ -8,6 +8,7 @@ import expenseReducer from './slices/expenseSlice';
 import guideReducer from './slices/guideSlice';
 import notificationReducer from './slices/notificationSlice';
 import postReducer from './slices/postSlice';
+import transportReducer from './slices/transportSlice';
 import userActivityReducer from './slices/userActivitySlice';
 import userReducer from './slices/userSlice';
 
@@ -23,6 +24,7 @@ const store = configureStore({
     guide: guideReducer,
     notifications: notificationReducer,
     expense: expenseReducer,
+    transport: transportReducer,
   },
 });
 

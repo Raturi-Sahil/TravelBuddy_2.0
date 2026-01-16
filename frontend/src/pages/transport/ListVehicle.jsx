@@ -1,9 +1,14 @@
+import { useAuth } from "@clerk/clerk-react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Bus, Car, Camera, Check, Clock, IndianRupee, MapPin, Phone, Plus, Route, Shield, Truck, Upload, Users, X, Zap
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+
+import { createTransportListing, clearCreateSuccess, clearTransportError } from "../../redux/slices/transportSlice";
 
 const vehicleTypes = [
   { id: 'taxi', name: 'Taxi', icon: Car, description: '4-seater cars', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&q=80' },
@@ -62,8 +67,12 @@ const FloatingParticles = () => {
 
 export default function ListVehicle() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { getToken } = useAuth();
+
+  const { createLoading, createSuccess, error } = useSelector((state) => state.transport);
+
   const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     vehicleType: '',
     vehicleName: '',
@@ -79,8 +88,26 @@ export default function ListVehicle() {
     features: [],
     languages: '',
     description: '',
-    vehicleImages: [],
+    vehicleImages: [], // File objects
+    imagePreviewUrls: [], // Preview URLs
   });
+
+  // Handle success
+  useEffect(() => {
+    if (createSuccess) {
+      toast.success('Vehicle listed successfully!');
+      setCurrentStep(4); // Success step
+      dispatch(clearCreateSuccess());
+    }
+  }, [createSuccess, dispatch]);
+
+  // Handle error
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(clearTransportError());
+    }
+  }, [error, dispatch]);
 
   const updateForm = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -97,26 +124,44 @@ export default function ListVehicle() {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    const imageUrls = files.map(file => URL.createObjectURL(file));
+    const newFiles = [...formData.vehicleImages, ...files].slice(0, 5);
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+
     setFormData(prev => ({
       ...prev,
-      vehicleImages: [...prev.vehicleImages, ...imageUrls].slice(0, 5)
+      vehicleImages: newFiles,
+      imagePreviewUrls: newPreviews
     }));
   };
 
   const removeImage = (index) => {
     setFormData(prev => ({
       ...prev,
-      vehicleImages: prev.vehicleImages.filter((_, i) => i !== index)
+      vehicleImages: prev.vehicleImages.filter((_, i) => i !== index),
+      imagePreviewUrls: prev.imagePreviewUrls.filter((_, i) => i !== index)
     }));
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    setCurrentStep(4); // Success step
+    const listingData = {
+      vehicleType: formData.vehicleType,
+      vehicleName: formData.vehicleName,
+      vehicleNumber: formData.vehicleNumber,
+      seatingCapacity: formData.seatingCapacity,
+      route: formData.route,
+      serviceArea: formData.serviceArea,
+      minPrice: formData.minPrice,
+      maxPrice: formData.maxPrice || undefined,
+      priceType: formData.priceType,
+      phone: formData.phone,
+      whatsapp: formData.whatsapp || undefined,
+      features: formData.features,
+      languages: formData.languages ? formData.languages.split(',').map(l => l.trim()) : [],
+      description: formData.description || undefined,
+      vehicleImages: formData.vehicleImages, // File objects
+    };
+
+    dispatch(createTransportListing({ getToken, listingData }));
   };
 
   const canProceed = () => {
@@ -402,7 +447,7 @@ export default function ListVehicle() {
                   <Camera className="w-4 h-4 inline mr-1" /> Vehicle Photos (Max 5)
                 </label>
                 <div className="flex flex-wrap gap-3">
-                  {formData.vehicleImages.map((img, i) => (
+                  {formData.imagePreviewUrls.map((img, i) => (
                     <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-slate-200">
                       <img src={img} alt="" className="w-full h-full object-cover" />
                       <button
@@ -413,7 +458,7 @@ export default function ListVehicle() {
                       </button>
                     </div>
                   ))}
-                  {formData.vehicleImages.length < 5 && (
+                  {formData.imagePreviewUrls.length < 5 && (
                     <label className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-teal-400 hover:bg-teal-50/50 transition-all">
                       <Upload className="w-6 h-6 text-slate-400" />
                       <span className="text-xs text-slate-400 mt-1">Add</span>
@@ -643,14 +688,14 @@ export default function ListVehicle() {
                 if (currentStep === 3) handleSubmit();
                 else setCurrentStep(currentStep + 1);
               }}
-              disabled={!canProceed() || isSubmitting}
+              disabled={!canProceed() || createLoading}
               className={`px-8 py-3 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 ${
                 canProceed()
                   ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:shadow-xl'
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
               }`}
             >
-              {isSubmitting ? (
+              {createLoading ? (
                 <>
                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
                   Submitting...
