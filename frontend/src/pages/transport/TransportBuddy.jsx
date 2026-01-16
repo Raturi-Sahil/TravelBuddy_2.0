@@ -1,142 +1,31 @@
+import { useAuth } from "@clerk/clerk-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Bus, Car, ChevronRight, Filter, MapPin, MessageCircle, Phone, Search, Star, Truck, Users, X, Zap, Route, IndianRupee, Clock, Shield, ArrowRight
+  Bus, Car, Filter, Loader2, MapPin, MessageCircle, Phone, Search, Star, Truck, Users, X, Route, Shield, ArrowRight
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-// Dummy Transport Data
-const dummyTransports = [
-  {
-    id: 1,
-    providerName: "Sharma Travels",
-    providerPhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop",
-    vehicleType: "Taxi",
-    vehicleName: "Maruti Swift Dzire",
-    vehicleImage: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80",
-    seatingCapacity: 4,
-    route: "Manali to Rohtang Pass",
-    serviceArea: "Manali, Kullu, Rohtang",
-    priceRange: "₹2,500 - ₹3,500",
-    priceType: "per trip",
-    phone: "+91 98765 43210",
-    rating: 4.8,
-    totalRides: 342,
-    verified: true,
-    available: true,
-    languages: ["Hindi", "English"],
-    features: ["AC", "Music System", "First Aid Kit"]
-  },
-  {
-    id: 2,
-    providerName: "Mountain Riders",
-    providerPhoto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop",
-    vehicleType: "Mini Van",
-    vehicleName: "Force Traveller",
-    vehicleImage: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&q=80",
-    seatingCapacity: 12,
-    route: "Shimla City Tour",
-    serviceArea: "Shimla, Kufri, Chail",
-    priceRange: "₹4,000 - ₹6,000",
-    priceType: "per day",
-    phone: "+91 87654 32109",
-    rating: 4.6,
-    totalRides: 189,
-    verified: true,
-    available: true,
-    languages: ["Hindi", "Punjabi"],
-    features: ["AC", "Luggage Space", "USB Charging"]
-  },
-  {
-    id: 3,
-    providerName: "Valley Express",
-    providerPhoto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop",
-    vehicleType: "Bus",
-    vehicleName: "Luxury Coach",
-    vehicleImage: "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800&q=80",
-    seatingCapacity: 45,
-    route: "Delhi to Manali",
-    serviceArea: "Delhi, Chandigarh, Manali",
-    priceRange: "₹800 - ₹1,500",
-    priceType: "per seat",
-    phone: "+91 76543 21098",
-    rating: 4.4,
-    totalRides: 567,
-    verified: true,
-    available: true,
-    languages: ["Hindi", "English"],
-    features: ["AC", "Reclining Seats", "Entertainment"]
-  },
-  {
-    id: 4,
-    providerName: "Rajesh Auto",
-    providerPhoto: "https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=150&h=150&fit=crop",
-    vehicleType: "Auto",
-    vehicleName: "Bajaj Auto Rickshaw",
-    vehicleImage: "https://images.unsplash.com/photo-1612441804231-a5e0a2b1e17b?w=800&q=80",
-    seatingCapacity: 3,
-    route: "Local Jaipur Sightseeing",
-    serviceArea: "Jaipur Old City, Hawa Mahal, Amber",
-    priceRange: "₹300 - ₹800",
-    priceType: "per trip",
-    phone: "+91 65432 10987",
-    rating: 4.7,
-    totalRides: 892,
-    verified: false,
-    available: true,
-    languages: ["Hindi", "Rajasthani"],
-    features: ["Open Air", "Local Expert", "Flexible Routes"]
-  },
-  {
-    id: 5,
-    providerName: "Goa Beach Rides",
-    providerPhoto: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop",
-    vehicleType: "Bike",
-    vehicleName: "Royal Enfield Classic",
-    vehicleImage: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
-    seatingCapacity: 2,
-    route: "North Goa Beach Hopping",
-    serviceArea: "Calangute, Baga, Anjuna",
-    priceRange: "₹500 - ₹800",
-    priceType: "per day",
-    phone: "+91 54321 09876",
-    rating: 4.9,
-    totalRides: 456,
-    verified: true,
-    available: false,
-    languages: ["Hindi", "English", "Konkani"],
-    features: ["Helmet Provided", "Fuel Included", "Flexible Return"]
-  },
-  {
-    id: 6,
-    providerName: "Kerala Backwaters",
-    providerPhoto: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop",
-    vehicleType: "Tempo Traveller",
-    vehicleName: "12 Seater Tempo",
-    vehicleImage: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=800&q=80",
-    seatingCapacity: 12,
-    route: "Munnar to Alleppey",
-    serviceArea: "Kochi, Munnar, Alleppey, Thekkady",
-    priceRange: "₹5,500 - ₹8,000",
-    priceType: "per day",
-    phone: "+91 43210 98765",
-    rating: 4.5,
-    totalRides: 234,
-    verified: true,
-    available: true,
-    languages: ["Malayalam", "Hindi", "English"],
-    features: ["AC", "Pushback Seats", "Ice Box"]
-  }
-];
+import { fetchTransports, logTransportContact } from "../../redux/slices/transportSlice";
 
-const vehicleTypes = ["All", "Taxi", "Mini Van", "Bus", "Auto", "Bike", "Tempo Traveller"];
+const vehicleTypes = ["All", "taxi", "auto", "minivan", "tempo", "bus", "bike"];
+const vehicleTypeLabels = {
+  "All": "All",
+  "taxi": "Taxi",
+  "auto": "Auto",
+  "minivan": "Mini Van",
+  "tempo": "Tempo Traveller",
+  "bus": "Bus",
+  "bike": "Bike"
+};
 
 // Vehicle Icon Mapper
 const getVehicleIcon = (type) => {
   switch (type) {
-    case "Bus": return Bus;
-    case "Taxi": return Car;
-    case "Mini Van": case "Tempo Traveller": return Truck;
+    case "bus": return Bus;
+    case "taxi": return Car;
+    case "minivan": case "tempo": return Truck;
     default: return Car;
   }
 };
@@ -240,7 +129,7 @@ const FilterModal = ({ isOpen, onClose, filters, setFilters, resultCount, onRese
                           : 'bg-white text-slate-600 border-slate-200 hover:border-teal-300 hover:text-teal-600'
                       }`}
                     >
-                      {type}
+                      {vehicleTypeLabels[type]}
                     </motion.button>
                   ))}
                 </div>
@@ -339,7 +228,7 @@ const FilterModal = ({ isOpen, onClose, filters, setFilters, resultCount, onRese
 };
 
 // Transport Card Component
-const TransportCard = ({ transport, index }) => {
+const TransportCard = ({ transport, index, onContact }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const VehicleIcon = getVehicleIcon(transport.vehicleType);
@@ -350,6 +239,23 @@ const TransportCard = ({ transport, index }) => {
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setMousePosition({ x, y });
+  };
+
+  const formatPrice = () => {
+    if (transport.maxPrice) {
+      return `₹${transport.minPrice} - ₹${transport.maxPrice}`;
+    }
+    return `₹${transport.minPrice}`;
+  };
+
+  const formatPriceType = (type) => {
+    const types = {
+      'per_trip': 'per trip',
+      'per_day': 'per day',
+      'per_km': 'per km',
+      'per_seat': 'per seat'
+    };
+    return types[type] || type;
   };
 
   return (
@@ -378,7 +284,7 @@ const TransportCard = ({ transport, index }) => {
       {/* Image Section */}
       <div className="h-48 relative overflow-hidden">
         <img
-          src={transport.vehicleImage}
+          src={transport.vehicleImages?.[0] || "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80"}
           alt={transport.vehicleName}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
@@ -392,9 +298,9 @@ const TransportCard = ({ transport, index }) => {
             className="px-3 py-1 bg-white/90 backdrop-blur-md text-slate-800 text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm"
           >
             <VehicleIcon className="w-3.5 h-3.5 text-teal-600" />
-            {transport.vehicleType}
+            {vehicleTypeLabels[transport.vehicleType] || transport.vehicleType}
           </motion.span>
-          {transport.verified && (
+          {transport.isVerified && (
             <span className="px-2 py-1 bg-teal-500 text-white text-xs font-bold rounded-lg flex items-center gap-1">
               <Shield className="w-3 h-3" /> Verified
             </span>
@@ -404,9 +310,9 @@ const TransportCard = ({ transport, index }) => {
         {/* Availability Badge */}
         <div className="absolute bottom-4 left-4 z-10">
           <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
-            transport.available ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+            transport.isAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
           }`}>
-            {transport.available ? 'Available' : 'Unavailable'}
+            {transport.isAvailable ? 'Available' : 'Unavailable'}
           </span>
         </div>
 
@@ -414,7 +320,7 @@ const TransportCard = ({ transport, index }) => {
         <div className="absolute top-4 right-4 z-10">
           <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg shadow-sm">
             <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-            <span className="text-xs font-bold text-slate-700">{transport.rating}</span>
+            <span className="text-xs font-bold text-slate-700">{transport.averageRating?.toFixed(1) || '0.0'}</span>
           </div>
         </div>
       </div>
@@ -424,15 +330,15 @@ const TransportCard = ({ transport, index }) => {
         {/* Provider Info */}
         <div className="flex items-center gap-3 mb-4">
           <img
-            src={transport.providerPhoto}
-            alt={transport.providerName}
+            src={transport.owner?.profileImage || "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"}
+            alt={transport.owner?.name}
             className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
           />
           <div>
             <h3 className="font-bold text-slate-900 group-hover:text-teal-600 transition-colors">
-              {transport.providerName}
+              {transport.owner?.name || 'Provider'}
             </h3>
-            <p className="text-xs text-slate-500">{transport.totalRides} rides completed</p>
+            <p className="text-xs text-slate-500">{transport.totalContacts || 0} contacts</p>
           </div>
         </div>
 
@@ -457,7 +363,7 @@ const TransportCard = ({ transport, index }) => {
 
         {/* Features */}
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {transport.features.map((feature, i) => (
+          {transport.features?.slice(0, 3).map((feature, i) => (
             <span key={i} className="px-2 py-0.5 bg-teal-50 text-teal-700 text-xs font-medium rounded-full">
               {feature}
             </span>
@@ -469,14 +375,15 @@ const TransportCard = ({ transport, index }) => {
           <div>
             <p className="text-xs text-slate-400 uppercase font-medium">Price</p>
             <div className="flex items-center gap-1">
-              <span className="text-lg font-bold text-slate-900">{transport.priceRange}</span>
+              <span className="text-lg font-bold text-slate-900">{formatPrice()}</span>
             </div>
-            <p className="text-xs text-slate-500">{transport.priceType}</p>
+            <p className="text-xs text-slate-500">{formatPriceType(transport.priceType)}</p>
           </div>
 
           <div className="flex gap-2">
             <motion.a
               href={`tel:${transport.phone}`}
+              onClick={() => onContact(transport._id, 'call')}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className="p-3 bg-teal-100 text-teal-600 rounded-xl hover:bg-teal-200 transition-colors"
@@ -484,9 +391,10 @@ const TransportCard = ({ transport, index }) => {
               <Phone className="w-5 h-5" />
             </motion.a>
             <motion.a
-              href={`https://wa.me/${transport.phone.replace(/\s/g, '')}`}
+              href={`https://wa.me/${transport.whatsapp || transport.phone}`.replace(/\s/g, '')}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => onContact(transport._id, 'whatsapp')}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className="p-3 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-200 transition-colors"
@@ -506,6 +414,11 @@ const TransportCard = ({ transport, index }) => {
 // Main Component
 export default function TransportBuddy() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { getToken } = useAuth();
+
+  const { transports, transportsLoading, pagination } = useSelector((state) => state.transport);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({
@@ -515,33 +428,31 @@ export default function TransportBuddy() {
     verifiedOnly: false,
   });
 
-  // Filter transports
-  const filteredTransports = dummyTransports.filter(transport => {
-    // Search
-    const matchesSearch =
-      transport.providerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transport.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transport.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transport.serviceArea.toLowerCase().includes(searchQuery.toLowerCase());
-    if (!matchesSearch) return false;
+  // Fetch transports on mount and when filters change
+  useEffect(() => {
+    const fetchData = async () => {
+      dispatch(fetchTransports({
+        getToken,
+        filters: {
+          search: searchQuery,
+          vehicleType: filters.vehicleType,
+          minSeats: filters.minSeats,
+          availability: filters.availability === 'Available Only' ? 'true' : undefined,
+          verifiedOnly: filters.verifiedOnly ? 'true' : undefined,
+        }
+      }));
+    };
 
-    // Vehicle Type
-    if (filters.vehicleType !== 'All' && transport.vehicleType !== filters.vehicleType) return false;
+    const debounceTimer = setTimeout(fetchData, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [dispatch, getToken, searchQuery, filters]);
 
-    // Seats
-    if (transport.seatingCapacity < filters.minSeats) return false;
-
-    // Availability
-    if (filters.availability === 'Available Only' && !transport.available) return false;
-
-    // Verified
-    if (filters.verifiedOnly && !transport.verified) return false;
-
-    return true;
-  });
+  const handleContact = (transportId, contactType) => {
+    dispatch(logTransportContact({ getToken, transportId, contactType }));
+  };
 
   const stats = [
-    { icon: Car, value: "500+", label: "Transport Providers" },
+    { icon: Car, value: pagination?.totalCount || transports.length || "0", label: "Transport Providers" },
     { icon: MapPin, value: "100+", label: "Destinations Covered" },
     { icon: Star, value: "4.7", label: "Average Rating" },
   ];
@@ -570,7 +481,7 @@ export default function TransportBuddy() {
         onClose={() => setIsFilterOpen(false)}
         filters={filters}
         setFilters={setFilters}
-        resultCount={filteredTransports.length}
+        resultCount={transports.length}
         onReset={() => setFilters({ vehicleType: 'All', minSeats: 1, availability: 'All', verifiedOnly: false })}
       />
 
@@ -690,12 +601,20 @@ export default function TransportBuddy() {
         >
           <div>
             <h2 className="text-2xl font-bold text-slate-800">Available Transports</h2>
-            <p className="text-slate-500 text-sm">Showing {filteredTransports.length} providers</p>
+            <p className="text-slate-500 text-sm">Showing {transports.length} providers</p>
           </div>
         </motion.div>
 
         {/* Transport Grid */}
-        {filteredTransports.length === 0 ? (
+        {transportsLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full"
+            />
+          </div>
+        ) : transports.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -721,8 +640,8 @@ export default function TransportBuddy() {
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredTransports.map((transport, index) => (
-              <TransportCard key={transport.id} transport={transport} index={index} />
+            {transports.map((transport, index) => (
+              <TransportCard key={transport._id} transport={transport} index={index} onContact={handleContact} />
             ))}
           </div>
         )}

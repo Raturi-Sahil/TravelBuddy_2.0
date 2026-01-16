@@ -899,6 +899,156 @@ export const expenseService = {
   },
 };
 
+// Transport Service functions
+export const transportService = {
+  // Create transport listing
+  createTransportListing: async (authApi, data) => {
+    const formData = new FormData();
+
+    // Append images
+    if (data.vehicleImages && data.vehicleImages.length > 0) {
+      data.vehicleImages.forEach((image) => {
+        if (image instanceof File) {
+          formData.append('vehicleImages', image);
+        }
+      });
+    }
+
+    // Append other fields
+    Object.keys(data).forEach(key => {
+      if (key !== 'vehicleImages') {
+        const value = data[key];
+        if (value !== undefined && value !== null) {
+          if (typeof value === 'object') {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value);
+          }
+        }
+      }
+    });
+
+    const response = await authApi.post('/transports', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // Update transport listing
+  updateTransportListing: async (authApi, id, data) => {
+    const formData = new FormData();
+
+    // Append new images
+    if (data.newImages && data.newImages.length > 0) {
+      data.newImages.forEach((image) => {
+        if (image instanceof File) {
+          formData.append('vehicleImages', image);
+        }
+      });
+    }
+
+    // Append existing images
+    if (data.existingImages) {
+      formData.append('existingImages', JSON.stringify(data.existingImages));
+    }
+
+    // Append other fields
+    Object.keys(data).forEach(key => {
+      if (key !== 'vehicleImages' && key !== 'newImages' && key !== 'existingImages') {
+        const value = data[key];
+        if (value !== undefined && value !== null) {
+          if (typeof value === 'object') {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value);
+          }
+        }
+      }
+    });
+
+    const response = await authApi.patch(`/transports/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // Toggle transport availability
+  toggleTransportAvailability: async (authApi, id) => {
+    const response = await authApi.patch(`/transports/${id}/availability`);
+    return response.data;
+  },
+
+  // Delete transport listing
+  deleteTransportListing: async (authApi, id) => {
+    const response = await authApi.delete(`/transports/${id}`);
+    return response.data;
+  },
+
+  // Get my transport listings
+  getMyTransportListings: async (authApi) => {
+    const response = await authApi.get('/transports/my-listings');
+    return response.data;
+  },
+
+  // Get transports with filters
+  getTransports: async (authApi, filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.search) params.append('search', filters.search);
+    if (filters.vehicleType && filters.vehicleType !== 'All') params.append('vehicleType', filters.vehicleType);
+    if (filters.minSeats) params.append('minSeats', filters.minSeats);
+    if (filters.minPrice) params.append('minPrice', filters.minPrice);
+    if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
+    if (filters.availability) params.append('availability', filters.availability);
+    if (filters.verifiedOnly) params.append('verifiedOnly', filters.verifiedOnly);
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.page) params.append('page', filters.page);
+    if (filters.limit) params.append('limit', filters.limit);
+
+    const response = await authApi.get(`/transports?${params.toString()}`);
+    return response.data;
+  },
+
+  // Get nearby transports
+  getNearbyTransports: async (authApi, { lat, lng, maxDistance, limit }) => {
+    const params = new URLSearchParams();
+    params.append('lat', lat);
+    params.append('lng', lng);
+    if (maxDistance) params.append('maxDistance', maxDistance);
+    if (limit) params.append('limit', limit);
+
+    const response = await authApi.get(`/transports/nearby?${params.toString()}`);
+    return response.data;
+  },
+
+  // Get transport by ID
+  getTransportById: async (authApi, id) => {
+    const response = await authApi.get(`/transports/${id}`);
+    return response.data;
+  },
+
+  // Log contact (for analytics)
+  logContact: async (authApi, id, contactType) => {
+    const response = await authApi.post(`/transports/${id}/contact`, { contactType });
+    return response.data;
+  },
+
+  // Create review
+  createReview: async (authApi, id, reviewData) => {
+    const response = await authApi.post(`/transports/${id}/reviews`, reviewData);
+    return response.data;
+  },
+
+  // Get transport reviews
+  getTransportReviews: async (authApi, id, page = 1, limit = 10) => {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('limit', limit);
+
+    const response = await authApi.get(`/transports/${id}/reviews?${params.toString()}`);
+    return response.data;
+  },
+};
+
 
 
 export default api;

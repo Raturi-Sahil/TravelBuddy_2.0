@@ -18,6 +18,7 @@ import notificationRoutes from "./routes/notificationsRoutes";
 import placesRoutes from "./routes/placesRoute";
 import postRoutes from "./routes/postRoutes";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
+import transportRoutes from "./routes/transportRoute";
 import userRoutes from "./routes/userRoute";
 
 
@@ -85,6 +86,7 @@ app.use("/articles", articleRoutes);
 app.use("/guides", guideRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/expenses", expenseRoutes);
+app.use("/transports", transportRoutes);
 app.use("/admin", adminRoutes);
 
 app.get("/", (req, res) => {
