@@ -43,7 +43,8 @@ app.use(
         !origin ||
         allowedOrigins.includes(origin) ||
         origin.endsWith(".vercel.app") || // Allow Vercel deployments
-        origin.endsWith(".onrender.com")  // Allow Render deployments
+        origin.endsWith(".onrender.com") || // Allow Render deployments
+        origin.endsWith("travelbuddie.in") // Allow Custom Domain
       ) {
         callback(null, true);
       } else {

@@ -22,7 +22,9 @@ export const initializeSocket = (server: HttpServer) => {
                 if (
                     !origin ||
                     allowedOrigins.includes(origin) ||
-                    origin.endsWith(".vercel.app") // Allow Vercel deployments automatically
+                    origin.endsWith(".vercel.app") || // Allow Vercel deployments automatically
+                    origin.endsWith(".onrender.com") ||
+                    origin.endsWith("travelbuddie.in") // Allow Custom Domain
                 ) {
                     callback(null, true);
                 } else {
